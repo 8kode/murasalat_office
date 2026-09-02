@@ -1,7 +1,7 @@
 {
  "app": "murasalat_office",
  "charts": [],
- "content": "[{\"id\":\"5STUeKG9pz\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Murasalat Office workspace</span>\",\"col\":12}},{\"id\":\"fCiQc59f8f\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"0uoPa5qYou\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Party Type\",\"col\":3}},{\"id\":\"wW2DmN52y-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Party\",\"col\":3}},{\"id\":\"kkfQT0ek47\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Department\",\"col\":3}}]",
+ "content": "[{\"id\":\"tUUwIq6sG_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Correspondence\",\"col\":3}},{\"id\":\"1WYY3P_j-I\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Setup</b></span>\",\"col\":12}},{\"id\":\"1vGtFH_2zP\",\"type\":\"card\",\"data\":{\"card_name\":\"All Linked of Corspondeng\",\"col\":4}}]",
  "creation": "2026-09-02 03:59:33.922092",
  "custom_blocks": [],
  "docstatus": 0,
@@ -13,8 +13,68 @@
  "is_hidden": 0,
  "label": "Murasalat Office",
  "link_type": "DocType",
- "links": [],
- "modified": "2026-09-02 04:03:20.498520",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "All Linked of Corspondeng",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Party Type",
+   "link_count": 0,
+   "link_to": "Murasalat Party Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Party",
+   "link_count": 0,
+   "link_to": "Murasalat Party",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Department",
+   "link_count": 0,
+   "link_to": "Murasalat Department",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Correspondence Type",
+   "link_count": 0,
+   "link_to": "Murasalat Correspondence Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Correspondence Category",
+   "link_count": 0,
+   "link_to": "Murasalat Correspondence Category",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-03 01:08:20.916145",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
@@ -28,24 +88,8 @@
   {
    "color": "Grey",
    "doc_view": "List",
-   "label": "Murasalat Party Type",
-   "link_to": "Murasalat Party Type",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Murasalat Party",
-   "link_to": "Murasalat Party",
-   "stats_filter": "[]",
-   "type": "DocType"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "List",
-   "label": "Murasalat Department",
-   "link_to": "Murasalat Department",
+   "label": "Murasalat Correspondence",
+   "link_to": "Murasalat Correspondence",
    "stats_filter": "[]",
    "type": "DocType"
   }
