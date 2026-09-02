@@ -1,0 +1,33 @@
+[
+ {
+  "app": "murasalat_office",
+  "charts": [],
+  "content": "[]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "external_link": null,
+  "for_user": null,
+  "hide_custom": 0,
+  "icon": "message-square-text",
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Murasalat Office",
+  "link_to": null,
+  "link_type": "DocType",
+  "links": [],
+  "modified": "2026-09-02 03:18:36.971668",
+  "module": "Murasalat Office",
+  "name": "Murasalat Office",
+  "number_cards": [],
+  "parent_page": null,
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 0.0,
+  "shortcuts": [],
+  "title": "Murasalat Office",
+  "type": "Workspace"
+ }
+]

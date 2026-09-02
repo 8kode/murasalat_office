@@ -1,0 +1,33 @@
+[
+ {
+  "app": null,
+  "docstatus": 0,
+  "doctype": "Workspace Sidebar",
+  "for_user": null,
+  "header_icon": null,
+  "items": [
+   {
+    "child": 0,
+    "collapsible": 1,
+    "filters": null,
+    "icon": null,
+    "indent": 0,
+    "keep_closed": 0,
+    "label": "Murasalat Office",
+    "link_to": "Murasalat Office",
+    "link_type": "Workspace",
+    "navigate_to_tab": null,
+    "route_options": null,
+    "show_arrow": 0,
+    "type": "Link",
+    "url": null
+   }
+  ],
+  "modified": "2026-09-02 03:18:43.894849",
+  "module": "Murasalat Office",
+  "module_onboarding": null,
+  "name": "Murasalat Office",
+  "standard": 0,
+  "title": "Murasalat Office"
+ }
+]
