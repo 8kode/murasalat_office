@@ -1,7 +1,7 @@
 {
  "app": "murasalat_office",
  "charts": [],
- "content": "[]",
+ "content": "[{\"id\":\"5STUeKG9pz\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the Murasalat Office workspace</span>\",\"col\":12}},{\"id\":\"fCiQc59f8f\",\"type\":\"paragraph\",\"data\":{\"text\":\"Click on \\n\\t\\t\\t\\n\\t\\t\\t\\n\\t\\t to edit\",\"col\":12}},{\"id\":\"0uoPa5qYou\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Party Type\",\"col\":3}},{\"id\":\"wW2DmN52y-\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Party\",\"col\":3}},{\"id\":\"kkfQT0ek47\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Murasalat Department\",\"col\":3}}]",
  "creation": "2026-09-02 03:59:33.922092",
  "custom_blocks": [],
  "docstatus": 0,
@@ -14,7 +14,7 @@
  "label": "Murasalat Office",
  "link_type": "DocType",
  "links": [],
- "modified": "2026-09-02 03:59:33.922092",
+ "modified": "2026-09-02 04:03:20.498520",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
@@ -24,7 +24,32 @@
  "quick_lists": [],
  "roles": [],
  "sequence_id": 0.0,
- "shortcuts": [],
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Murasalat Party Type",
+   "link_to": "Murasalat Party Type",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Murasalat Party",
+   "link_to": "Murasalat Party",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Murasalat Department",
+   "link_to": "Murasalat Department",
+   "stats_filter": "[]",
+   "type": "DocType"
+  }
+ ],
  "title": "Murasalat Office",
  "type": "Workspace"
 }
