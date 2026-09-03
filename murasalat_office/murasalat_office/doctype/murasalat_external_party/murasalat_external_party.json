@@ -1,0 +1,50 @@
+{
+  "actions": [],
+  "autoname": "field:party_name",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "party_name",
+    "short_name",
+    "party_type",
+    "parent_party",
+    "city",
+    "country",
+    "contact_section",
+    "email",
+    "phone",
+    "address",
+    "is_active",
+    "notes"
+  ],
+  "fields": [
+    {"fieldname":"party_name","fieldtype":"Data","label":"Party Name","reqd":1,"unique":1},
+    {"fieldname":"short_name","fieldtype":"Data","label":"Short Name"},
+    {"fieldname":"party_type","fieldtype":"Select","label":"Party Type","options":"Government\nPrivate\nIndividual\nOther","reqd":1},
+    {"fieldname":"parent_party","fieldtype":"Link","label":"Parent Party","options":"Murasalat External Party"},
+    {"fieldname":"city","fieldtype":"Data","label":"City"},
+    {"fieldname":"country","fieldtype":"Link","label":"Country","options":"Country"},
+    {"fieldname":"contact_section","fieldtype":"Section Break","label":"Contact Information"},
+    {"fieldname":"email","fieldtype":"Data","label":"Email","options":"Email"},
+    {"fieldname":"phone","fieldtype":"Data","label":"Phone"},
+    {"fieldname":"address","fieldtype":"Small Text","label":"Address"},
+    {"default":"1","fieldname":"is_active","fieldtype":"Check","label":"Is Active"},
+    {"fieldname":"notes","fieldtype":"Small Text","label":"Notes"}
+  ],
+  "links": [],
+  "module": "Murasalat Office",
+  "name": "Murasalat External Party",
+  "permissions": [
+    {"role":"Murasalat User","read":1},
+    {"role":"Murasalat Clerk","read":1,"write":1,"create":1},
+    {"role":"Murasalat Manager","read":1,"write":1,"create":1},
+    {"role":"Murasalat Auditor","read":1},
+    {"role":"Murasalat System Manager","read":1,"write":1,"create":1,"delete":1}
+  ],
+  "search_fields": "party_name,short_name,party_type,city",
+  "show_name_in_global_search": 1,
+  "sort_field": "party_name",
+  "sort_order": "ASC",
+  "title_field": "party_name",
+  "track_changes": 1
+}

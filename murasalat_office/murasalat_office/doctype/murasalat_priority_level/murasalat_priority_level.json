@@ -1,29 +1,27 @@
 {
   "actions": [],
-  "autoname": "field:level_name",
+  "autoname": "field:priority_name",
   "doctype": "DocType",
   "engine": "InnoDB",
   "field_order": [
-    "level_name",
+    "priority_name",
     "code",
     "rank",
     "color",
-    "restrict_access",
-    "is_active",
-    "description"
+    "default_due_days",
+    "is_active"
   ],
   "fields": [
-    {"fieldname":"level_name","fieldtype":"Data","label":"Level Name","reqd":1,"unique":1},
+    {"fieldname":"priority_name","fieldtype":"Data","label":"Priority Name","reqd":1,"unique":1},
     {"fieldname":"code","fieldtype":"Data","label":"Code","reqd":1,"unique":1},
     {"fieldname":"rank","fieldtype":"Int","label":"Rank","reqd":1},
     {"fieldname":"color","fieldtype":"Color","label":"Color"},
-    {"fieldname":"restrict_access","fieldtype":"Check","label":"Restrict Access"},
-    {"default":"1","fieldname":"is_active","fieldtype":"Check","label":"Is Active"},
-    {"fieldname":"description","fieldtype":"Small Text","label":"Description"}
+    {"fieldname":"default_due_days","fieldtype":"Int","label":"Default Due Days"},
+    {"default":"1","fieldname":"is_active","fieldtype":"Check","label":"Is Active"}
   ],
   "links": [],
   "module": "Murasalat Office",
-  "name": "Murasalat Confidentiality Level",
+  "name": "Murasalat Priority Level",
   "permissions": [
     {"role":"Murasalat User","read":1},
     {"role":"Murasalat Clerk","read":1},
@@ -33,6 +31,6 @@
   ],
   "sort_field": "rank",
   "sort_order": "ASC",
-  "title_field": "level_name",
+  "title_field": "priority_name",
   "track_changes": 1
 }

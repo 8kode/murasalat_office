@@ -1,0 +1,68 @@
+{
+  "actions": [],
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "organization_section",
+    "company",
+    "default_department",
+    "defaults_section",
+    "default_confidentiality",
+    "default_priority",
+    "default_routing_purpose",
+    "dates_section",
+    "hijri_date_enabled",
+    "default_due_days",
+    "attachments_section",
+    "maximum_attachment_size_mb",
+    "allow_secret_attachments",
+    "allowed_file_extensions",
+    "controls_section",
+    "prevent_registered_deletion",
+    "enable_barcode",
+    "enable_audit_log"
+  ],
+  "fields": [
+    {"fieldname":"organization_section","fieldtype":"Section Break","label":"Organization"},
+    {"fieldname":"company","fieldtype":"Link","label":"Company","options":"Company","reqd":1},
+    {"fieldname":"default_department","fieldtype":"Link","label":"Default Department","options":"Department"},
+    {"fieldname":"defaults_section","fieldtype":"Section Break","label":"Defaults"},
+    {"fieldname":"default_confidentiality","fieldtype":"Link","label":"Default Confidentiality","options":"Murasalat Confidentiality Level","reqd":1},
+    {"fieldname":"default_priority","fieldtype":"Link","label":"Default Priority","options":"Murasalat Priority Level","reqd":1},
+    {"fieldname":"default_routing_purpose","fieldtype":"Link","label":"Default Routing Purpose","options":"Murasalat Routing Purpose"},
+    {"fieldname":"dates_section","fieldtype":"Section Break","label":"Dates"},
+    {"default":"1","fieldname":"hijri_date_enabled","fieldtype":"Check","label":"Enable Hijri Dates"},
+    {"default":"5","fieldname":"default_due_days","fieldtype":"Int","label":"Default Due Days"},
+    {"fieldname":"attachments_section","fieldtype":"Section Break","label":"Attachments"},
+    {"default":"10","fieldname":"maximum_attachment_size_mb","fieldtype":"Int","label":"Maximum Attachment Size MB","reqd":1},
+    {"default":"1","fieldname":"allow_secret_attachments","fieldtype":"Check","label":"Allow Secret Attachments"},
+    {"default":"pdf,jpg,jpeg,png,docx,xlsx","fieldname":"allowed_file_extensions","fieldtype":"Small Text","label":"Allowed File Extensions"},
+    {"fieldname":"controls_section","fieldtype":"Section Break","label":"Controls"},
+    {"default":"1","fieldname":"prevent_registered_deletion","fieldtype":"Check","label":"Prevent Registered Correspondence Deletion"},
+    {"default":"1","fieldname":"enable_barcode","fieldtype":"Check","label":"Enable Barcode"},
+    {"default":"1","fieldname":"enable_audit_log","fieldtype":"Check","label":"Enable Audit Log"}
+  ],
+  "issingle": 1,
+  "links": [],
+  "module": "Murasalat Office",
+  "name": "Murasalat Settings",
+  "permissions": [
+    {
+      "role": "Murasalat System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "track_changes": 1
+}

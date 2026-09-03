@@ -1,0 +1,48 @@
+{
+  "actions": [],
+  "autoname": "MUR-DEL-.YYYY.-.#####",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "delegation_section",
+    "delegator",
+    "delegate",
+    "department",
+    "valid_from",
+    "valid_to",
+    "status",
+    "permissions_section",
+    "allow_read",
+    "allow_referral",
+    "allow_complete",
+    "maximum_confidentiality",
+    "reason"
+  ],
+  "fields": [
+    {"fieldname":"delegation_section","fieldtype":"Section Break","label":"Delegation Information"},
+    {"fieldname":"delegator","fieldtype":"Link","in_list_view":1,"label":"Delegator","options":"User","reqd":1},
+    {"fieldname":"delegate","fieldtype":"Link","in_list_view":1,"label":"Delegate","options":"User","reqd":1},
+    {"fieldname":"department","fieldtype":"Link","label":"Department","options":"Department","reqd":1},
+    {"fieldname":"valid_from","fieldtype":"Date","in_list_view":1,"label":"Valid From","reqd":1},
+    {"fieldname":"valid_to","fieldtype":"Date","in_list_view":1,"label":"Valid To","reqd":1},
+    {"default":"Draft","fieldname":"status","fieldtype":"Select","label":"Status","options":"Draft\nActive\nExpired\nCancelled","read_only":1},
+    {"fieldname":"permissions_section","fieldtype":"Section Break","label":"Delegated Permissions"},
+    {"default":"1","fieldname":"allow_read","fieldtype":"Check","label":"Allow Read"},
+    {"fieldname":"allow_referral","fieldtype":"Check","label":"Allow Referral"},
+    {"fieldname":"allow_complete","fieldtype":"Check","label":"Allow Complete"},
+    {"fieldname":"maximum_confidentiality","fieldtype":"Link","label":"Maximum Confidentiality","options":"Murasalat Confidentiality Level"},
+    {"fieldname":"reason","fieldtype":"Small Text","label":"Reason"}
+  ],
+  "links": [],
+  "module": "Murasalat Office",
+  "name": "Murasalat Delegation",
+  "permissions": [
+    {"role":"Murasalat User","read":1,"write":1,"create":1,"if_owner":1},
+    {"role":"Murasalat Manager","read":1,"write":1,"create":1,"delete":1},
+    {"role":"Murasalat Auditor","read":1},
+    {"role":"Murasalat System Manager","read":1,"write":1,"create":1,"delete":1}
+  ],
+  "sort_field": "valid_from",
+  "sort_order": "DESC",
+  "track_changes": 1
+}

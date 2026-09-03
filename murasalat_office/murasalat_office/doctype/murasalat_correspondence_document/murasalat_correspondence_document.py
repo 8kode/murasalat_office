@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class MurasalatPriority(Document):
+class MurasalatCorrespondenceDocument(Document):
 	pass

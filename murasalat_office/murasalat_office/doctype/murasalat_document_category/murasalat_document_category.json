@@ -1,29 +1,27 @@
 {
   "actions": [],
-  "autoname": "field:level_name",
+  "autoname": "field:category_name",
   "doctype": "DocType",
   "engine": "InnoDB",
   "field_order": [
-    "level_name",
+    "category_name",
     "code",
-    "rank",
-    "color",
-    "restrict_access",
+    "display_order",
+    "allow_multiple",
     "is_active",
     "description"
   ],
   "fields": [
-    {"fieldname":"level_name","fieldtype":"Data","label":"Level Name","reqd":1,"unique":1},
+    {"fieldname":"category_name","fieldtype":"Data","label":"Category Name","reqd":1,"unique":1},
     {"fieldname":"code","fieldtype":"Data","label":"Code","reqd":1,"unique":1},
-    {"fieldname":"rank","fieldtype":"Int","label":"Rank","reqd":1},
-    {"fieldname":"color","fieldtype":"Color","label":"Color"},
-    {"fieldname":"restrict_access","fieldtype":"Check","label":"Restrict Access"},
+    {"fieldname":"display_order","fieldtype":"Int","label":"Display Order"},
+    {"default":"1","fieldname":"allow_multiple","fieldtype":"Check","label":"Allow Multiple"},
     {"default":"1","fieldname":"is_active","fieldtype":"Check","label":"Is Active"},
     {"fieldname":"description","fieldtype":"Small Text","label":"Description"}
   ],
   "links": [],
   "module": "Murasalat Office",
-  "name": "Murasalat Confidentiality Level",
+  "name": "Murasalat Document Category",
   "permissions": [
     {"role":"Murasalat User","read":1},
     {"role":"Murasalat Clerk","read":1},
@@ -31,8 +29,8 @@
     {"role":"Murasalat Auditor","read":1},
     {"role":"Murasalat System Manager","read":1,"write":1,"create":1,"delete":1}
   ],
-  "sort_field": "rank",
+  "sort_field": "display_order",
   "sort_order": "ASC",
-  "title_field": "level_name",
+  "title_field": "category_name",
   "track_changes": 1
 }

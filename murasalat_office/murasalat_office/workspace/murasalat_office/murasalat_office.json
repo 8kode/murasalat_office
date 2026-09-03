@@ -18,40 +18,10 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "All Linked of Corspondeng",
-   "link_count": 5,
+   "link_count": 12,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Murasalat Party Type",
-   "link_count": 0,
-   "link_to": "Murasalat Party Type",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Murasalat Party",
-   "link_count": 0,
-   "link_to": "Murasalat Party",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Murasalat Department",
-   "link_count": 0,
-   "link_to": "Murasalat Department",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   },
   {
    "hidden": 0,
@@ -72,9 +42,109 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Settings",
+   "link_count": 0,
+   "link_to": "Murasalat Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat External Party",
+   "link_count": 0,
+   "link_to": "Murasalat External Party",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Confidentiality Level",
+   "link_count": 0,
+   "link_to": "Murasalat Confidentiality Level",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Routing Purpose",
+   "link_count": 0,
+   "link_to": "Murasalat Routing Purpose",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Priority Level",
+   "link_count": 0,
+   "link_to": "Murasalat Priority Level",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Document Category",
+   "link_count": 0,
+   "link_to": "Murasalat Document Category",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Numbering Rule",
+   "link_count": 0,
+   "link_to": "Murasalat Numbering Rule",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Correspondence Document",
+   "link_count": 0,
+   "link_to": "Murasalat Correspondence Document",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Referral",
+   "link_count": 0,
+   "link_to": "Murasalat Referral",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Delegation",
+   "link_count": 0,
+   "link_to": "Murasalat Delegation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-09-03 01:08:20.916145",
+ "modified": "2026-09-04 02:08:21.616187",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
