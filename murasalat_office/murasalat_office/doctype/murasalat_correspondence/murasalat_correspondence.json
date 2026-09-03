@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_bulk_edit": 1,
- "allow_rename": 1,
+ "autoname": "IN-.YYYY.-.#####",
  "creation": "2026-09-03 00:03:15.878502",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -14,10 +14,23 @@
   "link_information",
   "main_data_section_section",
   "incoming_number",
-  "column_break_fqgg",
+  "column_break_visg",
   "correspondence_type",
-  "column_break_dejh",
+  "column_break_wurr",
   "subject",
+  "sender_row_section_section",
+  "sender_party",
+  "column_break_qlqj",
+  "recipient_department",
+  "column_break_oucc",
+  "external_reference_number",
+  "date_section",
+  "external_reference_date",
+  "priority",
+  "column_break_fqgg",
+  "external_reference_date_hijri",
+  "column_break_dejh",
+  "confidentiality_level",
   "tab_2_tab",
   "tab_3_tab"
  ],
@@ -39,6 +52,7 @@
    "label": "Is Link to Another Correspondence"
   },
   {
+   "collapsible": 1,
    "fieldname": "correspondence_link_section_section",
    "fieldtype": "Section Break",
    "label": "Correspondence Link Section"
@@ -87,6 +101,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Letter",
    "fieldname": "correspondence_type",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -99,19 +114,100 @@
    "fieldtype": "Column Break"
   },
   {
+   "bold": 1,
    "fieldname": "subject",
    "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
    "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sender_party",
+   "fieldtype": "Link",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Sender Party",
+   "options": "Murasalat Party",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "recipient_department",
+   "fieldtype": "Link",
+   "label": "Recipient Department",
+   "options": "Murasalat Department",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "external_reference_number",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "label": "External Reference Number",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "external_reference_date",
+   "fieldtype": "Date",
+   "label": "External Reference Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "confidentiality_level",
+   "fieldtype": "Link",
+   "label": "Confidentiality Level",
+   "options": "Murasalat Confidentiality Level"
+  },
+  {
+   "fieldname": "external_reference_date_hijri",
+   "fieldtype": "Date",
+   "label": "External Reference Date Hijri"
+  },
+  {
+   "fieldname": "sender_row_section_section",
+   "fieldtype": "Section Break",
+   "label": "Sender Row Section"
+  },
+  {
+   "fieldname": "column_break_qlqj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_oucc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_visg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wurr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_section",
+   "fieldtype": "Section Break",
+   "label": "Date Section"
+  },
+  {
+   "default": "Normal",
+   "fieldname": "priority",
+   "fieldtype": "Link",
+   "label": "Priority",
+   "options": "Murasalat Priority",
    "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-03 01:00:10.336364",
+ "modified": "2026-09-03 02:57:19.315532",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -131,5 +227,8 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "subject",
+ "track_changes": 1,
+ "track_seen": 1
 }

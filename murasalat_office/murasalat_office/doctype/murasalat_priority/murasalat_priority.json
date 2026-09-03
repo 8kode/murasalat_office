@@ -1,44 +1,57 @@
 {
  "actions": [],
  "allow_bulk_edit": 1,
- "allow_rename": 1,
- "autoname": "field:type_name",
- "creation": "2026-09-03 00:55:43.678881",
+ "autoname": "field:priority_name",
+ "creation": "2026-09-03 02:49:54.773575",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "type_name",
-  "is_active",
-  "description"
+  "priority_name",
+  "arabic_name",
+  "weight",
+  "color",
+  "enabled"
  ],
  "fields": [
   {
-   "fieldname": "type_name",
+   "fieldname": "priority_name",
    "fieldtype": "Data",
+   "in_global_search": 1,
    "in_list_view": 1,
-   "label": "Type Name",
+   "label": "Priority Name",
    "reqd": 1,
+   "search_index": 1,
    "unique": 1
   },
   {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "label": "Is Active"
+   "fieldname": "arabic_name",
+   "fieldtype": "Data",
+   "label": "Arabic Name"
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "Description"
+   "fieldname": "weight",
+   "fieldtype": "Int",
+   "label": "Weight"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-03 01:26:59.217829",
+ "modified": "2026-09-03 02:52:52.614682",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
- "name": "Murasalat Correspondence Type",
+ "name": "Murasalat Priority",
  "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
@@ -60,6 +73,5 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "type_name",
- "track_changes": 1
+ "title_field": "priority_name"
 }
