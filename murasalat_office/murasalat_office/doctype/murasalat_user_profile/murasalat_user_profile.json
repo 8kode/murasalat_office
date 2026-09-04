@@ -1,0 +1,135 @@
+{
+ "actions": [],
+ "autoname": "field:user",
+ "creation": "2026-09-04 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "employee",
+  "default_company",
+  "default_department",
+  "confidentiality_clearance",
+  "can_register_internal",
+  "can_register_incoming",
+  "can_register_outgoing",
+  "can_view_secret_attachments",
+  "can_print_barcode",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee"
+  },
+  {
+   "fieldname": "default_company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Default Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "default_department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Default Department",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "confidentiality_clearance",
+   "fieldtype": "Link",
+   "label": "Confidentiality Clearance",
+   "options": "Murasalat Confidentiality Level"
+  },
+  {
+   "default": "0",
+   "fieldname": "can_register_internal",
+   "fieldtype": "Check",
+   "label": "Can Register Internal"
+  },
+  {
+   "default": "0",
+   "fieldname": "can_register_incoming",
+   "fieldtype": "Check",
+   "label": "Can Register Incoming"
+  },
+  {
+   "default": "0",
+   "fieldname": "can_register_outgoing",
+   "fieldtype": "Check",
+   "label": "Can Register Outgoing"
+  },
+  {
+   "default": "0",
+   "fieldname": "can_view_secret_attachments",
+   "fieldtype": "Check",
+   "label": "Can View Secret Attachments"
+  },
+  {
+   "default": "0",
+   "fieldname": "can_print_barcode",
+   "fieldtype": "Check",
+   "label": "Can Print Barcode"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-04 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat User Profile",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "Murasalat User"
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Clerk"
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Manager"
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Auditor"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Murasalat System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "user,employee,default_company,default_department",
+ "show_name_in_global_search": 1,
+ "sort_field": "user",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "user",
+ "track_changes": 1
+}

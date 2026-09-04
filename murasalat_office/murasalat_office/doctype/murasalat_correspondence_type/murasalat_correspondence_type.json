@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "field:type_name",
+ "autoname": "field:code",
  "creation": "2026-09-03 20:38:50.354708",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -10,6 +10,12 @@
   "requires_external_party",
   "requires_reference_number",
   "requires_document_date",
+  "allow_internal",
+  "allow_incoming",
+  "allow_outgoing",
+  "requires_main_document",
+  "requires_letter_number",
+  "requires_letter_date",
   "is_active",
   "description"
  ],
@@ -58,10 +64,46 @@
    "fieldname": "requires_document_date",
    "fieldtype": "Check",
    "label": "Requires Document Date"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_internal",
+   "fieldtype": "Check",
+   "label": "Allow Internal "
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_incoming",
+   "fieldtype": "Check",
+   "label": "Allow Incoming"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_outgoing",
+   "fieldtype": "Check",
+   "label": "Allow Outgoing"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_main_document",
+   "fieldtype": "Check",
+   "label": "Requires Main Document"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_letter_number",
+   "fieldtype": "Check",
+   "label": "Requires Letter Number"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_letter_date",
+   "fieldtype": "Check",
+   "label": "Requires Letter Date"
   }
  ],
  "links": [],
- "modified": "2026-09-04 01:34:05.436121",
+ "modified": "2026-09-04 04:36:57.582849",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence Type",

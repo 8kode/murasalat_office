@@ -1,54 +1,166 @@
 {
-  "actions": [],
-  "autoname": "MUR-DOC-.YYYY.-.######",
-  "doctype": "DocType",
-  "engine": "InnoDB",
-  "field_order": [
-    "document_section",
-    "correspondence",
-    "document_category",
-    "document_type",
-    "file",
-    "file_name",
-    "security_section",
-    "is_secret",
-    "confidentiality_level",
-    "version_section",
-    "document_version",
-    "is_main_document",
-    "uploaded_by",
-    "uploaded_on",
-    "notes"
-  ],
-  "fields": [
-    {"fieldname":"document_section","fieldtype":"Section Break","label":"Document Information"},
-    {"fieldname":"correspondence","fieldtype":"Link","in_list_view":1,"label":"Correspondence","options":"Murasalat Correspondence","reqd":1},
-    {"fieldname":"document_category","fieldtype":"Link","in_list_view":1,"label":"Document Category","options":"Murasalat Document Category","reqd":1},
-    {"fieldname":"document_type","fieldtype":"Data","label":"Document Type","reqd":1},
-    {"fieldname":"file","fieldtype":"Attach","label":"File","reqd":1},
-    {"fieldname":"file_name","fieldtype":"Data","label":"File Name","read_only":1},
-    {"fieldname":"security_section","fieldtype":"Section Break","label":"Document Security"},
-    {"fieldname":"is_secret","fieldtype":"Check","in_list_view":1,"label":"Is Secret"},
-    {"depends_on":"is_secret","fieldname":"confidentiality_level","fieldtype":"Link","label":"Confidentiality Level","options":"Murasalat Confidentiality Level"},
-    {"fieldname":"version_section","fieldtype":"Section Break","label":"Version Information"},
-    {"default":"1","fieldname":"document_version","fieldtype":"Int","label":"Document Version","read_only":1},
-    {"fieldname":"is_main_document","fieldtype":"Check","label":"Is Main Document"},
-    {"fieldname":"uploaded_by","fieldtype":"Link","label":"Uploaded By","options":"User","read_only":1},
-    {"fieldname":"uploaded_on","fieldtype":"Datetime","label":"Uploaded On","read_only":1},
-    {"fieldname":"notes","fieldtype":"Small Text","label":"Notes"}
-  ],
-  "links": [],
-  "module": "Murasalat Office",
-  "name": "Murasalat Correspondence Document",
-  "permissions": [
-    {"role":"Murasalat User","read":1,"write":1,"create":1,"if_owner":1},
-    {"role":"Murasalat Clerk","read":1,"write":1,"create":1},
-    {"role":"Murasalat Manager","read":1,"write":1,"create":1,"delete":1},
-    {"role":"Murasalat Auditor","read":1},
-    {"role":"Murasalat System Manager","read":1,"write":1,"create":1,"delete":1}
-  ],
-  "search_fields": "correspondence,file_name,document_type",
-  "sort_field": "uploaded_on",
-  "sort_order": "DESC",
-  "track_changes": 1
+ "actions": [],
+ "autoname": "MUR-DOC-.YYYY.-.######",
+ "creation": "2026-09-04 00:46:55.301566",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "document_section",
+  "correspondence",
+  "document_category",
+  "document_type",
+  "file",
+  "file_name",
+  "security_section",
+  "is_secret",
+  "confidentiality_level",
+  "version_section",
+  "document_version",
+  "is_main_document",
+  "uploaded_by",
+  "uploaded_on",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "document_section",
+   "fieldtype": "Section Break",
+   "label": "Document Information"
+  },
+  {
+   "fieldname": "correspondence",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Correspondence",
+   "options": "Murasalat Correspondence",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_category",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Document Category",
+   "options": "Murasalat Document Category",
+   "reqd": 1
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "label": "Document Type",
+   "options": "Murasalat Document Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "File Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Document Security"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_secret",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Secret"
+  },
+  {
+   "depends_on": "is_secret",
+   "fieldname": "confidentiality_level",
+   "fieldtype": "Link",
+   "label": "Confidentiality Level",
+   "options": "Murasalat Confidentiality Level"
+  },
+  {
+   "fieldname": "version_section",
+   "fieldtype": "Section Break",
+   "label": "Version Information"
+  },
+  {
+   "default": "1",
+   "fieldname": "document_version",
+   "fieldtype": "Int",
+   "label": "Document Version",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_main_document",
+   "fieldtype": "Check",
+   "label": "Is Main Document"
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "label": "Uploaded By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uploaded_on",
+   "fieldtype": "Datetime",
+   "label": "Uploaded On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-04 04:42:09.484444",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Correspondence Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "if_owner": 1,
+   "read": 1,
+   "role": "Murasalat User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Murasalat Clerk",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Murasalat Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Auditor"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Murasalat System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "correspondence,file_name,document_type",
+ "sort_field": "uploaded_on",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
 }
