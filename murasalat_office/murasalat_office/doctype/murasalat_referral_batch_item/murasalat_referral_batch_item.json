@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "recipient_type",
+  "to_department",
+  "to_user",
+  "routing_purpose",
+  "priority_level",
+  "due_date",
+  "instructions",
+  "options_section",
+  "paper_correspondence",
+  "send_copy",
+  "for_follow_up",
+  "created_referral"
+ ],
+ "fields": [
+  {
+   "fieldname": "recipient_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Recipient Type",
+   "options": "User\nDepartment",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.recipient_type=='Department'",
+   "fieldname": "to_department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "To Department",
+   "mandatory_depends_on": "eval:doc.recipient_type=='Department'",
+   "options": "Department"
+  },
+  {
+   "depends_on": "eval:doc.recipient_type=='User'",
+   "fieldname": "to_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "To User",
+   "mandatory_depends_on": "eval:doc.recipient_type=='User'",
+   "options": "User"
+  },
+  {
+   "fieldname": "routing_purpose",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Routing Purpose",
+   "options": "Murasalat Routing Purpose",
+   "reqd": 1
+  },
+  {
+   "fieldname": "priority_level",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Priority Level",
+   "options": "Murasalat Priority Level"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Small Text",
+   "label": "Instructions"
+  },
+  {
+   "fieldname": "options_section",
+   "fieldtype": "Section Break",
+   "label": "Referral Options"
+  },
+  {
+   "default": "0",
+   "fieldname": "paper_correspondence",
+   "fieldtype": "Check",
+   "label": "Paper Correspondence"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_copy",
+   "fieldtype": "Check",
+   "label": "Send Copy"
+  },
+  {
+   "default": "0",
+   "fieldname": "for_follow_up",
+   "fieldtype": "Check",
+   "label": "For Follow Up"
+  },
+  {
+   "fieldname": "created_referral",
+   "fieldtype": "Link",
+   "label": "Created Referral",
+   "options": "Murasalat Referral",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "module": "Murasalat Office",
+ "name": "Murasalat Referral Batch Item",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "ASC"
+}

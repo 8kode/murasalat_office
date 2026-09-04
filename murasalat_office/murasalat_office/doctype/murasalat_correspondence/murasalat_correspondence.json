@@ -1,7 +1,6 @@
 {
  "actions": [],
  "allow_import": 1,
- "creation": "2026-09-04 03:40:51.834702",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
@@ -11,6 +10,9 @@
   "correspondence_number",
   "direction",
   "correspondence_type",
+  "type_requires_letter_number",
+  "type_requires_letter_date",
+  "type_requires_main_document",
   "column_break_identity",
   "workflow_state",
   "routing_status",
@@ -46,15 +48,12 @@
   "details_section",
   "notes",
   "links_section",
-  "link_to_other_correspondence",
   "correspondence_links",
   "concerned_persons_section",
   "concerned_persons",
-  "data_actions_html",
   "attachments_tab",
-  "attachments_intro_html",
-  "documents_html",
-  "attachments_actions_html",
+  "general_attachments_section",
+  "general_attachments",
   "referrals_tab",
   "referral_summary_section",
   "active_referral_count",
@@ -64,9 +63,6 @@
   "column_break_referral_summary",
   "last_referred_on",
   "last_activity_on",
-  "referrals_intro_html",
-  "referrals_html",
-  "referrals_actions_html",
   "audit_tab",
   "registration_section",
   "registered_by",
@@ -106,7 +102,9 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Correspondence Number",
+   "no_copy": 1,
    "read_only": 1,
+   "search_index": 1,
    "unique": 1
   },
   {
@@ -128,6 +126,30 @@
    "options": "Murasalat Correspondence Type",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fetch_from": "correspondence_type.requires_letter_number",
+   "fieldname": "type_requires_letter_number",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Type Requires Letter Number",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "correspondence_type.requires_letter_date",
+   "fieldname": "type_requires_letter_date",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Type Requires Letter Date",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "correspondence_type.requires_main_document",
+   "fieldname": "type_requires_main_document",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Type Requires Main Document",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_identity",
@@ -224,7 +246,8 @@
   {
    "fieldname": "due_date_hijri",
    "fieldtype": "Data",
-   "label": "Due Date Hijri"
+   "label": "Due Date Hijri",
+   "read_only": 1
   },
   {
    "fieldname": "page_count",
@@ -296,6 +319,7 @@
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "External Letter Number",
+   "mandatory_depends_on": "eval:doc.direction=='Incoming' && doc.type_requires_letter_number==1",
    "search_index": 1
   },
   {
@@ -304,6 +328,7 @@
    "fieldtype": "Date",
    "in_standard_filter": 1,
    "label": "External Letter Date",
+   "mandatory_depends_on": "eval:doc.direction=='Incoming' && doc.type_requires_letter_date==1",
    "search_index": 1
   },
   {
@@ -349,6 +374,7 @@
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "Outgoing Letter Number",
+   "mandatory_depends_on": "eval:doc.direction=='Outgoing' && doc.type_requires_letter_number==1",
    "search_index": 1
   },
   {
@@ -357,6 +383,7 @@
    "fieldtype": "Date",
    "in_standard_filter": 1,
    "label": "Outgoing Letter Date",
+   "mandatory_depends_on": "eval:doc.direction=='Outgoing' && doc.type_requires_letter_date==1",
    "search_index": 1
   },
   {
@@ -377,18 +404,12 @@
    "label": "Notes"
   },
   {
+   "collapsible": 1,
    "fieldname": "links_section",
    "fieldtype": "Section Break",
-   "label": "Links"
+   "label": "Correspondence Links"
   },
   {
-   "default": "0",
-   "fieldname": "link_to_other_correspondence",
-   "fieldtype": "Check",
-   "label": "Link to Other Correspondence"
-  },
-  {
-   "depends_on": "link_to_other_correspondence",
    "fieldname": "correspondence_links",
    "fieldtype": "Table",
    "label": "Correspondence Links",
@@ -407,29 +428,20 @@
    "options": "Murasalat Concerned Person"
   },
   {
-   "fieldname": "data_actions_html",
-   "fieldtype": "HTML",
-   "label": "Data Actions"
-  },
-  {
    "fieldname": "attachments_tab",
    "fieldtype": "Tab Break",
    "label": "Attachments"
   },
   {
-   "fieldname": "attachments_intro_html",
-   "fieldtype": "HTML",
-   "label": "Attachment Instructions"
+   "fieldname": "general_attachments_section",
+   "fieldtype": "Section Break",
+   "label": "General Attachments"
   },
   {
-   "fieldname": "documents_html",
-   "fieldtype": "HTML",
-   "label": "Correspondence Documents"
-  },
-  {
-   "fieldname": "attachments_actions_html",
-   "fieldtype": "HTML",
-   "label": "Attachment Actions"
+   "description": "Use this gallery only for ordinary non-confidential attachments. Use Murasalat Correspondence Document for classified or versioned documents.",
+   "fieldname": "general_attachments",
+   "fieldtype": "Attachment Gallery",
+   "label": "General Attachments"
   },
   {
    "fieldname": "referrals_tab",
@@ -490,21 +502,6 @@
    "fieldtype": "Datetime",
    "label": "Last Activity On",
    "read_only": 1
-  },
-  {
-   "fieldname": "referrals_intro_html",
-   "fieldtype": "HTML",
-   "label": "Referral Instructions"
-  },
-  {
-   "fieldname": "referrals_html",
-   "fieldtype": "HTML",
-   "label": "Referrals"
-  },
-  {
-   "fieldname": "referrals_actions_html",
-   "fieldtype": "HTML",
-   "label": "Referral Actions"
   },
   {
    "fieldname": "audit_tab",
@@ -656,13 +653,15 @@
    "group": "Transactions",
    "link_doctype": "Murasalat Referral",
    "link_fieldname": "correspondence"
+  },
+  {
+   "group": "Transactions",
+   "link_doctype": "Murasalat Referral Batch",
+   "link_fieldname": "correspondence"
   }
  ],
- "modified": "2026-09-04 04:13:20.463503",
- "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
- "owner": "Administrator",
  "permissions": [
   {
    "create": 1,

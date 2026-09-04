@@ -9,7 +9,7 @@ from murasalat_office.murasalat_office.doctype.murasalat_correspondence.murasala
     get_current_user_profile,
     update_correspondence_routing_summary,
 )
-from murasalat_office.utils.dates import gregorian_to_hijri
+from murasalat_office.utils.hijri import gregorian_to_hijri
 
 
 ACTIVE_STATUSES = ("Sent", "Received", "In Progress")

@@ -10,7 +10,7 @@
   "direction",
   "correspondence_type",
   "prefix",
-  "digits",
+  "number_of_digits",
   "include_year",
   "year_type",
   "is_default",
@@ -47,14 +47,6 @@
    "reqd": 1
   },
   {
-   "default": "6",
-   "fieldname": "digits",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Number of Digits",
-   "reqd": 1
-  },
-  {
    "default": "1",
    "fieldname": "include_year",
    "fieldtype": "Check",
@@ -79,10 +71,18 @@
    "fieldname": "is_active",
    "fieldtype": "Check",
    "label": "Is Active"
+  },
+  {
+   "default": "6",
+   "fieldname": "number_of_digits",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Number of Digits",
+   "reqd": 1
   }
  ],
  "links": [],
- "modified": "2026-09-04 05:15:16.462889",
+ "modified": "2026-09-04 20:59:30.608364",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Numbering Rule",

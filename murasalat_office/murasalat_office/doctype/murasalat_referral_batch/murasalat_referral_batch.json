@@ -1,0 +1,194 @@
+{
+ "actions": [],
+ "allow_import": 0,
+ "autoname": "hash",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "batch_information_section",
+  "correspondence",
+  "from_user",
+  "from_department",
+  "column_break_batch_information",
+  "status",
+  "processed_on",
+  "created_referrals",
+  "defaults_section",
+  "default_routing_purpose",
+  "default_priority_level",
+  "default_due_date",
+  "recipients_section",
+  "recipients",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "batch_information_section",
+   "fieldtype": "Section Break",
+   "label": "Batch Information"
+  },
+  {
+   "fieldname": "correspondence",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Correspondence",
+   "options": "Murasalat Correspondence",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "from_user",
+   "fieldtype": "Link",
+   "label": "From User",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_department",
+   "fieldtype": "Link",
+   "label": "From Department",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_batch_information",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "processed_on",
+   "fieldtype": "Datetime",
+   "label": "Processed On",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "created_referrals",
+   "fieldtype": "Int",
+   "label": "Created Referrals",
+   "read_only": 1
+  },
+  {
+   "fieldname": "defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Referral Defaults"
+  },
+  {
+   "fieldname": "default_routing_purpose",
+   "fieldtype": "Link",
+   "label": "Default Routing Purpose",
+   "options": "Murasalat Routing Purpose"
+  },
+  {
+   "fieldname": "default_priority_level",
+   "fieldtype": "Link",
+   "label": "Default Priority",
+   "options": "Murasalat Priority Level"
+  },
+  {
+   "fieldname": "default_due_date",
+   "fieldtype": "Date",
+   "label": "Default Due Date"
+  },
+  {
+   "fieldname": "recipients_section",
+   "fieldtype": "Section Break",
+   "label": "Referral Recipients"
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "label": "Recipients",
+   "options": "Murasalat Referral Batch Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Murasalat Referral Batch",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [
+  {
+   "group": "Transactions",
+   "link_doctype": "Murasalat Referral",
+   "link_fieldname": "referral_batch"
+  }
+ ],
+ "module": "Murasalat Office",
+ "name": "Murasalat Referral Batch",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Murasalat User",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Murasalat Clerk",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "cancel": 1,
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Murasalat Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Murasalat System Manager",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "correspondence,from_user,from_department",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "correspondence",
+ "track_changes": 1
+}

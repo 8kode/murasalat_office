@@ -17,3 +17,30 @@ fixtures = [
         "filters": [["name", "like", "Murasalat Office%"]]
     }
 ]
+
+
+doc_events = {
+	"Murasalat Referral": {
+		"on_update": (
+			"murasalat_office.utils.routing."
+			"sync_correspondence_summary"
+		),
+		"on_submit": (
+			"murasalat_office.utils.routing."
+			"sync_correspondence_summary"
+		),
+		"on_update_after_submit": (
+			"murasalat_office.utils.routing."
+			"sync_correspondence_summary"
+		),
+		"on_cancel": (
+			"murasalat_office.utils.routing."
+			"sync_correspondence_summary"
+		),
+		"after_delete": (
+			"murasalat_office.utils.routing."
+			"sync_correspondence_summary"
+		),
+	},
+}
+

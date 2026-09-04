@@ -6,6 +6,7 @@
   "field_order": [
     "reference_section",
     "correspondence",
+    "referral_batch",
     "parent_referral",
     "root_referral",
     "referral_batch",
@@ -64,6 +65,14 @@
       "label": "Correspondence",
       "options": "Murasalat Correspondence",
       "reqd": 1
+    },
+    {
+      "fieldname": "referral_batch",
+      "fieldtype": "Link",
+      "label": "Referral Batch",
+      "no_copy": 1,
+      "options": "Murasalat Referral Batch",
+      "read_only": 1
     },
     {
       "fieldname": "parent_referral",
