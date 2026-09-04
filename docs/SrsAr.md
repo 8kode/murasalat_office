@@ -1,2171 +1,2298 @@
-# وثيقة مواصفات متطلبات النظام
+# وثيقة المتطلبات الشاملة SRS
 
-# Software Requirements Specification — SRS
+## نظام إدارة المعاملات والمراسلات الإدارية على Frappe 16 وERPNext 16
 
-## GESW Office
+**اسم التطبيق المقترح:** `aamali_correspondence`  
+**اسم الوحدة داخل النظام:** `Aamali Correspondence`  
+**الاسم العربي:** نظام المعاملات والمراسلات الإدارية  
+**إصدار الوثيقة:** 1.0  
+**حالة الوثيقة:** خط أساس تنفيذي Baseline  
+**المنصة المستهدفة:** Frappe Framework v16 + ERPNext v16
 
-### نظام إدارة المراسلات والمعاملات الإدارية
-
----
-
-|البيان|القيمة|
-|---|---|
-|اسم النظام|GESW Office|
-|نوع النظام|Custom Frappe Application|
-|المنصة الأساسية|Frappe Framework 16|
-|التوافق الاختياري|ERPNext 16|
-|إصدار الوثيقة|1.1|
-|حالة الوثيقة|Implementation Baseline|
-|اللغة الأساسية|العربية|
-|اتجاه الواجهة|RTL|
-|تاريخ الوثيقة|2026|
-|مالك النظام|__________________|
-|الجهة المنفذة|__________________|
-|مدير المشروع|__________________|
-|تاريخ الاعتماد|__________________|
+> أظهرت صفحات الإصدارات وقت إعداد هذه الوثيقة إصدار Frappe v16.33.0 وإصدار ERPNext v16.34.1، لكن يجب تثبيت زوج إصدارات متوافق واختباره في بيئة تجريبية قبل الإنتاج، بدل تحديث كل منتج مستقلًا بصورة تلقائية.  
+> [Frappe Releases](https://github.com/frappe/frappe/releases) — [ERPNext Releases](https://github.com/frappe/erpnext/releases)
 
 ---
 
-# سجل الإصدارات
+# 1. الغرض من النظام
 
-|الإصدار|التاريخ|الوصف|أعدها|اعتمدها|
-|---|---|---|---|---|
-|1.0|2026|النسخة الأولية للرؤية والنطاق|—|—|
-|1.1|2026|إعادة تنظيم المتطلبات، حسم نموذج البيانات، إضافة الصلاحيات ومعايير القبول والمتطلبات غير الوظيفية|—|—|
+إنشاء تطبيق مخصص يعمل فوق Frappe وERPNext لإدارة:
 
----
-
-# 1. الغرض من الوثيقة
-
-تحدد هذه الوثيقة المتطلبات الوظيفية والتقنية وغير الوظيفية لنظام **GESW Office**، وتعتبر المرجع الأساسي لفريق:
-
-- تحليل الأعمال.
-- التصميم.
-- البرمجة.
-- الاختبار.
-- النشر.
-- القبول النهائي.
-- الصيانة المستقبلية.
-
-لا يجوز إضافة وظيفة جديدة أو تغيير سلوك أساسي في النظام إلا بعد:
-
-1. توثيق المتطلب.
-2. تحديد المرحلة التي ينتمي إليها.
-3. تقييم أثره على نموذج البيانات.
-4. تقييم أثره على الصلاحيات.
-5. تحديث معايير القبول.
-6. اعتماد التغيير من مالك النظام.
-
----
-
-# 2. الرؤية
-
-يهدف GESW Office إلى توفير نظام مؤسسي لإدارة دورة حياة المراسلات والمعاملات الإدارية منذ استلامها أو إنشائها وحتى إغلاقها وأرشفتها.
-
-لا يهدف النظام إلى استبدال ERPNext أو بناء نظام موارد مؤسسية جديد، وإنما يقدم طبقة متخصصة لإدارة:
-
-- الوارد.
-- الصادر.
 - المعاملات الداخلية.
-- الجهات.
-- الوثائق والمرفقات.
-- الإحالات.
-- المسؤوليات.
-- الإجراءات والمهام.
-- المواعيد النهائية.
-- المتابعة.
-- العلاقات بين المعاملات.
+- المعاملات الواردة الخارجية.
+- المعاملات الصادرة الخارجية.
+- الخطابات الإلكترونية.
+- المسودات.
+- الإحالات الفردية والمتعددة.
+- الاستلام والرفض والإعادة والسحب.
+- التوجيهات والتأشيرات.
+- الموافقات والتوقيعات.
+- الردود.
+- الوثائق والمرفقات العادية والسرية.
+- المسح الضوئي.
+- الباركود وQR.
+- المعاملات الورقية.
+- بيانات التسليم.
+- التتبع الكامل.
+- البحث المتقدم.
+- المجلدات الشخصية.
+- التفويضات.
+- الإحصائيات والتقارير.
+- المهام واللجان والاجتماعات.
+
+النظام الجديد سيحاكي **المنطق الوظيفي** المستخلص من صور نظام أعمالي، لكنه سيُبنى بطريقة أصلية ومتوافقة مع بنية Frappe، ولن يكون نسخًا برمجيًا أو تقنيًا للنظام الأصلي.
+
+---
+
+# 2. أهداف المشروع
+
+1. رقمنة دورة المعاملة من الإنشاء حتى الإغلاق والأرشفة.
+2. توحيد الوارد والصادر والداخلي ضمن سجل مركزي.
+3. تقليل تداول الملفات الورقية.
+4. معرفة الجهة الحائزة للمعاملة في أي وقت.
+5. تسجيل جميع الإحالات والإجراءات في سجل غير قابل للتلاعب العادي.
+6. دعم السرية على مستوى المعاملة والمستند والإحالة.
+7. مراقبة مواعيد الاستحقاق والتأخير.
+8. دعم التقويم الميلادي والهجري في الواجهة.
+9. ربط المعاملات ببعضها.
+10. استخراج مؤشرات إنتاجية الموظفين والإدارات.
+11. التكامل مع بيانات الموظفين والإدارات في ERPNext.
+12. توفير REST API للتكاملات المصرح بها.
+13. توفير واجهة عربية RTL متجاوبة.
+14. دعم تعدد الشركات أو الجهات عند الحاجة.
+
+---
+
+# 3. حدود النظام
+
+## 3.1 داخل النطاق
+
+- التسجيل الداخلي والوارد والصادر.
+- معالج تسجيل من ثلاث خطوات:
+    1. البيانات.
+    2. المرفقات.
+    3. الإحالة.
+- صندوق المعاملات.
 - البحث.
+- التتبع.
+- المجلدات.
+- التفويضات.
 - التقارير.
-- الطباعة.
-- سجل النشاط.
-- الصلاحيات.
-- الأرشفة المستقبلية.
+- بيانات التسليم.
+- الإحصائيات.
+- إدارة المهام.
+- اللجان والاجتماعات.
+- الإشعارات.
+- الباركود وQR.
+- صلاحيات حسب المستخدم والإدارة والسرية.
+- API للتكامل.
+- الأرشفة وسياسة الاحتفاظ.
+- التدقيق Audit.
+
+## 3.2 خارج النطاق الأساسي
+
+لا تُعد العناصر التالية جزءًا إلزاميًا من الإصدار الأول، لكنها قابلة للإضافة:
+
+- توقيع رقمي وطني موثّق قانونيًا ما لم يتوفر مزود معتمد.
+- الربط مع مراسلات حكومية خارجية قبل توفر API رسمي.
+- التعرف الضوئي OCR المتقدم.
+- تطبيق جوال Native مستقل.
+- إرسال ورقي فعلي عبر شركة شحن.
+- ذكاء اصطناعي لتصنيف الخطابات.
+- تحويل البريد الإلكتروني الوارد إلى معاملة تلقائيًا.
+- تكامل Active Directory أو Entra ID ما لم تتوفر بياناته.
 
 ---
 
-# 3. المبدأ الرئيسي
+# 4. الأساس التقني على Frappe
 
-المعاملة هي الكيان المركزي في النظام، وليست الوثيقة المرفقة.
+سيستفيد التطبيق من مكونات Frappe التالية:
 
-```text
-Correspondence
-├── Identity
-├── Classification
-├── Parties
-├── Departments
-├── Attachments
-├── Routing
-├── Assignment
-├── Actions
-├── Deadlines
-├── Workflow
-├── Comments
-├── Timeline
-├── Relations
-└── Reports
-```
+- DocTypes والنماذج والقوائم.
+- Role Permissions.
+- User Permissions.
+- Workflow.
+- Notifications.
+- Assignments وToDo عند الحاجة.
+- File وPrivate File.
+- Print Formats.
+- Query Reports وScript Reports.
+- Background Jobs.
+- REST API.
+- Realtime Events.
+- Version Tracking.
+- Workspace.
+- Translation وRTL.
 
-تمثل المعاملة سجل الأعمال الكامل، بينما تمثل الوثيقة ملفًا أو مستندًا مرتبطًا بها.
-
-مثال:
-
-```text
-المعاملة:
-IN-2026-00125
-
-الموضوع:
-طلب اعتماد مشروع
-
-المرفقات:
-request.pdf
-technical-attachment.pdf
-supporting-image.jpg
-```
+يوفّر Frappe واجهات REST تلقائية للـDocTypes، ويدعم المصادقة بالرمز أو الجلسة، كما يدعم الأحداث الفورية عبر [Socket.IO](http://socket.io/). لكنه لا يحقق تلقائيًا كل قواعد السرية المطلوبة؛ لذلك يجب إضافة منطق صلاحيات مخصص للمعاملات والمرفقات السرية.  
+[REST API](https://docs.frappe.io/framework/user/en/api/rest) — [Realtime API](https://docs.frappe.io/framework/user/en/api/realtime) — [Users and Permissions](https://docs.frappe.io/framework/user/en/basics/users-and-permissions)
 
 ---
 
-# 4. نطاق النظام
-
-## 4.1 الوظائف الداخلة في النطاق الأساسي
-
-يشمل الإصدار الأساسي:
-
-1. تسجيل المعاملات الواردة.
-2. تسجيل المعاملات الصادرة.
-3. تسجيل المعاملات الداخلية.
-4. إنشاء رقم مرجعي رسمي تلقائي.
-5. إدارة الجهات الخارجية.
-6. إدارة الهيكل التنظيمي الداخلي.
-7. تصنيف المعاملات.
-8. تحديد الأولوية والسرية.
-9. إرفاق الملفات.
-10. إحالة المعاملة إلى إدارة أو مستخدم.
-11. الاحتفاظ بسجل الإحالات.
-12. تحديد المسؤول الحالي.
-13. تحديد الموعد النهائي.
-14. إدارة الحالة ودورة العمل.
-15. عرض صندوق المعاملات الشخصي.
-16. البحث والتصفية.
-17. ربط المعاملات ببعضها.
-18. التعليقات وسجل التغييرات.
-19. الطباعة.
-20. التقارير الأساسية.
-21. صلاحيات المستخدمين والإدارات.
-22. منع الحذف غير المصرح به.
-
-## 4.2 الوظائف خارج الإصدار الأساسي
-
-لا يشمل الإصدار الأساسي:
-
-- OCR.
-- البحث داخل محتوى الملفات.
-- البريد الإلكتروني الوارد التلقائي.
-- التوقيع الرقمي المعتمد.
-- تطبيق هاتف مستقل.
-- الربط مع الأنظمة الحكومية.
-- محرك بحث خارجي.
-- ذكاء اصطناعي.
-- التخزين الخارجي المخصص.
-- نظام حفظ وإتلاف آلي للسجلات.
-- نظام إدارة نسخ متقدم للملفات.
-
-يجب ألا يمنع التصميم إضافة هذه الوظائف مستقبلًا.
-
----
-
-# 5. القرارات المعمارية الملزمة
-
-## 5.1 كيان موحد للمعاملات
-
-يجب تنفيذ الوارد والصادر والداخلي داخل DocType رئيسي واحد باسم:
-
-```text
-GESW Correspondence
-```
-
-ويحدد نوع المعاملة بواسطة الحقل:
-
-```text
-correspondence_type
-```
-
-وتكون القيم:
-
-- Incoming.
-- Outgoing.
-- Internal.
-
-لا يجوز إنشاء ثلاثة تطبيقات أو ثلاثة نماذج مستقلة تحتوي على نسخ مكررة من الوظائف المشتركة.
-
-## 5.2 الرقم الرسمي منفصل عن المفتاح الداخلي
-
-يجب أن يكون لكل معاملة:
-
-1. معرف داخلي فريد يستخدمه النظام.
-2. رقم مرجعي رسمي يظهر للمستخدمين والمطبوعات.
-
-الحقل الرسمي:
-
-```text
-reference_number
-```
-
-لا يصدر الرقم الرسمي أثناء حالة Draft، بل عند تسجيل المعاملة أو إرسالها رسميًا، حسب نوعها.
-
-## 5.3 منصة التشغيل
-
-- يعتمد التطبيق على Frappe Framework 16.
-- يجب ألا يعدل التطبيق ملفات Frappe أو ERPNext الأساسية.
-- يجب أن يكون التطبيق قابلًا للتثبيت فوق Frappe بصورة مستقلة.
-- يجب أن يكون متوافقًا مع ERPNext 16 عند تثبيته في الموقع نفسه.
-- لا يجوز إنشاء نظام Authentication مستقل.
-- تستخدم آليات Frappe القياسية للمستخدمين والأدوار والجلسات والمرفقات والطباعة والتعليقات قدر الإمكان.
-
-يدعم Frappe المستخدمين والأدوار وصلاحيات DocType وUser Permissions وPermission Levels، كما يدعم Naming Series والمهام والإشعارات والمرفقات المرتبطة بصلاحيات المستند.  
-المراجع: [Users and Permissions](https://docs.frappe.io/framework/user/en/basics/users-and-permissions)، [Naming](https://docs.frappe.io/framework/user/en/basics/doctypes/naming)، [Assignments and ToDos](https://docs.frappe.io/framework/assignments-and-todos)، [Attachments](https://docs.frappe.io/framework/user/en/desk/attachments).
-
----
-
-# 6. المصطلحات
+# 5. المصطلحات
 
 |المصطلح|التعريف|
 |---|---|
-|Correspondence|المعاملة الإدارية الأساسية|
-|Incoming|معاملة واردة من جهة خارجية|
-|Outgoing|معاملة صادرة إلى جهة خارجية|
-|Internal|معاملة داخلية بين الإدارات أو الموظفين|
-|Party|جهة خارجية أو فرد مرتبط بالمعاملة|
-|Department|إدارة أو وحدة تنظيمية داخل المؤسسة|
-|Routing|إحالة المعاملة من مستخدم أو إدارة إلى أخرى|
-|Assignment|تحديد المستخدم أو الإدارة المسؤولة حاليًا|
-|Action|إجراء عمل مطلوب أو منفذ على المعاملة|
-|ToDo|مهمة تشغيلية تظهر للمستخدم|
-|Workflow State|الحالة الرسمية للمعاملة في دورة العمل|
-|Timeline|العرض الزمني للتغييرات والتعليقات والإحالات|
-|Confidentiality|مستوى سرية المعاملة|
-|Current Owner|المستخدم المسؤول حاليًا عن المعاملة|
-|Current Department|الإدارة التي توجد المعاملة ضمن مسؤوليتها حاليًا|
-|Official Number|الرقم المرجعي الرسمي للمعاملة|
+|المعاملة|السجل الإداري الرئيسي الذي يجمع البيانات والوثائق والإحالات|
+|معاملة داخلية|مراسلة بين إدارات أو مستخدمي الجهة|
+|واردة خارجية|خطاب وصل من جهة خارجية|
+|صادرة خارجية|خطاب صادر من الجهة إلى طرف خارجي|
+|الخطاب الرئيسي|المستند الأساسي للمعاملة|
+|الرد|خطاب أُنشئ ردًا على معاملة سابقة|
+|الإحالة|توجيه المعاملة من مستخدم أو إدارة إلى مستلم آخر|
+|الأصل|الإحالة الأساسية التي تمنح مسؤولية الإجراء|
+|صورة|نسخة للاطلاع لا تنقل ملكية الإجراء الأساسية|
+|للمتابعة|إحالة لمراقبة التنفيذ|
+|خاص|إحالة مقيدة بالمستلم المحدد|
+|مراسلة ورقية|وجود نسخة أو أصل ورقي يحتاج إلى متابعة|
+|التأشيرة|توجيه أو تعليمات إدارية مرتبطة بالإحالة|
+|الاستحقاق|التاريخ المطلوب لإكمال الإجراء|
+|الاستلام|إقرار المستلم باستلام الإحالة|
+|السحب|استرجاع إحالة مرسلة وفق شروط محددة|
+|إعادة التشغيل|إعادة فتح معاملة مغلقة|
+|التسديد|إنهاء الإجراء على الإحالة مع توثيق النتيجة|
+|الإغلاق|إنهاء دورة المعاملة|
+|الجهة الحائزة|الإدارة أو المستخدم المسؤول حاليًا عن المعاملة|
 
 ---
 
-# 7. أصحاب المصلحة
+# 6. الأدوار Roles
 
-|الجهة|المسؤولية|
+## 6.1 أدوار النظام
+
+|Role|الوظيفة|
 |---|---|
-|مالك النظام|اعتماد النطاق والسياسات|
-|الإدارة العليا|مراجعة التقارير والمؤشرات|
-|إدارة المراسلات|تسجيل الوارد والصادر|
-|مديرو الإدارات|الإحالة والمتابعة والإغلاق|
-|موظفو الإدارات|معالجة المعاملات والمهام|
-|التدقيق|مراجعة السجلات دون تعديل|
-|تقنية المعلومات|التشغيل والنسخ الاحتياطي والأمان|
-|فريق التطوير|التنفيذ والاختبارات الفنية|
-|فريق ضمان الجودة|اختبار معايير القبول|
+|`ACM User`|مستخدم معاملات عادي|
+|`ACM Correspondence Clerk`|موظف اتصالات إدارية|
+|`ACM Incoming Clerk`|تسجيل الوارد|
+|`ACM Outgoing Clerk`|تسجيل الصادر|
+|`ACM Scanner Operator`|المسح والرفع|
+|`ACM Department Coordinator`|منسق معاملات الإدارة|
+|`ACM Department Manager`|مدير الإدارة|
+|`ACM Approver`|اعتماد الخطابات|
+|`ACM Signatory`|توقيع الخطابات|
+|`ACM Follow Up Officer`|متابعة المعاملات|
+|`ACM Delivery Officer`|إدارة التسليم|
+|`ACM Confidential User`|الاطلاع على السرية المصرح بها|
+|`ACM Records Manager`|الأرشفة والاحتفاظ|
+|`ACM Reports User`|التقارير المسموح بها|
+|`ACM Auditor`|قراءة السجلات والتدقيق دون تعديل|
+|`ACM Administrator`|إدارة إعدادات التطبيق|
+|`System Manager`|إدارة منصة Frappe|
+
+## 6.2 قاعدة الفصل بين المهام
+
+يجب دعم الفصل بين:
+
+- منشئ الخطاب.
+- مراجع الخطاب.
+- المعتمد.
+- الموقّع.
+- موظف الصادر.
+- مسؤول التسليم.
+- مسؤول الإغلاق.
+
+ويجب منع المستخدم من اعتماد خطابه بنفسه إذا فُعّل خيار الفصل بين المهام.
 
 ---
 
-# 8. الأدوار
+# 7. استخدام DocTypes القياسية
 
-## 8.1 System Manager
+يجب إعادة استخدام DocTypes القياسية بدل تكرارها:
 
-- إدارة الإعدادات التقنية.
-- إدارة المستخدمين والأدوار.
-- الوصول الإداري وفق سياسات المؤسسة.
-- لا يستخدم كدور تشغيلي يومي.
-
-## 8.2 GESW Administrator
-
-- إدارة إعدادات التطبيق.
-- إدارة أنواع المعاملات والأولويات والسرية.
-- إدارة الجهات والإدارات.
-- الاطلاع على التقارير العامة.
-- تنفيذ العمليات الاستثنائية المصرح بها.
-
-## 8.3 Correspondence Clerk
-
-- إنشاء وتسجيل الوارد.
-- إنشاء وتسجيل الصادر.
-- إدخال بيانات الجهات.
-- إرفاق الوثائق.
-- الطباعة.
-- تصحيح المسودة قبل التسجيل.
-- لا يحذف المعاملات المسجلة.
-
-## 8.4 Department User
-
-- عرض المعاملات التي تدخل ضمن نطاقه.
-- قبول المعاملات المحالة إليه.
-- تسجيل الإجراءات والتعليقات.
-- إكمال المهام المسندة إليه.
-- إحالة المعاملة إذا سمحت السياسة.
-
-## 8.5 Department Manager
-
-- عرض معاملات الإدارة.
-- إحالة المعاملات.
-- إعادة الإسناد.
-- مراجعة المعاملات.
-- إكمال وإغلاق المعاملات.
-- إعادة فتح المعاملة وفق الصلاحية.
-
-## 8.6 Executive Manager
-
-- الاطلاع على المعاملات التابعة للنطاق التنظيمي.
-- إصدار التوجيهات.
-- الموافقة أو الرفض.
-- الاطلاع على التقارير التنفيذية.
-
-## 8.7 Auditor
-
-- قراءة المعاملات المصرح بها.
-- قراءة سجل التغييرات والإحالات.
-- تشغيل التقارير.
-- عدم إنشاء أو تعديل أو حذف البيانات.
+|DocType قياسي|الاستخدام|
+|---|---|
+|`User`|حساب المستخدم|
+|`Role`|الأدوار|
+|`Company`|الجهة القانونية|
+|`Department`|الإدارات والوحدات التنظيمية|
+|`Employee`|بيانات الموظف|
+|`Contact`|جهات الاتصال|
+|`Address`|عناوين الجهات|
+|`File`|تخزين الملفات|
+|`Communication`|البريد أو التواصل المرتبط|
+|`ToDo`|الإسنادات الاختيارية|
+|`Comment`|التعليقات غير الرسمية|
+|`Version`|تتبع التعديلات|
+|`Notification`|إشعارات النظام|
+|`Email Account`|البريد الصادر والوارد|
+|`Print Format`|الخطابات والباركود والتقارير|
 
 ---
 
-# 9. البيانات الأساسية
+# 8. الحقول المخصصة على DocTypes القياسية
 
-## 9.1 الجهات الخارجية
+## 8.1 حقول `Department`
 
-يجب إنشاء DocType باسم:
+|Fieldname|التسمية|النوع|إلزامي|
+|---|---|---|---|
+|`acm_unit_code`|رمز وحدة المراسلات|Data|نعم عند التفعيل|
+|`acm_unit_type`|نوع الوحدة|Select|لا|
+|`acm_accepts_incoming`|تستقبل وارد|Check|لا|
+|`acm_issues_outgoing`|تصدر معاملات|Check|لا|
+|`acm_allow_internal`|تسمح بمعاملات داخلية|Check|لا|
+|`acm_manager_user`|مدير الإدارة|Link/User|لا|
+|`acm_coordinator_user`|منسق المعاملات|Link/User|لا|
+|`acm_correspondence_email`|بريد المراسلات|Data|لا|
+|`acm_default_sla_policy`|سياسة الاستحقاق|Link/ACM SLA Policy|لا|
+|`acm_is_correspondence_office`|مكتب اتصالات إدارية|Check|لا|
+|`acm_active`|مفعلة في المعاملات|Check|نعم|
 
-```text
-GESW Party
-```
+## 8.2 حقول `Employee`
 
-الحقول الأساسية:
-
-|الحقل|النوع|إلزامي|
+|Fieldname|التسمية|النوع|
 |---|---|---|
-|Party Name Arabic|Data|نعم|
-|Party Name English|Data|لا|
-|Party Type|Link/Select|نعم|
-|Short Name|Data|لا|
-|External Code|Data|لا|
-|Phone|Data|لا|
-|Email|Data|لا|
-|Address|Small Text|لا|
-|Contact Person|Data|لا|
-|Notes|Text|لا|
-|Active|Check|نعم|
+|`acm_can_receive_directly`|يمكن الإحالة إليه مباشرة|Check|
+|`acm_job_correspondence_code`|رمز الموظف بالمراسلات|Data|
+|`acm_max_confidentiality`|أعلى سرية مسموحة|Link/ACM Confidentiality Level|
+|`acm_default_delegation_user`|المفوض إليه الافتراضي|Link/User|
+|`acm_signature_profile`|ملف التوقيع|Link/ACM Signature Profile|
 
-أنواع الجهات الافتراضية:
+---
 
-- Government Entity.
-- Ministry.
-- Public Institution.
-- Private Company.
-- Non-Profit Organization.
-- International Organization.
-- Individual.
-- Other.
+# 9. كتالوج الـDocTypes المخصصة
 
-يجب أن تكون الأنواع قابلة للإدارة، وليست Hard-coded في الواجهة.
+## 9.1 ملخص الـDocTypes
 
-## 9.2 الإدارات
+### إعدادات وبيانات مرجعية
 
-يجب إنشاء DocType هرمي باسم:
+1. ACM Settings
+2. ACM External Party
+3. ACM Correspondence Type
+4. ACM Confidentiality Level
+5. ACM Priority Level
+6. ACM Routing Purpose
+7. ACM Subject Classification
+8. ACM Document Category
+9. ACM Correspondence Reason
+10. ACM Delivery Method
+11. ACM SLA Policy
+12. ACM Numbering Rule
+13. ACM Retention Policy
+14. ACM Signature Profile
 
-```text
-GESW Department
-```
+### المعاملات
 
-الحقول:
+15. ACM Correspondence
+16. ACM Correspondence Link
+17. ACM Concerned Person
+18. ACM Correspondence Document
+19. ACM Referral
+20. ACM Referral Recipient
+21. ACM Correspondence Action
+22. ACM Approval Step
+23. ACM Approval Action
 
-- Department Name Arabic.
-- Department Name English.
-- Department Code.
-- Parent Department.
-- Manager.
-- Active.
-- Notes.
+### التنظيم والمتابعة
 
-يجب دعم:
+24. ACM Delegation
+25. ACM Personal Folder
+26. ACM Folder Item
+27. ACM Follow Up Entry
 
-- الإدارة الرئيسية.
-- الإدارات التابعة.
-- الأقسام.
-- الوحدات الفرعية.
-- انتقال المدير دون فقد السجلات التاريخية.
+### التسليم
 
-## 9.3 عضوية المستخدم في الإدارة
+28. ACM Dispatch
+29. ACM Dispatch Item
+30. ACM Delivery Event
 
-يجب دعم ربط المستخدم بـ:
+### المهام
 
-- إدارة أساسية.
-- إدارات إضافية عند الحاجة.
-- منصب أو صفة وظيفية.
-- تاريخ بداية ونهاية العضوية.
-- حالة Active.
+31. ACM Work Task
+32. ACM Task Assignee
+33. ACM Task Update
 
-لا يجوز الاعتماد فقط على قيمة نصية داخل User.
+### اللجان والاجتماعات
 
-## 9.4 تصنيفات المعاملات
+34. ACM Committee
+35. ACM Committee Member
+36. ACM Meeting
+37. ACM Meeting Attendee
+38. ACM Agenda Item
+39. ACM Meeting Decision
 
-يجب إنشاء بيانات قابلة للإدارة لأنواع المحتوى، مثل:
+---
 
-- خطاب.
-- طلب.
-- مذكرة.
-- تعميم.
-- قرار.
-- إشعار.
-- دعوة.
-- تقرير.
-- شكوى.
-- رد.
+# 10. تعريف الـDocTypes والحقول
+
+## 10.1 `ACM Settings`
+
+**النوع:** Single  
+**الغرض:** الإعدادات العامة.
+
+|Fieldname|التسمية|النوع|الافتراضي|
+|---|---|---|---|
+|`default_company`|الشركة الافتراضية|Link/Company|—|
+|`default_confidentiality`|السرية الافتراضية|Link|عادي|
+|`default_priority`|الأهمية الافتراضية|Link|عادي|
+|`default_internal_type`|نوع المعاملة الداخلية|Link|خطاب|
+|`default_incoming_type`|نوع الوارد|Link|خطاب|
+|`default_outgoing_type`|نوع الصادر|Link|خطاب|
+|`display_hijri_dates`|عرض التاريخ الهجري|Check|1|
+|`hijri_adjustment`|تصحيح التاريخ الهجري|Int|0|
+|`require_due_date_on_referral`|إلزام استحقاق الإحالة|Check|1|
+|`require_main_document`|إلزام الخطاب الرئيسي|Check|1|
+|`allow_multiple_referrals`|السماح بإحالة متعددة|Check|1|
+|`allow_direct_employee_referral`|الإحالة المباشرة للموظف|Check|1|
+|`allow_withdraw_after_receipt`|السماح بالسحب بعد الاستلام|Check|0|
+|`require_rejection_reason`|إلزام سبب الرفض|Check|1|
+|`require_close_reason`|إلزام سبب الإغلاق|Check|1|
+|`allow_self_approval`|السماح بالاعتماد الذاتي|Check|0|
+|`barcode_type`|نوع الباركود|Select|QR Code|
+|`barcode_prefix`|بادئة الباركود|Data|ACM|
+|`max_file_size_mb`|أقصى حجم للملف|Int|25|
+|`allowed_file_extensions`|الامتدادات المسموحة|Small Text|pdf,docx,xlsx,png,jpg|
+|`enable_ocr`|تفعيل OCR|Check|0|
+|`enable_email_gateway`|تفعيل البريد|Check|0|
+|`enable_sms`|تفعيل الرسائل|Check|0|
+|`enable_digital_signature`|تفعيل التوقيع الرقمي|Check|0|
+|`enable_paper_tracking`|تتبع النسخ الورقية|Check|1|
+|`warning_before_due_days`|تنبيه قبل الاستحقاق|Int|2|
+|`auto_close_days`|الإغلاق التلقائي بعد الإنجاز|Int|0|
+|`retention_policy`|سياسة الاحتفاظ الافتراضية|Link|—|
+|`audit_log_retention_days`|مدة الاحتفاظ بسجل التدقيق|Int|3650|
+
+---
+
+## 10.2 `ACM External Party`
+
+**الغرض:** الجهات الخارجية الوارد منها أو الصادر إليها.
+
+|Fieldname|التسمية|النوع|إلزامي|
+|---|---|---|---|
+|`party_name`|اسم الجهة|Data|نعم|
+|`party_name_en`|الاسم الإنجليزي|Data|لا|
+|`party_code`|رمز الجهة|Data/Unique|نعم|
+|`party_type`|نوع الجهة|Select|نعم|
+|`parent_party`|الجهة الأعلى|Link/Self|لا|
+|`is_group`|مجموعة|Check|لا|
+|`government_id`|الرقم الرسمي|Data|لا|
+|`country`|الدولة|Link/Country|لا|
+|`city`|المدينة|Data|لا|
+|`address`|العنوان|Link/Address|لا|
+|`primary_contact`|جهة الاتصال|Link/Contact|لا|
+|`email`|البريد|Data|لا|
+|`phone`|الهاتف|Data|لا|
+|`preferred_delivery_method`|وسيلة التسليم|Link|لا|
+|`is_active`|نشطة|Check|نعم|
+|`notes`|ملاحظات|Small Text|لا|
+
+قيم `party_type`:
+
+- وزارة.
+- جهة حكومية.
+- مؤسسة عامة.
+- شركة.
+- بنك.
+- جامعة.
+- مدرسة.
+- فرد.
+- جهة دولية.
 - أخرى.
 
-## 9.5 الأولويات
+---
 
-القيم الأساسية:
+## 10.3 `ACM Correspondence Type`
 
-- Normal.
-- High.
-- Urgent.
-- Critical.
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`type_name`|اسم النوع|Data|
+|`type_code`|الرمز|Data/Unique|
+|`allowed_direction`|الاتجاه المسموح|Select|
+|`requires_letter_number`|يتطلب رقم خطاب|Check|
+|`requires_letter_date`|يتطلب تاريخ خطاب|Check|
+|`requires_main_document`|يتطلب خطابًا رئيسيًا|Check|
+|`default_confidentiality`|السرية الافتراضية|Link|
+|`default_priority`|الأهمية الافتراضية|Link|
+|`default_sla_policy`|سياسة الاستحقاق|Link|
+|`is_active`|نشط|Check|
 
-يجوز تعطيل Critical في الواجهة خلال المرحلة الأولى، مع بقاء النموذج قابلًا لدعمها.
+قيم الاتجاه:
 
-## 9.6 مستويات السرية
+- جميع الاتجاهات.
+- داخلي.
+- وارد خارجي.
+- صادر خارجي.
 
-القيم الأساسية:
+أمثلة الأنواع:
 
-- Public.
-- Internal.
-- Confidential.
-- Restricted.
-
-يجب حفظ القيم الداخلية باللغة الإنجليزية وعرض ترجمتها العربية للمستخدم.
+- خطاب.
+- تعميم.
+- قرار.
+- مذكرة.
+- طلب.
+- شكوى.
+- دعوة.
+- محضر.
+- تقرير.
+- بريد إلكتروني.
 
 ---
 
-# 10. نموذج بيانات المعاملة
+## 10.4 `ACM Confidentiality Level`
 
-## 10.1 DocType الرئيسي
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`level_name`|اسم الدرجة|Data|
+|`level_code`|الرمز|Data/Unique|
+|`rank`|الترتيب الأمني|Int|
+|`color`|اللون|Color|
+|`requires_explicit_access`|يتطلب تصريحًا مباشرًا|Check|
+|`hide_subject`|إخفاء الموضوع عن غير المخول|Check|
+|`prevent_download`|منع التنزيل|Check|
+|`prevent_print`|منع الطباعة|Check|
+|`watermark_required`|إلزام العلامة المائية|Check|
+|`allow_delegation`|السماح بالتفويض|Check|
+|`is_active`|نشط|Check|
 
-```text
-GESW Correspondence
-```
+قيم أولية:
 
-## 10.2 الحقول العامة
-
-| الحقل                     | النوع         | الوصف                |
-| ------------------------- | ------------- | -------------------- |
-| Internal ID               | UUID/Name     | المعرف الداخلي       |
-| Reference Number          | Data/Unique   | الرقم الرسمي         |
-| Correspondence Type       | Select        | وارد/صادر/داخلي      |
-| Subject                   | Data          | موضوع المعاملة       |
-| Category                  | Link          | تصنيف المعاملة       |
-| Description               | Text Editor   | وصف المعاملة         |
-| Priority                  | Select/Link   | الأولوية             |
-| Confidentiality           | Select/Link   | السرية               |
-| Workflow State            | Link/Data     | الحالة الرسمية       |
-| Transaction Date          | Date          | تاريخ المعاملة       |
-| Registration Date         | Datetime      | تاريخ التسجيل الرسمي |
-| Original Document Date    | Date          | تاريخ الخطاب الأصلي  |
-| External Reference Number | Data          | رقم خطاب الجهة       |
-| Due Date                  | Date/Datetime | الموعد النهائي       |
-| Current Department        | Link          | الإدارة الحالية      |
-| Current Owner             | Link/User     | المسؤول الحالي       |
-| Source Party              | Link          | الجهة المرسلة        |
-| Target Party              | Link          | الجهة المستلمة       |
-| Source Department         | Link          | الإدارة المرسلة      |
-| Target Department         | Link          | الإدارة المستلمة     |
-| Received By               | Link/User     | المستلم              |
-| Sent By                   | Link/User     | المرسل               |
-| Approved By               | Link/User     | المعتمد              |
-| Completed By              | Link/User     | منفذ الإكمال         |
-| Completed On              | Datetime      | وقت الإكمال          |
-| Closed By                 | Link/User     | منفذ الإغلاق         |
-| Closed On                 | Datetime      | وقت الإغلاق          |
-| Cancel Reason             | Small Text    | سبب الإلغاء          |
-| Reopen Reason             | Small Text    | سبب إعادة الفتح      |
-| Dispatch Method           | Link/Select   | طريقة الإرسال        |
-| Is Overdue                | محاسَب        | متأخرة أم لا         |
-
-## 10.3 الحقول الشرطية للوارد
-
-عندما يكون النوع Incoming يجب عرض:
-
-- Source Party.
-- External Reference Number.
-- Original Document Date.
-- Received By.
-- Receiving Department.
-- Registration Date.
-
-ويجب أن يكون إلزاميًا عند التسجيل:
-
-- Subject.
-- Source Party.
-- Transaction Date أو Received Date.
-- Category.
-- Confidentiality.
-- Receiving Department.
-
-## 10.4 الحقول الشرطية للصادر
-
-عندما يكون النوع Outgoing يجب عرض:
-
-- Target Party.
-- Target Contact Person.
-- Issuing Department.
-- Responsible User.
-- Dispatch Method.
-- External Reference Number عند الحاجة.
-- Approval Information.
-- Sent Date.
-
-ويجب أن يكون إلزاميًا قبل الإرسال:
-
-- Subject.
-- Target Party.
-- Issuing Department.
-- Category.
-- Confidentiality.
-- مستند صادر واحد على الأقل، ما لم تسمح سياسة المؤسسة بغير ذلك.
-- موافقة المستخدم المخول.
-
-## 10.5 الحقول الشرطية للداخلي
-
-عندما يكون النوع Internal يجب عرض:
-
-- Source Department.
-- Source User.
-- Target Department.
-- Target User.
-- Required Action.
-- Due Date.
-
-ويجب أن يكون إلزاميًا قبل الإرسال:
-
-- Subject.
-- Source Department.
-- Target Department أو Target User.
-- Category.
-- Confidentiality.
+1. عادي.
+2. محدود.
+3. سري.
+4. سري جدًا.
 
 ---
 
-# 11. الترقيم الرسمي
+## 10.5 `ACM Priority Level`
 
-## 11.1 النمط
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`priority_name`|اسم الأهمية|Data|
+|`priority_code`|الرمز|Data/Unique|
+|`rank`|الترتيب|Int|
+|`color`|اللون|Color|
+|`default_due_days`|أيام الاستحقاق|Int|
+|`escalation_hours`|ساعات التصعيد|Int|
+|`is_active`|نشط|Check|
 
-```text
-Incoming: IN-YYYY-NNNNN
-Outgoing: OUT-YYYY-NNNNN
-Internal: INT-YYYY-NNNNN
-```
+القيم الأولية المستخرجة من الواجهة:
+
+- عادي.
+- عاجل.
+- عاجل جدًا.
+- حالًا.
+
+---
+
+## 10.6 `ACM Routing Purpose`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`purpose_name`|التوجيه|Data|
+|`purpose_code`|الرمز|Data/Unique|
+|`requires_completion`|يتطلب إنجازًا|Check|
+|`requires_approval`|يتطلب موافقة|Check|
+|`requires_signature`|يتطلب توقيعًا|Check|
+|`allows_copy`|يسمح بصورة|Check|
+|`default_due_days`|أيام الاستحقاق|Int|
+|`is_active`|نشط|Check|
+
+القيم المثبتة من الصور:
+
+- للتوقيع.
+- لإكمال اللازم.
+- للمشاهدة.
+- للموافقة.
+- للتعميم.
+- للدراسة وإبداء الرأي.
+
+قيم إضافية قابلة للتهيئة:
+
+- للإفادة.
+- للاطلاع.
+- للحفظ.
+- للمتابعة.
+- للإجراء.
+- للإجابة.
+- للمراجعة.
+
+---
+
+## 10.7 `ACM Subject Classification`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`classification_name`|التصنيف|Data|
+|`classification_code`|الرمز|Data|
+|`parent_classification`|التصنيف الأعلى|Link/Self|
+|`is_group`|مجموعة|Check|
+|`retention_policy`|سياسة الاحتفاظ|Link|
+|`default_confidentiality`|السرية الافتراضية|Link|
+|`is_active`|نشط|Check|
+
+---
+
+## 10.8 `ACM Document Category`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`category_name`|اسم الفئة|Data|
+|`category_code`|الرمز|Data|
+|`is_main_document`|خطاب رئيسي|Check|
+|`is_reply`|رد|Check|
+|`is_secret`|مرفق سري|Check|
+|`allowed_extensions`|الامتدادات|Small Text|
+|`max_size_mb`|أقصى حجم|Int|
+|`is_active`|نشط|Check|
+
+قيم أولية:
+
+- الخطاب الرئيسي.
+- المرفقات.
+- الرد.
+- المرفقات السرية.
+- إثبات التسليم.
+- نسخة ممسوحة.
+- محضر.
+- توقيع إلكتروني.
+
+---
+
+## 10.9 `ACM Correspondence Reason`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`reason_name`|السبب|Data|
+|`reason_type`|نوع السبب|Select|
+|`requires_note`|يتطلب شرحًا|Check|
+|`is_active`|نشط|Check|
+
+أنواع السبب:
+
+- رفض.
+- إعادة.
+- سحب.
+- إغلاق.
+- إلغاء.
+- إعادة تشغيل.
+
+---
+
+## 10.10 `ACM Delivery Method`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`method_name`|وسيلة التسليم|Data|
+|`method_code`|الرمز|Data|
+|`requires_tracking_number`|يتطلب رقم تتبع|Check|
+|`requires_receiver_name`|يتطلب اسم مستلم|Check|
+|`requires_proof`|يتطلب إثباتًا|Check|
+|`is_electronic`|إلكترونية|Check|
+|`is_active`|نشطة|Check|
 
 أمثلة:
 
-```text
-IN-2026-00001
-OUT-2026-00001
-INT-2026-00001
-```
-
-## 11.2 قواعد الترقيم
-
-**REQ-NUM-001**  
-يجب ألا يصدر الرقم الرسمي في حالة Draft.
-
-**REQ-NUM-002**  
-يصدر رقم الوارد عند تنفيذ عملية Register.
-
-**REQ-NUM-003**  
-يصدر رقم الصادر عند اعتماده رسميًا أو إرساله، وفق إعداد النظام المعتمد.
-
-**REQ-NUM-004**  
-يصدر رقم المعاملة الداخلية عند تنفيذ عملية Send.
-
-**REQ-NUM-005**  
-يجب أن يكون الرقم فريدًا على مستوى النظام.
-
-**REQ-NUM-006**  
-يجب أن يبدأ عداد مستقل لكل نوع ولكل سنة ميلادية.
-
-**REQ-NUM-007**  
-لا يجوز تعديل الرقم بعد إصداره.
-
-**REQ-NUM-008**  
-لا يجوز إعادة استخدام رقم معاملة ملغاة.
-
-**REQ-NUM-009**  
-لا يشترط أن تكون الأرقام خالية تمامًا من الفجوات.
-
-**REQ-NUM-010**  
-يجب منع تغيير نوع المعاملة بعد إصدار الرقم الرسمي.
-
-**REQ-NUM-011**  
-يجب تطبيق حماية من إنشاء أرقام مكررة عند التسجيل المتزامن.
-
-يدعم Frappe Naming Series وأنماطًا تتضمن السنة والعداد، لكنه لا يضمن تسلسلًا خاليًا من الفجوات عند الحذف، ولذلك تعتمد هذه الوثيقة التفرد وعدم إعادة الاستخدام بدل اشتراط عدم وجود فجوات.  
-المرجع: [Frappe Naming](https://docs.frappe.io/framework/user/en/basics/doctypes/naming).
+- تسليم يدوي.
+- بريد رسمي.
+- بريد سريع.
+- بريد إلكتروني.
+- تكامل إلكتروني.
+- مندوب.
+- فاكس.
 
 ---
 
-# 12. الرقم الخارجي
+## 10.11 `ACM SLA Policy`
 
-**REQ-EXT-001**  
-يجب دعم رقم الجهة الخارجية للمعاملات الواردة والصادرة.
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`policy_name`|اسم السياسة|Data|
+|`company`|الشركة|Link/Company|
+|`department`|الإدارة|Link/Department|
+|`correspondence_type`|نوع المعاملة|Link|
+|`priority`|الأهمية|Link|
+|`routing_purpose`|التوجيه|Link|
+|`due_days`|أيام الإنجاز|Int|
+|`use_working_days`|أيام عمل|Check|
+|`warning_days`|تنبيه قبل الاستحقاق|Int|
+|`first_escalation_hours`|التصعيد الأول|Int|
+|`second_escalation_hours`|التصعيد الثاني|Int|
+|`escalate_to_manager`|تصعيد للمدير|Check|
+|`is_active`|نشطة|Check|
 
-**REQ-EXT-002**  
-لا يشترط أن يكون الرقم الخارجي فريدًا عالميًا.
+---
 
-**REQ-EXT-003**  
-يجب تحذير المستخدم عند وجود نفس الرقم الخارجي لنفس الجهة خلال الفترة المحددة في الإعدادات.
+## 10.12 `ACM Numbering Rule`
 
-**REQ-EXT-004**  
-يجب السماح بالبحث الجزئي والكامل في الرقم الخارجي.
-
-**REQ-EXT-005**  
-يجب الاحتفاظ بالرموز والشرطات الموجودة في الرقم الأصلي.
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`rule_name`|اسم القاعدة|Data|
+|`company`|الشركة|Link|
+|`department`|الإدارة|Link|
+|`direction`|الاتجاه|Select|
+|`correspondence_type`|النوع|Link|
+|`fiscal_or_hijri_year`|نوع السنة|Select|
+|`prefix`|البادئة|Data|
+|`digits`|عدد الخانات|Int|
+|`reset_frequency`|إعادة العداد|Select|
+|`current_counter`|العداد الحالي|Int|
+|`is_active`|نشطة|Check|
 
 مثال:
 
 ```text
-رقم النظام:
-IN-2026-00125
-
-رقم الجهة:
-MOH/2026/451
+IN-1448-000001
+OUT-1448-000001
+INT-1448-000001
 ```
 
 ---
 
-# 13. دورة العمل
+## 10.13 `ACM Retention Policy`
 
-يجب استخدام حقل واحد للحالة الرسمية:
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`policy_name`|السياسة|Data|
+|`retention_years`|سنوات الاحتفاظ|Int|
+|`archive_after_days`|الأرشفة بعد|Int|
+|`disposal_action`|إجراء نهاية المدة|Select|
+|`requires_approval`|يتطلب اعتمادًا|Check|
+|`legal_hold_allowed`|يسمح بالحجز القانوني|Check|
+|`is_active`|نشطة|Check|
+
+---
+
+## 10.14 `ACM Signature Profile`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`user`|المستخدم|Link/User|
+|`employee`|الموظف|Link/Employee|
+|`signature_image`|صورة التوقيع|Attach Image|
+|`certificate_reference`|مرجع الشهادة|Data|
+|`valid_from`|صالح من|Datetime|
+|`valid_to`|صالح إلى|Datetime|
+|`maximum_confidentiality`|أقصى سرية|Link|
+|`is_active`|نشط|Check|
+
+> صورة التوقيع وحدها ليست توقيعًا رقميًا قانونيًا. التوقيع المشفر يتطلب مزود شهادات وآلية تحقق مستقلة.
+
+---
+
+# 11. DocType الرئيسي: `ACM Correspondence`
+
+## 11.1 الإعدادات
+
+- `is_submittable = 0`، لأن المعاملة تحتاج إلى تعديلات محكومة عبر Workflow.
+- `track_changes = 1`.
+- التسمية من `ACM Numbering Rule`.
+- منع الحذف بعد التسجيل.
+- المسودة فقط يمكن حذفها وفق الصلاحية.
+
+## 11.2 الحقول
+
+### الهوية
+
+|Fieldname|التسمية|النوع|إلزامي|
+|---|---|---|---|
+|`correspondence_number`|رقم المعاملة|Data/Read Only/Unique|بعد التسجيل|
+|`direction`|اتجاه المعاملة|Select|نعم|
+|`correspondence_type`|نوع المعاملة|Link|نعم|
+|`workflow_state`|حالة سير العمل|Link/Workflow State|تلقائي|
+|`record_status`|حالة السجل|Select|تلقائي|
+|`company`|الشركة|Link/Company|نعم|
+|`owning_department`|الإدارة المالكة|Link/Department|نعم|
+|`current_department`|الإدارة الحالية|Link/Department|تلقائي|
+|`current_user`|المستخدم الحالي|Link/User|تلقائي|
+|`registration_datetime`|تاريخ التسجيل|Datetime|تلقائي|
+|`registration_hijri`|تاريخ التسجيل الهجري|Data|تلقائي|
+|`registered_by`|المسجل|Link/User|تلقائي|
+
+قيم `direction`:
+
+- Internal.
+- Incoming External.
+- Outgoing External.
+
+قيم `record_status`:
+
+- Draft.
+- Registered.
+- Active.
+- Awaiting Approval.
+- Approved.
+- Ready for Dispatch.
+- Dispatched.
+- Delivered.
+- Closed.
+- Reopened.
+- Cancelled.
+
+### الموضوع والتصنيف
+
+|Fieldname|التسمية|النوع|إلزامي|
+|---|---|---|---|
+|`subject`|الموضوع|Data|نعم|
+|`subject_classification`|تصنيف الموضوع|Link|لا|
+|`confidentiality_level`|درجة السرية|Link|نعم|
+|`priority_level`|الأهمية|Link|نعم|
+|`general_due_date`|تاريخ الاستحقاق|Date|حسب السياسة|
+|`general_due_date_hijri`|الاستحقاق الهجري|Data/Read Only|تلقائي|
+|`page_count`|عدد الصفحات|Int|لا|
+|`notes`|ملاحظات|Long Text|لا|
+|`keywords`|كلمات مفتاحية|Small Text|لا|
+
+### الوارد الخارجي
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`incoming_party`|الجهة الوارد منها|Link/ACM External Party|
+|`incoming_letter_number`|رقم الخطاب|Data|
+|`incoming_letter_date`|تاريخ الخطاب الميلادي|Date|
+|`incoming_letter_date_hijri`|تاريخ الخطاب الهجري|Data|
+|`receiving_department`|الجهة المرسل إليها|Link/Department|
+|`incoming_method`|وسيلة الورود|Link/ACM Delivery Method|
+|`received_datetime`|تاريخ ووقت الورود|Datetime|
+|`physical_received_by`|مستلم الأصل الورقي|Link/User|
+
+### الصادر الخارجي
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`outgoing_party`|الجهة الصادر إليها|Link/ACM External Party|
+|`outgoing_letter_number`|رقم الصادر|Data|
+|`outgoing_letter_date`|تاريخ الصادر|Date|
+|`outgoing_letter_date_hijri`|تاريخ الصادر الهجري|Data|
+|`issuing_department`|الإدارة المنشئة|Link/Department|
+|`delivery_method`|وسيلة الإرسال|Link|
+|`dispatch_reference`|مرجع التسليم|Link/ACM Dispatch|
+
+### الربط والتجميع
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`link_to_other_correspondence`|اربط بمعاملة أخرى|Check|
+|`primary_linked_correspondence`|المعاملة المرتبطة الرئيسية|Link/Self|
+|`links`|روابط المعاملات|Table/ACM Correspondence Link|
+|`concerned_persons`|بيانات الشخص المعني|Table/ACM Concerned Person|
+|`parent_correspondence`|المعاملة الأم|Link/Self|
+|`reply_to`|رد على|Link/Self|
+
+### مؤشرات الوثائق
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`main_document_count`|الخطاب الرئيسي|Int/Read Only|
+|`attachment_count`|عدد المرفقات|Int/Read Only|
+|`reply_count`|عدد الردود|Int/Read Only|
+|`secret_attachment_count`|المرفقات السرية|Int/Read Only|
+|`has_physical_copy`|توجد مراسلة ورقية|Check|
+|`physical_copy_location`|موقع النسخة الورقية|Data|
+
+### المؤشرات الزمنية
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`first_referral_datetime`|أول إحالة|Datetime|
+|`last_action_datetime`|آخر إجراء|Datetime|
+|`closed_datetime`|تاريخ الإغلاق|Datetime|
+|`closed_by`|أغلق بواسطة|Link/User|
+|`close_reason`|سبب الإغلاق|Link/ACM Correspondence Reason|
+|`is_overdue`|متأخرة|Check/Read Only|
+|`overdue_days`|أيام التأخير|Int/Read Only|
+|`is_on_hold`|معلقة|Check|
+|`legal_hold`|حجز قانوني|Check|
+
+### الباركود
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`barcode_value`|قيمة الباركود|Barcode/Read Only|
+|`qr_payload`|بيانات QR|Small Text/Read Only|
+|`barcode_printed`|تمت الطباعة|Check|
+|`barcode_print_count`|عدد مرات الطباعة|Int|
+|`last_barcode_printed_by`|آخر طباعة بواسطة|Link/User|
+|`last_barcode_printed_on`|تاريخ آخر طباعة|Datetime|
+
+### حقول تقنية
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`source_channel`|قناة الإنشاء|Select|
+|`external_reference`|مرجع النظام الخارجي|Data|
+|`integration_status`|حالة التكامل|Select|
+|`retention_policy`|سياسة الاحتفاظ|Link|
+|`archive_status`|حالة الأرشفة|Select|
+|`archived_on`|تاريخ الأرشفة|Datetime|
+
+---
+
+# 12. `ACM Correspondence Link` — Child Table
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`linked_correspondence`|المعاملة المرتبطة|Link/ACM Correspondence|
+|`link_type`|نوع العلاقة|Select|
+|`is_primary`|العلاقة الرئيسية|Check|
+|`sequence`|الترتيب|Int|
+|`notes`|ملاحظات|Small Text|
+
+قيم العلاقة:
+
+- مرتبط بـ.
+- رد على.
+- أصل لـ.
+- تابع لـ.
+- سابق.
+- لاحق.
+- مكرر.
+- مرفق بمعاملة.
+- وارد مرتبط بصادر.
+
+قاعدة العمل:
+
+> عند ربط أكثر من معاملة يمكن اعتماد أول معاملة كمرجع رئيسي، مع الاحتفاظ ببقية الروابط.
+
+---
+
+# 13. `ACM Concerned Person` — Child Table
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`person_type`|نوع الشخص|Select|
+|`full_name`|الاسم|Data|
+|`national_id`|رقم الهوية|Data|
+|`employee`|الموظف|Link/Employee|
+|`external_contact`|جهة الاتصال|Link/Contact|
+|`mobile`|الجوال|Data|
+|`email`|البريد|Data|
+|`relationship`|صفته في المعاملة|Data|
+|`notes`|ملاحظات|Small Text|
+|`mask_identity`|إخفاء الهوية|Check|
+
+يجب تشفير أو إخفاء بيانات الهوية في العرض والتقارير بحسب الصلاحية.
+
+---
+
+# 14. `ACM Correspondence Document`
+
+هذا الـDocType يمثل كل ملف على حدة بدل الاكتفاء بإرفاق الملفات مباشرة بالمعاملة.
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`correspondence`|المعاملة|Link|
+|`document_category`|النوع|Link/ACM Document Category|
+|`folder_section`|المجلد|Select|
+|`document_title`|عنوان المستند|Data|
+|`file`|الملف|Attach|
+|`file_name`|اسم الملف|Data/Read Only|
+|`file_extension`|الامتداد|Data/Read Only|
+|`file_size`|الحجم|Int/Read Only|
+|`is_private`|ملف خاص|Check|
+|`is_secret`|مرفق سري|Check|
+|`confidentiality_level`|سرية المستند|Link|
+|`version_number`|رقم النسخة|Int|
+|`replaces_document`|يحل محل|Link/Self|
+|`is_current_version`|النسخة الحالية|Check|
+|`is_main_document`|الخطاب الرئيسي|Check|
+|`is_reply`|رد|Check|
+|`uploaded_by`|رفع بواسطة|Link/User|
+|`uploaded_on`|تاريخ الرفع|Datetime|
+|`source`|مصدر الملف|Select|
+|`scan_device`|جهاز المسح|Data|
+|`page_count`|الصفحات|Int|
+|`checksum_sha256`|بصمة الملف|Data/Read Only|
+|`ocr_status`|حالة OCR|Select|
+|`ocr_text`|النص المستخرج|Long Text|
+|`digitally_signed`|موقع رقميًا|Check|
+|`signature_status`|حالة التحقق|Select|
+|`watermark_required`|علامة مائية|Check|
+|`download_count`|مرات التنزيل|Int/Read Only|
+
+قيم `folder_section`:
+
+- Main Letter.
+- Attachments.
+- Reply.
+- Secret Attachments.
+- Delivery Proof.
+- Other.
+
+قيم المصدر:
+
+- Upload.
+- Scanner.
+- Email.
+- API.
+- Generated.
+- Mobile Camera.
+
+يجب أن تُحفظ الملفات Private. وتوضح وثائق Frappe أن من يملك Read على المستند يستطيع الوصول عادةً إلى مرفقاته؛ لذلك يجب ربط المرفقات السرية بهذا الـDocType المستقل وتطبيق `has_permission` و`permission_query_conditions` عليه، بدل الاعتماد على مرفقات المعاملة العامة فقط.  
+[Attachments](https://docs.frappe.io/framework/user/en/desk/attachments) — [Permission Query Conditions](https://docs.frappe.io/framework/user/en/python-api/hooks)
+
+---
+
+# 15. `ACM Referral`
+
+كل مستلم يجب أن ينتج إحالة مستقلة حتى يمكن تتبع حالته واستحقاقه.
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`correspondence`|المعاملة|Link|
+|`referral_number`|رقم الإحالة|Data/Unique|
+|`referral_batch_id`|مجموعة الإحالة المتعددة|Data|
+|`from_department`|من إدارة|Link/Department|
+|`from_user`|من مستخدم|Link/User|
+|`to_type`|نوع المستلم|Select|
+|`to_department`|إلى إدارة|Link/Department|
+|`to_user`|إلى موظف|Link/User|
+|`routing_purpose`|التوجيه|Link|
+|`priority_level`|درجة الأهمية|Link|
+|`due_date`|تاريخ الاستحقاق|Date|
+|`due_date_hijri`|الاستحقاق الهجري|Data|
+|`recipient_instructions`|تعليمات للمستقبل|Small Text|
+|`is_private`|خاص|Check|
+|`is_paper_correspondence`|مراسلة ورقية|Check|
+|`is_copy`|صورة|Check|
+|`for_follow_up`|للمتابعة|Check|
+|`referral_status`|حالة الإحالة|Select|
+|`sent_on`|تاريخ الإرسال|Datetime|
+|`received_on`|تاريخ الاستلام|Datetime|
+|`received_by`|استلم بواسطة|Link/User|
+|`rejected_on`|تاريخ الرفض|Datetime|
+|`rejected_by`|رفض بواسطة|Link/User|
+|`rejection_reason`|سبب الرفض|Link|
+|`rejection_notes`|ملاحظات الرفض|Small Text|
+|`completed_on`|تاريخ الإنجاز|Datetime|
+|`completed_by`|أنجز بواسطة|Link/User|
+|`completion_notes`|نتيجة الإجراء|Long Text|
+|`withdrawn_on`|تاريخ السحب|Datetime|
+|`withdrawn_by`|سحب بواسطة|Link/User|
+|`withdrawal_reason`|سبب السحب|Link|
+|`parent_referral`|الإحالة السابقة|Link/Self|
+|`delegation`|التفويض المستخدم|Link/ACM Delegation|
+|`is_overdue`|متأخرة|Check/Read Only|
+|`overdue_days`|أيام التأخير|Int/Read Only|
+
+حالات الإحالة:
 
 ```text
-workflow_state
+Draft
+Sent
+Pending Receipt
+Received
+In Progress
+Completed
+Rejected
+Returned
+Withdrawn
+Cancelled
 ```
 
-لا يجوز إنشاء حقل آخر باسم `status` يؤدي الوظيفة نفسها.
+---
 
-حالة Frappe الداخلية `docstatus` ليست بديلًا عن حالة الأعمال.
+# 16. `ACM Referral Recipient`
 
-## 13.1 حالات الوارد
+يستخدم فقط في واجهة إنشاء الإحالة المتعددة قبل تحويل الصفوف إلى سجلات `ACM Referral`.
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`recipient_type`|نوع المستلم|Select|
+|`department`|الإدارة|Link|
+|`user`|الموظف|Link|
+|`routing_purpose`|التوجيه|Link|
+|`priority_level`|درجة الأهمية|Link|
+|`due_date`|تاريخ الاستحقاق|Date|
+|`instructions`|تعليمات للمستقبل|Small Text|
+|`is_private`|خاص|Check|
+|`is_paper`|مراسلة ورقية|Check|
+|`is_copy`|صورة|Check|
+|`for_follow_up`|للمتابعة|Check|
+
+---
+
+# 17. `ACM Correspondence Action`
+
+سجل أحداث غير قابل للتعديل من المستخدم العادي.
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`correspondence`|المعاملة|Link|
+|`referral`|الإحالة|Link|
+|`action_type`|نوع العملية|Select|
+|`action_datetime`|التاريخ والوقت|Datetime|
+|`performed_by`|المنفذ الفعلي|Link/User|
+|`acting_for`|يعمل نيابة عن|Link/User|
+|`delegation`|التفويض|Link|
+|`from_status`|الحالة السابقة|Data|
+|`to_status`|الحالة الجديدة|Data|
+|`from_department`|من إدارة|Link|
+|`to_department`|إلى إدارة|Link|
+|`notes`|الملاحظات|Long Text|
+|`ip_address`|عنوان IP|Data|
+|`user_agent`|معلومات الجهاز|Small Text|
+|`source`|مصدر العملية|Select|
+|`request_id`|معرف الطلب|Data|
+|`payload_hash`|بصمة الحدث|Data|
+|`previous_hash`|بصمة الحدث السابق|Data|
+
+أنواع العمليات:
+
+- إنشاء.
+- حفظ مسودة.
+- تسجيل.
+- تعديل.
+- ربط.
+- رفع مرفق.
+- حذف مرفق قبل التسجيل.
+- إحالة.
+- استلام.
+- رفض.
+- إعادة.
+- سحب.
+- إكمال.
+- إضافة رد.
+- طلب اعتماد.
+- موافقة.
+- توقيع.
+- رفض اعتماد.
+- إرسال.
+- تسليم.
+- إغلاق.
+- إعادة تشغيل.
+- طباعة.
+- تنزيل.
+- أرشفة.
+- إلغاء.
+
+---
+
+# 18. الاعتمادات
+
+## 18.1 `ACM Approval Step`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`correspondence`|المعاملة|Link|
+|`document`|المستند|Link|
+|`sequence`|ترتيب الاعتماد|Int|
+|`approval_type`|نوع الاعتماد|Select|
+|`approver_type`|نوع المعتمد|Select|
+|`approver_role`|الدور|Link/Role|
+|`approver_user`|المستخدم|Link/User|
+|`approver_department`|الإدارة|Link|
+|`status`|الحالة|Select|
+|`requested_on`|تاريخ الطلب|Datetime|
+|`due_date`|الاستحقاق|Datetime|
+|`acted_on`|تاريخ الإجراء|Datetime|
+|`comments`|الملاحظات|Small Text|
+
+أنواع الاعتماد:
+
+- Review.
+- Approval.
+- Signature.
+- Visa/Endorsement.
+- Final Release.
+
+## 18.2 `ACM Approval Action`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`approval_step`|خطوة الاعتماد|Link|
+|`action`|الإجراء|Select|
+|`action_by`|بواسطة|Link/User|
+|`action_on`|التاريخ|Datetime|
+|`comments`|الملاحظات|Long Text|
+|`signed_document`|المستند الموقع|Link/ACM Correspondence Document|
+|`signature_hash`|بصمة التوقيع|Data|
+|`delegation`|التفويض|Link|
+
+الإجراءات:
+
+- Approve.
+- Sign.
+- Endorse.
+- Return for Revision.
+- Reject.
+- Forward.
+
+---
+
+# 19. `ACM Delegation`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`delegator`|المفوِّض|Link/User|
+|`delegate`|المفوَّض إليه|Link/User|
+|`company`|الشركة|Link|
+|`department`|الإدارة|Link|
+|`valid_from`|من تاريخ|Datetime|
+|`valid_to`|إلى تاريخ|Datetime|
+|`scope`|نطاق التفويض|Select|
+|`allowed_actions`|الإجراءات|Table MultiSelect أو Child|
+|`maximum_confidentiality`|أقصى سرية|Link|
+|`exclude_private_referrals`|استثناء الإحالات الخاصة|Check|
+|`reason`|السبب|Small Text|
+|`status`|الحالة|Select|
+|`approved_by`|اعتمد بواسطة|Link/User|
+|`approved_on`|تاريخ الاعتماد|Datetime|
+|`revoked_by`|أُلغي بواسطة|Link/User|
+|`revoked_on`|تاريخ الإلغاء|Datetime|
+
+ضوابط:
+
+- لا تفويض خارج الفترة.
+- لا يمكن تفويض صلاحية أعلى من صلاحية المفوِّض.
+- السرية العالية يمكن منع تفويضها.
+- كل إجراء يسجل المنفذ والمستخدم الأصلي.
+
+---
+
+# 20. المجلدات
+
+## 20.1 `ACM Personal Folder`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`folder_name`|اسم المجلد|Data|
+|`owner_user`|المالك|Link/User|
+|`parent_folder`|المجلد الأعلى|Link/Self|
+|`color`|اللون|Color|
+|`is_shared`|مشترك|Check|
+|`shared_department`|الإدارة المشتركة|Link|
+|`is_active`|نشط|Check|
+
+## 20.2 `ACM Folder Item`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`folder`|المجلد|Link|
+|`correspondence`|المعاملة|Link|
+|`added_by`|أضيف بواسطة|Link/User|
+|`added_on`|تاريخ الإضافة|Datetime|
+|`notes`|ملاحظات شخصية|Small Text|
+
+المجلد لا يغير حالة المعاملة أو ملكيتها.
+
+---
+
+# 21. `ACM Follow Up Entry`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`correspondence`|المعاملة|Link|
+|`referral`|الإحالة|Link|
+|`follow_up_owner`|مسؤول المتابعة|Link/User|
+|`department`|الإدارة|Link|
+|`follow_up_date`|تاريخ المتابعة|Date|
+|`status`|الحالة|Select|
+|`reminder_datetime`|التذكير|Datetime|
+|`notes`|الملاحظات|Long Text|
+|`result`|النتيجة|Long Text|
+|`closed_on`|تاريخ الإغلاق|Datetime|
+
+---
+
+# 22. التسليم
+
+## 22.1 `ACM Dispatch`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`dispatch_number`|رقم بيان التسليم|Data/Unique|
+|`dispatch_date`|التاريخ|Date|
+|`company`|الشركة|Link|
+|`dispatch_department`|إدارة الصادر|Link|
+|`delivery_method`|وسيلة التسليم|Link|
+|`courier_name`|المندوب/الناقل|Data|
+|`tracking_number`|رقم التتبع|Data|
+|`status`|الحالة|Select|
+|`prepared_by`|أعد بواسطة|Link/User|
+|`handed_over_on`|تاريخ التسليم للناقل|Datetime|
+|`notes`|ملاحظات|Long Text|
+|`items`|المعاملات|Table/ACM Dispatch Item|
+
+الحالات:
+
+- Draft.
+- Prepared.
+- Handed Over.
+- In Transit.
+- Partially Delivered.
+- Delivered.
+- Returned.
+- Cancelled.
+
+## 22.2 `ACM Dispatch Item`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`correspondence`|المعاملة|Link|
+|`external_party`|الجهة المستلمة|Link|
+|`recipient_name`|اسم المستلم|Data|
+|`address`|العنوان|Link/Address|
+|`package_number`|رقم الطرد|Data|
+|`status`|الحالة|Select|
+|`delivered_on`|تاريخ التسليم|Datetime|
+|`delivery_event`|آخر حدث|Link|
+|`proof_document`|إثبات التسليم|Link/ACM Correspondence Document|
+
+## 22.3 `ACM Delivery Event`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`dispatch`|بيان التسليم|Link|
+|`dispatch_item`|البند|Link|
+|`event_type`|نوع الحدث|Select|
+|`event_datetime`|التاريخ والوقت|Datetime|
+|`location`|الموقع|Data|
+|`receiver_name`|اسم المستلم|Data|
+|`receiver_id`|هوية المستلم|Data|
+|`tracking_number`|رقم التتبع|Data|
+|`proof_file`|الإثبات|Attach|
+|`recorded_by`|سجل بواسطة|Link/User|
+|`notes`|ملاحظات|Small Text|
+
+---
+
+# 23. إدارة المهام
+
+## 23.1 `ACM Work Task`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`task_title`|عنوان المهمة|Data|
+|`description`|الوصف|Text Editor|
+|`correspondence`|المعاملة|Link|
+|`project`|المشروع|Link/Project|
+|`committee`|اللجنة|Link|
+|`meeting`|الاجتماع|Link|
+|`task_pattern`|النمط|Data|
+|`priority`|الأولوية|Link/ACM Priority Level|
+|`status`|الحالة|Select|
+|`start_date`|تاريخ البداية|Date|
+|`due_date`|تاريخ الاستحقاق|Date|
+|`progress`|نسبة الإنجاز|Percent|
+|`owner_user`|مالك المهمة|Link/User|
+|`department`|الإدارة|Link|
+|`remind_before`|التذكير قبل|Duration|
+|`parent_task`|المهمة الأعلى|Link/Self|
+|`copied_from`|منسوخة من|Link/Self|
+|`is_recurring`|متكررة|Check|
+|`completion_notes`|ملاحظات الإنجاز|Long Text|
+|`completed_on`|تاريخ الإنجاز|Datetime|
+|`assignees`|المكلفون|Table/ACM Task Assignee|
+
+## 23.2 `ACM Task Assignee`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`user`|المستخدم|Link/User|
+|`employee`|الموظف|Link/Employee|
+|`department`|الإدارة|Link|
+|`assignment_role`|دوره في المهمة|Select|
+|`individual_due_date`|استحقاقه|Date|
+|`progress`|الإنجاز|Percent|
+|`status`|الحالة|Select|
+
+## 23.3 `ACM Task Update`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`task`|المهمة|Link|
+|`update_by`|بواسطة|Link/User|
+|`update_on`|التاريخ|Datetime|
+|`old_progress`|الإنجاز السابق|Percent|
+|`new_progress`|الإنجاز الجديد|Percent|
+|`status`|الحالة|Select|
+|`update_text`|التحديث|Long Text|
+|`attachment`|مرفق|Attach|
+
+---
+
+# 24. اللجان والاجتماعات
+
+## 24.1 `ACM Committee`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`committee_name`|اسم اللجنة|Data|
+|`committee_number`|رقم اللجنة|Data|
+|`formation_date`|تاريخ التشكيل|Date|
+|`formation_correspondence`|قرار التشكيل|Link/ACM Correspondence|
+|`chairperson`|الرئيس|Link/User|
+|`secretary`|المقرر|Link/User|
+|`department`|الإدارة|Link|
+|`valid_from`|من تاريخ|Date|
+|`valid_to`|إلى تاريخ|Date|
+|`status`|الحالة|Select|
+|`purpose`|الهدف|Long Text|
+|`members`|الأعضاء|Table/ACM Committee Member|
+
+## 24.2 `ACM Committee Member`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`member_type`|نوع العضو|Select|
+|`user`|المستخدم|Link/User|
+|`employee`|الموظف|Link/Employee|
+|`external_name`|اسم عضو خارجي|Data|
+|`external_party`|الجهة الخارجية|Link|
+|`member_role`|الصفة|Select|
+|`start_date`|من تاريخ|Date|
+|`end_date`|إلى تاريخ|Date|
+|`is_active`|نشط|Check|
+
+## 24.3 `ACM Meeting`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`meeting_title`|عنوان الاجتماع|Data|
+|`committee`|اللجنة|Link|
+|`meeting_number`|رقم الاجتماع|Data|
+|`start_datetime`|البداية|Datetime|
+|`end_datetime`|النهاية|Datetime|
+|`location`|المكان|Data|
+|`online_meeting_url`|رابط الاجتماع|Data|
+|`chairperson`|الرئيس|Link/User|
+|`secretary`|المقرر|Link/User|
+|`status`|الحالة|Select|
+|`related_correspondence`|المعاملة المرتبطة|Link|
+|`attendees`|الحضور|Table|
+|`agenda_items`|جدول الأعمال|Table|
+|`minutes_document`|المحضر|Link/ACM Correspondence Document|
+
+## 24.4 `ACM Meeting Attendee`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`user`|المستخدم|Link|
+|`external_name`|الاسم الخارجي|Data|
+|`attendance_status`|حالة الحضور|Select|
+|`invitation_sent`|أرسلت الدعوة|Check|
+|`response_on`|تاريخ الرد|Datetime|
+|`notes`|ملاحظات|Small Text|
+
+## 24.5 `ACM Agenda Item`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`sequence`|الترتيب|Int|
+|`subject`|الموضوع|Data|
+|`presenter`|مقدم الموضوع|Link/User|
+|`correspondence`|المعاملة المرتبطة|Link|
+|`planned_duration`|المدة|Duration|
+|`notes`|ملاحظات|Long Text|
+
+## 24.6 `ACM Meeting Decision`
+
+|Fieldname|التسمية|النوع|
+|---|---|---|
+|`meeting`|الاجتماع|Link|
+|`agenda_item`|بند الجدول|Data|
+|`decision_number`|رقم القرار|Data|
+|`decision_text`|نص القرار|Long Text|
+|`responsible_user`|المسؤول|Link/User|
+|`responsible_department`|الإدارة|Link|
+|`due_date`|الاستحقاق|Date|
+|`work_task`|المهمة الناتجة|Link/ACM Work Task|
+|`status`|الحالة|Select|
+
+---
+
+# 25. مسارات العمل Workflows
+
+## 25.1 المعاملة الواردة
 
 ```text
 Draft
 → Registered
-→ Assigned
+→ Routed
+→ Pending Receipt
+→ Received
 → In Progress
-→ Waiting
+→ Awaiting Response
+→ Response Prepared
 → Completed
 → Closed
-→ Archived
 ```
 
-الحالات الجانبية:
+مسارات بديلة:
 
 ```text
-Cancelled
+Pending Receipt → Rejected → Returned to Sender
+Received → Returned for Clarification
+Closed → Reopened → In Progress
 ```
 
-الانتقالات:
-
-| الحالة الحالية   | الإجراء          | الحالة التالية | الدور               |
-| ---------------- | ---------------- | -------------- | ------------------- |
-| Draft            | Register         | Registered     | Clerk/Manager       |
-| Registered       | Route            | Assigned       | Clerk/Manager       |
-| Assigned         | Start Processing | In Progress    | Assignee            |
-| In Progress      | Wait             | Waiting        | Assignee/Manager    |
-| Waiting          | Resume           | In Progress    | Assignee/Manager    |
-| In Progress      | Complete         | Completed      | Assignee/Manager    |
-| Completed        | Close            | Closed         | Manager             |
-| Closed           | Reopen           | In Progress    | Manager مخول        |
-| Draft/Registered | Cancel           | Cancelled      | Manager             |
-| Closed           | Archive          | Archived       | وظيفة مستقبلية/مخول |
-
-## 13.2 حالات الصادر
+## 25.2 المعاملة الداخلية
 
 ```text
 Draft
-→ Under Review
-→ Approved
-→ Sent
-→ Closed
-```
-
-الانتقالات:
-
-|الحالة الحالية|الإجراء|الحالة التالية|الدور|
-|---|---|---|---|
-|Draft|Submit for Review|Under Review|Clerk/User|
-|Under Review|Return|Draft|Reviewer|
-|Under Review|Approve|Approved|Manager|
-|Approved|Mark as Sent|Sent|Clerk/Manager|
-|Sent|Close|Closed|Manager|
-|Closed|Reopen|Sent أو Draft|مدير مخول|
-|Draft/Under Review|Cancel|Cancelled|Manager|
-
-## 13.3 حالات الداخلي
-
-```text
-Draft
-→ Sent
+→ Registered
+→ Routed
 → Received
 → In Progress
 → Completed
 → Closed
 ```
 
-الانتقالات:
+إذا احتوت خطابًا يحتاج اعتمادًا:
 
-|الحالة الحالية|الإجراء|الحالة التالية|الدور|
-|---|---|---|---|
-|Draft|Send|Sent|Sender|
-|Sent|Acknowledge Receipt|Received|Recipient|
-|Received|Start Processing|In Progress|Recipient|
-|In Progress|Complete|Completed|Recipient|
-|Completed|Close|Closed|Manager/Sender|
-|Sent/Received|Return|Draft|مخول|
-|Draft/Sent|Cancel|Cancelled|Manager|
+```text
+In Progress
+→ Awaiting Review
+→ Awaiting Approval
+→ Awaiting Signature
+→ Approved
+→ Completed
+→ Closed
+```
 
-## 13.4 قواعد الانتقالات
+## 25.3 المعاملة الصادرة
 
-- لا يجوز تعديل `workflow_state` مباشرة.
-- يجب تغيير الحالة من خلال أزرار انتقال معتمدة.
-- يجب تسجيل منفذ الانتقال وتاريخه.
-- يجب تطبيق الشروط على الخادم وليس الواجهة فقط.
-- يجب أن تكون الانتقالات غير المسموحة مرفوضة حتى عند استخدام API.
-- إعادة الفتح تتطلب سببًا.
-- الإلغاء يتطلب سببًا.
-- لا يجوز إلغاء معاملة مغلقة إلا بصلاحية استثنائية.
-- يجب ألا يؤدي الإلغاء إلى حذف الرقم أو المرفقات أو Timeline.
+```text
+Draft
+→ Under Review
+→ Awaiting Approval
+→ Awaiting Signature
+→ Approved
+→ Registered Outgoing
+→ Ready for Dispatch
+→ Dispatched
+→ Delivered
+→ Closed
+```
+
+## 25.4 سحب الإحالة
+
+يسمح بالسحب إذا:
+
+- المرسل لديه صلاحية السحب.
+- الإحالة غير مستلمة؛ أو تسمح الإعدادات بالسحب بعد الاستلام.
+- لا توجد إحالة لاحقة مبنية عليها.
+- يُسجل سبب السحب.
+
+## 25.5 رفض الإحالة
+
+يتطلب:
+
+- سبب رفض.
+- ملاحظة عند إعداد السبب لذلك.
+- تسجيل التاريخ والمستخدم.
+- إعادة المسؤولية للجهة المرسلة.
+- إرسال إشعار فوري.
+
+## 25.6 إعادة تشغيل المراسلة
+
+- للمعاملات المغلقة فقط.
+- يتطلب سببًا.
+- لا يمحو دورة العمل القديمة.
+- ينشئ حدث Reopened.
+- يعيد الحالة إلى Active أو In Progress.
+- يحدد إدارة ومستخدمًا مسؤولًا جديدًا.
 
 ---
 
-# 14. الإحالات
+# 26. قواعد العمل Business Rules
 
-يجب إنشاء DocType مستقل باسم:
+## BR-001
 
-```text
-GESW Correspondence Routing
-```
+رقم المعاملة فريد ولا يمكن تغييره بعد التسجيل.
 
-## 14.1 الحقول
+## BR-002
 
-- Correspondence.
-- From Department.
-- From User.
-- To Department.
-- To User.
-- Instruction.
-- Priority.
-- Routed On.
-- Due Date.
-- Routing Status.
-- Accepted On.
-- Completed On.
-- Routed By.
-- Cancellation Reason.
-- Notes.
+يجب ألا يحصل السجل على رقم نهائي أثناء كونه مسودة، إلا إذا كانت سياسة الجهة تحجز الرقم مسبقًا.
 
-## 14.2 حالات الإحالة
+## BR-003
 
-- Pending.
-- Received.
-- In Progress.
-- Completed.
-- Returned.
-- Cancelled.
+الوارد الخارجي يتطلب:
 
-## 14.3 قواعد الإحالة
+- الجهة الوارد منها.
+- رقم الخطاب إذا كان النوع يتطلبه.
+- تاريخ الخطاب.
+- الموضوع.
+- نوع المعاملة.
+- السرية.
+- الأهمية.
+- الجهة المستقبلة.
 
-**REQ-ROU-001**  
-يجب السماح بالإحالة إلى إدارة أو مستخدم أو كليهما.
+## BR-004
 
-**REQ-ROU-002**  
-يجب الاحتفاظ بجميع الإحالات السابقة.
+الصادر الخارجي يتطلب جهة صادرة إليها وخطابًا معتمدًا قبل التسجيل النهائي.
 
-**REQ-ROU-003**  
-لا يجوز استبدال سجل الإحالة السابقة بسجل جديد.
+## BR-005
 
-**REQ-ROU-004**  
-يجب تحديث Current Department وCurrent Owner عند نجاح الإحالة.
+لا يجوز وجود أكثر من مستند حالي مصنف «الخطاب الرئيسي» للنسخة نفسها.
 
-**REQ-ROU-005**  
-يجب أن تظهر المعاملة في My Inbox للمستخدم أو الإدارة المستلمة.
+## BR-006
 
-**REQ-ROU-006**  
-يجب تسجيل الإحالة في Timeline.
+كل تعديل على مستند معتمد ينشئ نسخة جديدة ويلغي اعتماد النسخة السابقة.
 
-**REQ-ROU-007**  
-يجب منع الإحالة إلى مستخدم غير نشط.
+## BR-007
 
-**REQ-ROU-008**  
-يجب التحقق من عضوية المستخدم في الإدارة المستهدفة، إلا عند وجود صلاحية تجاوز.
+كل مستلم في الإحالة المتعددة ينتج سجل `ACM Referral` مستقلًا.
 
-**REQ-ROU-009**  
-يجب أن يكون التوجيه إلزاميًا إذا كانت سياسة المؤسسة تتطلب ذلك.
+## BR-008
 
-**REQ-ROU-010**  
-يجب ألا يؤدي إلغاء الإحالة إلى حذف سجلها.
+إحالة «صورة» لا تنقل مسؤولية المعاملة الأساسية.
 
----
+## BR-009
 
-# 15. الإسناد والمهام والإجراءات
+إحالة «خاص» لا تظهر لمنسق الإدارة العام إلا بصلاحية خاصة أو عند إعداد النظام بذلك.
 
-## 15.1 تعريف الإسناد
+## BR-010
 
-Assignment يعني تحديد المسؤول الحالي عن المعاملة أو الإجراء.
+تاريخ الاستحقاق الخاص بالإحالة مستقل عن تاريخ الاستحقاق العام للمعاملة.
 
-## 15.2 تعريف الإجراء
+## BR-011
 
-Action هو عمل مطلوب أو منفذ على المعاملة، مثل:
+لا يجوز تحديد تاريخ استحقاق سابق لتاريخ الإحالة.
 
-- دراسة.
-- مراجعة.
-- إعداد رد.
-- اعتماد.
-- توقيع.
-- اتصال بالجهة.
-- طلب معلومات.
-- إرفاق مستند.
+## BR-012
 
-## 15.3 DocType الإجراءات
+التاريخ الهجري للعرض، بينما يُحفظ التاريخ الأساسي في قاعدة البيانات كـDate/Datetime ميلادي موحد.
 
-يضاف في Phase 2:
+## BR-013
 
-```text
-GESW Correspondence Action
-```
+حالة التأخير تحسب وفق سياسة SLA وأيام العمل والعطلات.
 
-الحقول:
+## BR-014
 
-- Correspondence.
-- Action Type.
-- Description.
-- Assigned Department.
-- Assigned User.
-- Priority.
-- Due Date.
-- Status.
-- Started On.
-- Completed On.
-- Completed By.
-- Completion Notes.
-- Created By.
-- Created On.
+المرفق السري لا يرث تلقائيًا كل قارئي المعاملة؛ بل يخضع لصلاحية مستقلة.
 
-الحالات:
+## BR-015
 
-- Pending.
-- In Progress.
-- Waiting.
-- Completed.
-- Cancelled.
+لا يجوز حذف المعاملة بعد التسجيل. تستخدم حالة Cancelled مع سبب وسجل تدقيق.
 
-## 15.4 التكامل مع ToDo
+## BR-016
 
-يجوز إنشاء ToDo قياسي مرتبط بالإجراء أو المعاملة، بهدف إظهاره في مهام المستخدم.
+تنزيل وطباعة المعاملات السرية يسجلان في `ACM Correspondence Action`.
 
-لا يعتبر ToDo بديلًا عن سجل الإحالة.
+## BR-017
 
-يجب منع التكرار غير المقصود بين:
+عند طباعة مستند سري تضاف علامة مائية تحتوي على:
 
-- Current Owner.
-- Routing.
-- Action.
-- ToDo.
-
-يوفر Frappe ToDo مرتبطًا بالمستند ومسؤولًا وتاريخ استحقاق، بينما تحتاج التذكيرات قبل أو بعد الموعد إلى إعداد Notification.  
-المراجع: [Assignments and ToDos](https://docs.frappe.io/framework/assignments-and-todos)، [Notifications](https://docs.frappe.io/framework/notifications).
-
----
-
-# 16. العلاقات بين المعاملات
-
-يجب إنشاء DocType باسم:
-
-```text
-GESW Correspondence Relation
-```
-
-## 16.1 أنواع العلاقات
-
-- Reply To.
-- Replied By.
-- Related To.
-- Follow-up Of.
-- Resulted In.
-- References.
-- Replaces.
-- Superseded By.
-
-## 16.2 القواعد
-
-- يجب منع ربط المعاملة بنفسها.
-- يجب منع العلاقة المكررة.
-- يجب تسجيل منشئ العلاقة وتاريخها.
-- يجب عرض العلاقات عند فتح المعاملة.
-- يجب أن يراعي عرض المعاملة المرتبطة صلاحيات المستخدم.
-- وجود علاقة لا يمنح المستخدم صلاحية قراءة المعاملة الأخرى.
-- يجب عرض العلاقة العكسية تلقائيًا عند الحاجة.
-
-مثال:
-
-```text
-OUT-2026-00231
-Reply To
-IN-2026-00125
-```
-
----
-
-# 17. المرفقات والوثائق
-
-## 17.1 متطلبات الإصدار الأساسي
-
-- استخدام نظام File القياسي في Frappe.
-- حفظ مرفقات المعاملات كملفات Private.
-- ربط كل ملف بالمعاملة.
-- عدم إظهار الملف لمستخدم لا يملك صلاحية قراءة المعاملة.
-- تسجيل إضافة الملف وحذفه في Timeline أو Version Log.
-- منع حذف مرفق رسمي بعد إغلاق المعاملة إلا بصلاحية استثنائية.
-- دعم تعدد المرفقات.
-- إظهار اسم الملف ونوعه وحجمه ورافعه وتاريخ الرفع.
-
-## 17.2 أنواع الملفات
-
-الأنواع الافتراضية:
-
-- PDF.
-- JPG.
-- JPEG.
-- PNG.
-- DOCX.
-- XLSX.
-- PPTX.
-- TXT.
-
-يجب أن تكون القائمة والحجم الأقصى قابلين للإعداد.
-
-الحجم الافتراضي المقترح للملف الواحد:
-
-```text
-50 MB
-```
-
-وأي تغيير يعتمد من مسؤول النظام.
-
-## 17.3 حماية الملفات
-
-- يجب فحص امتداد الملف ونوع المحتوى.
-- يجب منع الملفات التنفيذية غير المصرح بها.
-- يجب دمج فحص برمجيات ضارة في بيئة الإنتاج إذا توفر.
-- يجب عدم إرسال رابط ملف حساس إلى مستخدم غير مخول.
-- يجب عدم الاعتماد على سرية رابط الملف وحدها.
-- يجب أن تخضع معاينة الملف وتنزيله لصلاحيات المعاملة.
-
-ينص توثيق Frappe على أن المستخدم الذي يملك صلاحية قراءة المستند يستطيع الوصول إلى الملفات المرتبطة به، ولذلك تعتمد حماية الملفات على دقة صلاحيات المعاملة.  
-المرجع: [Frappe Attachments](https://docs.frappe.io/framework/user/en/desk/attachments).
-
-## 17.4 إصدارات الوثائق
-
-إدارة نسخ محتوى الملفات ليست ضمن Phase 1.
-
-في Phase 3 يجب إنشاء:
-
-```text
-GESW Correspondence Document
-```
-
-بحيث يدعم:
-
-- Document Type.
-- Document Number.
-- Document Date.
-- Version Number.
-- Previous Version.
-- Current Version.
-- File.
-- Confidentiality.
-- Checksum.
-- Created By.
-- Created On.
-
-يجب عدم اعتبار Track Changes الخاص بالسجل بديلًا عن Versioning لمحتوى الملفات.  
-المرجع: [Document Versioning](https://docs.frappe.io/erpnext/document-versioning).
-
----
-
-# 18. Timeline وسجل التدقيق
-
-## 18.1 الأحداث المطلوب إظهارها
-
-- إنشاء المعاملة.
-- إصدار الرقم الرسمي.
-- تغيير الحالة.
-- الإحالة.
-- قبول الإحالة.
-- تغيير المسؤول.
-- إضافة مرفق.
-- حذف مرفق مصرح به.
-- إضافة تعليق.
-- تعديل حقل مهم.
-- إنشاء علاقة.
-- إزالة علاقة.
-- الإكمال.
-- الإغلاق.
-- إعادة الفتح.
-- الإلغاء.
-- الأرشفة.
-
-## 18.2 بيانات الحدث
-
-يجب توفير ما أمكن من:
-
-- المستخدم.
+- اسم المستخدم.
 - التاريخ والوقت.
-- نوع الحدث.
-- القيمة السابقة.
-- القيمة الجديدة.
-- الوصف.
-- عنوان IP عند توفره وفق سياسة المؤسسة.
+- رقم المعاملة.
+- عبارة سرية المستند.
 
-## 18.3 القواعد
+## BR-018
 
-- لا يستطيع المستخدم العادي حذف سجل التدقيق.
-- يجب تفعيل Track Changes على DocTypes المهمة.
-- يجب عدم استخدام التعليقات بدل سجل انتقال رسمي.
-- الإحالات والإجراءات والعلاقات تحفظ كسجلات مستقلة.
-- يجب تسجيل العمليات المنفذة عبر API مثل العمليات المنفذة من الواجهة.
-- يجب أن تظهر التواريخ وفق المنطقة الزمنية للمؤسسة.
+التفويض لا يرفع صلاحيات المفوض إليه فوق صلاحيات المفوض.
 
----
+## BR-019
 
-# 19. التعليقات
+عند ربط أكثر من معاملة، يُحفظ ترتيب الروابط وتحدد واحدة كرئيسية.
 
-- يسمح للمستخدم المخول بإضافة تعليق.
-- يظهر اسم المستخدم والتاريخ والوقت.
-- يظهر التعليق في Timeline.
-- لا يغير التعليق حالة المعاملة.
-- لا يجوز استخدام التعليق لإسناد مسؤولية رسمية.
-- حذف التعليقات مقيد.
-- يجب منع إدراج محتوى تنفيذي أو HTML غير آمن.
-- يجب أن تخضع التعليقات لصلاحية قراءة المعاملة.
+## BR-020
+
+الباركود لا يحتوي بيانات سرية مباشرة؛ يحتوي معرفًا أو رمز تحقق فقط.
 
 ---
 
-# 20. البحث
+# 27. نموذج الصلاحيات
 
-## 20.1 حقول البحث الأساسي
+## 27.1 صلاحية القراءة
 
-- الرقم الرسمي.
-- الرقم الخارجي.
-- الموضوع.
-- الجهة.
-- نوع المعاملة.
-- تصنيف المعاملة.
-- التاريخ.
-- الحالة.
-- الأولوية.
-- السرية.
-- الإدارة.
-- الموظف المسؤول.
-- منشئ المعاملة.
+يسمح بقراءة المعاملة إذا تحقق أحد الشروط:
 
-## 20.2 البحث المتقدم
+- المستخدم منشئها.
+- المستخدم مسجلها.
+- المستخدم مستلم إحالة فعالة.
+- المستخدم ضمن الإدارة المستلمة ومخول بالوصول الجماعي.
+- المستخدم مدير الإدارة بحسب التسلسل.
+- المستخدم مستلم صورة.
+- المستخدم مسؤول متابعة.
+- المستخدم مفوض رسميًا.
+- المستخدم مدقق معتمد.
+- المستخدم لديه تصريح صريح لمستوى السرية.
 
-يجب دعم الجمع بين الفلاتر:
+## 27.2 صلاحية التعديل
+
+- المسودة: المنشئ أو من يملك صلاحية تحرير المسودات.
+- المسجلة: تعديلات محدودة عبر إجراءات مخصصة.
+- تحت الاعتماد: يمنع تعديل النص والمرفق الرئيسي.
+- المعتمدة: لا تعدل؛ تنشأ نسخة جديدة.
+- المغلقة: قراءة فقط حتى إعادة التشغيل.
+
+## 27.3 تنفيذ الصلاحيات في Frappe
+
+يلزم استخدام:
+
+- Role Permissions.
+- User Permissions على Company وDepartment.
+- `permission_query_conditions`.
+- `has_permission`.
+- التحقق داخل كل Whitelisted Method.
+- منع الاعتماد على إخفاء الأزرار في الواجهة فقط.
+- التحقق من صلاحية الملف عند التنزيل.
+- منع الوصول المباشر إلى الملفات السرية.
+
+---
+
+# 28. واجهات النظام
+
+## 28.1 Workspace
 
 ```text
-النوع = وارد
-الجهة = وزارة الصحة
-من التاريخ = 2026-01-01
-إلى التاريخ = 2026-03-31
-الحالة = قيد المعالجة
-الأولوية = عاجل
-الإدارة الحالية = الإدارة المالية
+أعمالي
+├── إنشاء جديد
+│   ├── معاملة داخلية
+│   ├── واردة خارجية
+│   └── صادرة خارجية
+├── صندوق المعاملات
+│   ├── الوارد إليّ
+│   ├── غير المستلم
+│   ├── قيد الإجراء
+│   ├── للمتابعة
+│   ├── صور المعاملات
+│   └── المتأخر
+├── المرسلة
+├── المسودات
+├── المغلقة
+├── البحث المتقدم
+├── المجلدات
+├── بيانات التسليم
+├── المهام
+├── اللجان والاجتماعات
+├── التقارير
+└── الإعدادات
 ```
 
-## 20.3 قواعد البحث
+## 28.2 شاشة التسجيل
 
-- يجب ألا تعرض نتائج البحث سجلات لا يملك المستخدم حق قراءتها.
-- يجب ألا يكشف عدد النتائج وجود معاملات سرية غير مصرح بها.
-- يجب دعم البحث الجزئي في الموضوع والرقم الخارجي.
-- يجب دعم البحث الكامل في الرقم الرسمي.
-- يجب فهرسة الحقول المستخدمة بصورة متكررة.
-- يجب توفير ترتيب حسب آخر تحديث والتاريخ والموعد النهائي.
-
-## 20.4 البحث العربي
-
-يجب أن يدعم البحث قدر الإمكان:
-
-- تجاهل التشكيل.
-- تجاهل التطويل.
-- توحيد أشكال الألف لأغراض البحث.
-- التعامل مع الأرقام العربية والإنجليزية.
-- البحث دون حساسية لحالة الأحرف الإنجليزية.
-- الحفاظ على القيمة الأصلية للعرض.
-
-## 20.5 البحث داخل الملفات
-
-ليس ضمن Phase 1.
-
-يمكن إضافته لاحقًا من خلال:
+واجهة Wizard مخصصة:
 
 ```text
-File
-→ Text Extraction/OCR
-→ Search Index
-→ Permission-filtered Results
+1. البيانات
+2. المرفقات
+3. الإحالة
 ```
 
-يوفر Frappe واجهات للفهرسة والبحث النصي، إلا أن استخراج النص من الملفات ودعم OCR والتطبيع العربي يجب تنفيذه واختباره كمرحلة مستقلة.  
-المرجع: [FullTextSearch API](https://docs.frappe.io/framework/user/en/api/full-text-search).
-
----
-
-# 21. My Inbox ولوحة المتابعة
-
-## 21.1 My Inbox
-
-يجب أن تعرض:
-
-- المعاملات المحالة إلى المستخدم.
-- المعاملات المحالة إلى إدارته.
-- المعاملات الجديدة غير المفتوحة.
-- المعاملات التي تتطلب إجراء.
-- المعاملات المتأخرة.
-- المعاملات المستحقة اليوم.
-- المعاملات المنتظرة.
-
-## 21.2 My Tasks
-
-تعرض:
-
-- المهام المفتوحة.
-- المهام المتأخرة.
-- المهام المستحقة اليوم.
-- المهام المكتملة حديثًا.
-
-## 21.3 Dashboard
-
-يجب أن تعرض وفق صلاحية المستخدم:
-
-- إجمالي الوارد.
-- إجمالي الصادر.
-- إجمالي الداخلي.
-- قيد المعالجة.
-- المتأخر.
-- العاجل.
-- بانتظار الإجراء.
-- المكتمل.
-- المغلق.
-
-يجب ألا تحتسب سجلات لا يحق للمستخدم رؤيتها.
-
----
-
-# 22. الإشعارات
-
-## 22.1 إشعارات Phase 1
-
-- إحالة معاملة إلى المستخدم.
-- إحالة معاملة إلى إدارته.
-- تغيير المسؤول الحالي.
-- إعادة معاملة إليه.
-- إضافة تعليق مع ذكر المستخدم إذا دعمت الواجهة ذلك.
-
-## 22.2 إشعارات Phase 2
-
-- إسناد مهمة.
-- قرب الموعد النهائي.
-- حلول الموعد.
-- تجاوز الموعد.
-- طلب مراجعة.
-- طلب اعتماد.
-- الموافقة.
-- الرفض.
-- إكمال المهمة.
-
-## 22.3 القواعد
-
-- يجب ألا تحتوي الإشعارات على معلومات سرية أكثر من صلاحية المستلم.
-- يجب ألا يمنح رابط الإشعار صلاحية إضافية.
-- عند فقد المستخدم صلاحية المستند يجب رفض فتحه.
-- يجب أن تكون بعض الإشعارات قابلة للتعطيل من الإعدادات.
-- يجب تجنب إرسال إشعارات مكررة للعملية نفسها.
-
-يدعم Frappe إشعارات مبنية على إنشاء المستند والحفظ والتغيير والتاريخ، بالإضافة إلى الإشعارات داخل النظام والبريد الإلكتروني عند إعداده.  
-المرجع: [Frappe Notifications](https://docs.frappe.io/framework/notifications).
-
----
-
-# 23. الصلاحيات والأمان
-
-## 23.1 أبعاد الصلاحية
-
-تعتمد صلاحيات الوصول على:
-
-- User.
-- Role.
-- Department.
-- Department Hierarchy.
-- Correspondence Type.
-- Current Department.
-- Current Owner.
-- Workflow State.
-- Confidentiality Level.
-- Explicit Access عند الحاجة.
-
-## 23.2 مصفوفة العمليات
-
-|العملية|Clerk|Department User|Manager|Auditor|Admin|
-|---|---|---|---|---|---|
-|إنشاء Draft|نعم|حسب السياسة|نعم|لا|نعم|
-|تسجيل وارد|نعم|لا|نعم|لا|نعم|
-|إعداد صادر|نعم|نعم|نعم|لا|نعم|
-|اعتماد صادر|لا|لا|نعم|لا|نعم|
-|إحالة|حسب السياسة|حسب السياسة|نعم|لا|نعم|
-|تعديل Draft|نعم|حسب الملكية|نعم|لا|نعم|
-|تعديل بعد التسجيل|محدود|محدود|محدود|لا|استثنائي|
-|إضافة تعليق|نعم|نعم|نعم|لا|نعم|
-|إضافة مرفق|نعم|نعم|نعم|لا|نعم|
-|حذف مرفق رسمي|لا|لا|استثنائي|لا|استثنائي|
-|إكمال معاملة|لا|حسب الإسناد|نعم|لا|نعم|
-|إغلاق|لا|لا|نعم|لا|نعم|
-|إعادة فتح|لا|لا|حسب التفويض|لا|نعم|
-|إلغاء|لا|لا|حسب التفويض|لا|نعم|
-|حذف معاملة مسجلة|لا|لا|لا|لا|لا افتراضيًا|
-|عرض Audit|محدود|محدود|نعم|نعم|نعم|
-|التصدير|حسب السياسة|حسب السياسة|نعم|حسب السياسة|نعم|
-|الطباعة|نعم|حسب الصلاحية|نعم|حسب السياسة|نعم|
-
-## 23.3 العزل حسب الإدارة
-
-- المستخدم العادي يرى المعاملات المسندة إليه أو إلى إدارته وفق السياسة.
-- المدير يرى معاملات إدارته والإدارات التابعة إذا كان ذلك مفعلًا.
-- لا تمنح عضوية الإدارة حق الوصول إلى Restricted تلقائيًا.
-- يجب تطبيق الصلاحيات على List وReport وSearch وAPI وPrint وFile Download.
-- يجب عدم الاكتفاء بإخفاء عناصر الواجهة.
-
-## 23.4 السرية
-
-### Public
-
-متاحة للمستخدمين الداخليين وفق الأدوار العامة.
-
-### Internal
-
-متاحة للمستخدمين الذين يدخل السجل ضمن نطاق عملهم.
-
-### Confidential
-
-متاحة فقط إلى:
-
-- المنشئ حسب السياسة.
-- الإدارة الحالية.
-- المسؤول الحالي.
-- المدير المخول.
-- المستخدمين المفوضين.
-
-### Restricted
-
-متاحة فقط إلى:
-
-- قائمة وصول صريحة.
-- أدوار أمنية محددة.
-- مسؤول النظام المصرح له وفق السياسة.
-
-## 23.5 صلاحيات إضافية
-
-يجب التحكم بصورة مستقلة في:
-
-- Read.
-- Write.
-- Create.
-- Delete.
-- Print.
-- Export.
-- Share.
-- Email.
-- Download File.
-- View Audit.
-- Reopen.
-- Cancel.
-- Override Confidentiality.
-
-يدعم Frappe فصل صلاحيات القراءة والكتابة والحذف والطباعة والتصدير والمشاركة والبريد، بالإضافة إلى User Permissions وPermission Levels.  
-المرجع: [Users and Permissions](https://docs.frappe.io/framework/user/en/basics/users-and-permissions).
-
----
-
-# 24. سلامة البيانات
-
-يجب أن يمنع النظام:
-
-- رقمًا رسميًا مكررًا.
-- تسجيل معاملة بلا موضوع.
-- تسجيل معاملة بلا نوع.
-- تسجيل معاملة بلا تاريخ.
-- تسجيل وارد بلا جهة مرسلة.
-- إرسال صادر بلا جهة مستلمة.
-- إرسال داخلي بلا إدارة مستلمة.
-- إحالة إلى مستخدم غير نشط.
-- إجراء بلا معاملة.
-- علاقة المعاملة بنفسها.
-- علاقة مكررة.
-- تغيير النوع بعد إصدار الرقم.
-- تغيير الرقم الرسمي.
-- الانتقال إلى حالة غير مسموحة.
-- إغلاق معاملة قبل إكمال الشروط المطلوبة.
-- حذف معاملة مسجلة من مستخدم عادي.
-- الوصول إلى ملف دون صلاحية المعاملة.
-
-يجب تنفيذ قواعد السلامة على مستوى الخادم، وليس من خلال JavaScript فقط.
-
----
-
-# 25. الإغلاق والإلغاء وإعادة الفتح
-
-## 25.1 الإغلاق
-
-قبل الإغلاق يجب:
-
-- أن تكون المعاملة Completed أو Sent حسب النوع.
-- ألا توجد مهام إلزامية مفتوحة، إذا كانت سياسة المنظومة تطبق ذلك.
-- تسجيل منفذ الإغلاق وتاريخه.
-- منع التعديل العادي على الحقول الجوهرية.
-
-## 25.2 الإلغاء
-
-- الإلغاء لا يعني الحذف.
-- سبب الإلغاء إلزامي.
-- يحتفظ الرقم الرسمي.
-- تحتفظ المعاملة بالمرفقات والعلاقات والتاريخ.
-- تظهر في التقارير كـCancelled.
-- لا تستخدم أرقامها مرة أخرى.
-
-## 25.3 إعادة الفتح
-
-- لا يسمح بها إلا لدور مخول.
-- السبب إلزامي.
-- يسجل المستخدم والتاريخ.
-- تعاد المعاملة إلى حالة مناسبة وفق نوعها.
-- يظهر الحدث في Timeline.
-
----
-
-# 26. الأرشفة والاحتفاظ
-
-## 26.1 مفهوم الأرشفة
-
-الأرشفة لا تعني حذف السجل، بل تحويله إلى حالة غير تشغيلية مع الاحتفاظ بـ:
-
-- البيانات.
+### البيانات
+
+- ربط بمعاملة أخرى.
+- البيانات الرئيسية.
+- بيانات الشخص المعني.
+- المرفقات السرية.
+- تفريغ الحقول.
+- حفظ كمسودة.
+- طباعة باركود.
+- التالي.
+
+### المرفقات
+
+- مسح ضوئي.
+- إرفاق من جهازك.
+- النوع.
+- المجلد.
+- إرفاق ملف.
+- تحميل.
+- الخطاب الرئيسي.
 - المرفقات.
-- الإحالات.
-- الإجراءات.
-- التعليقات.
-- العلاقات.
-- سجل التغييرات.
+- الرد.
+- الأحدث.
+- الأقدم.
+- عرض شبكي.
+- عرض قائمة.
 
-## 26.2 الإصدار الأول
+### الإحالة
 
-- لا يوجد حذف آلي للسجلات.
-- لا يوجد إتلاف آلي للمرفقات.
-- تبقى المعاملات المغلقة قابلة للبحث وفق الصلاحيات.
-- تنفذ حالة Archived في Phase 3.
-
-## 26.3 سياسة الاحتفاظ
-
-مدة الاحتفاظ القانونية تحددها المؤسسة قبل تشغيل وظيفة الإتلاف.
-
-حتى اعتماد السياسة:
-
-```text
-Retention Period = Indefinite
-Automatic Destruction = Disabled
-```
+- إحالة متعددة.
+- الجهات الخارجية عند انطباقها.
+- إلى.
+- التوجيه.
+- الأهمية.
+- الاستحقاق.
+- تعليمات للمستقبل.
+- خاص.
+- مراسلة ورقية.
+- صورة.
+- للمتابعة.
+- عمليات.
+- إرسال.
 
 ---
 
-# 27. التقارير
+# 29. صندوق المعاملات
 
-## 27.1 تقارير Phase 1
+## الأعمدة
 
-1. تقرير الوارد.
-2. تقرير الصادر.
-3. تقرير المعاملات الداخلية.
-4. تقرير حسب الحالة.
-5. تقرير حسب الإدارة.
-6. تقرير حسب الجهة.
-7. تقرير حسب الفترة.
-8. تقرير المعاملات المتأخرة.
-9. تقرير المعاملات العاجلة.
-10. تقرير الإحالات المفتوحة.
-11. تقرير المعاملات المغلقة.
-12. تقرير المعاملات الملغاة.
-
-## 27.2 الفلاتر المشتركة
-
-- الفترة.
-- نوع المعاملة.
-- الحالة.
-- الإدارة.
-- الجهة.
-- المستخدم.
-- الأولوية.
-- السرية.
-- متأخرة/غير متأخرة.
-- التصنيف.
-
-## 27.3 التقارير الإدارية المستقبلية
-
-- Average Processing Time.
-- Average Response Time.
-- Overdue Rate.
-- Completion Rate.
-- Department Performance.
-- User Workload.
-
-يجب اعتماد تعريف كل مؤشر قبل تنفيذه؛ فلا يجوز احتساب أداء الموظفين دون تعريف الحالات المستثناة وفترات الانتظار والعطلات.
-
----
-
-# 28. الطباعة
-
-يجب توفير Print Format رسمي للمعاملة يحتوي على:
-
-- شعار المؤسسة.
-- اسم المؤسسة.
-- نوع المعاملة.
-- الرقم الرسمي.
-- الرقم الخارجي.
-- التاريخ.
-- الجهة.
-- الإدارة.
+- رقم المعاملة.
+- النوع.
+- الاتجاه.
 - الموضوع.
-- الوصف.
-- الأولوية.
-- السرية حسب السياسة.
-- بيانات المسؤول.
-- قائمة المرفقات.
-- بيانات الاعتماد.
-- تاريخ ووقت الطباعة.
-- اسم المستخدم الذي نفذ الطباعة، إذا اعتمدت المؤسسة ذلك.
+- الجهة المرسلة.
+- الجهة الحالية.
+- التوجيه.
+- السرية.
+- الأهمية.
+- تاريخ الإرسال.
+- تاريخ الاستحقاق.
+- الأيام المتبقية.
+- الحالة.
+- وجود مرفقات.
+- خاص.
+- صورة.
+- للمتابعة.
 
-## 28.1 قواعد الطباعة
+## الألوان
 
-- دعم A4.
-- دعم RTL.
-- عدم قطع النص العربي.
-- عدم طباعة بيانات غير مصرح بها.
-- تطبيق صلاحية Print بصورة مستقلة.
-- إمكانية إضافة QR في مرحلة لاحقة.
-- يجب اختبار مخرجات PDF على المتصفحات المعتمدة.
+- طبيعي: اللون الافتراضي.
+- مستحق قريبًا: أصفر.
+- مستحق اليوم: برتقالي.
+- متأخر: أحمر.
+- مكتمل: أخضر.
+- مرفوض/معاد: لون تحذيري منفصل.
 
-يوفر Frappe 16 إمكانات Print Formats وتحسينات لتوليد PDF، بما في ذلك خيار محول PDF المبني على Chrome وفق صفحة ميزات الإصدار.  
-المرجع: [Frappe Framework 16](https://frappe.io/framework/version-16).
+## الإجراءات
+
+- فتح.
+- استلام.
+- رفض.
+- إحالة.
+- إعادة.
+- إكمال.
+- إضافة رد.
+- طلب اعتماد.
+- إضافة إلى مجلد.
+- متابعة.
+- طباعة.
+- تتبع.
 
 ---
 
-# 29. الصفحة الرئيسية وتجربة الاستخدام
+# 30. البحث المتقدم
 
-## 29.1 الصفحة الرئيسية
+## الحقول
 
-تعرض بطاقات مختصرة:
+- رقم المعاملة.
+- السنة الهجرية.
+- السنة الميلادية.
+- الاتجاه: وارد/داخلي/صادر.
+- أصل/نسخة.
+- الموضوع.
+- رقم الخطاب.
+- الجهة الوارد منها.
+- الجهة الصادر إليها.
+- الإدارة.
+- المستخدم.
+- النوع.
+- السرية.
+- الأهمية.
+- التوجيه.
+- الحالة.
+- تاريخ التسجيل من/إلى.
+- تاريخ الخطاب من/إلى.
+- تاريخ الاستحقاق من/إلى.
+- متأخر فقط.
+- يحتوي مرفقات.
+- يحتوي مرفقات سرية.
+- معاملات مرتبطة.
+- بحث شامل.
+- بحث محدد برقم المعاملة.
+
+البحث في نص OCR يجب أن يكون اختياريًا ويخضع للسرية.
+
+---
+
+# 31. التقارير
+
+1. المراسلات الواردة.
+2. المراسلات الصادرة.
+3. المعاملات الداخلية.
+4. المعاملات المرسلة من المستخدم.
+5. المعاملات المحالة من مدير الإدارة.
+6. إنتاجية الموظفين.
+7. إحصائية المعاملات لكل إدارة.
+8. المعاملات المستحقة اليوم.
+9. المعاملات المتأخرة.
+10. متوسط زمن الاستلام.
+11. متوسط زمن الإنجاز.
+12. الإحالات المرفوضة.
+13. الإحالات المسحوبة.
+14. المعاملات المعاد تشغيلها.
+15. المعاملات حسب السرية.
+16. المعاملات حسب الأهمية.
+17. المعاملات دون خطاب رئيسي.
+18. الصادر غير المسلّم.
+19. بيانات التسليم.
+20. نشاط المستخدمين.
+21. تنزيل وطباعة المستندات السرية.
+22. استخدام التفويضات.
+23. المرفقات حسب الحجم والنوع.
+24. المعاملات حسب تصنيف الموضوع.
+25. الالتزام باتفاقيات SLA.
+
+---
+
+# 32. الإشعارات
+
+## إشعارات فورية وبريدية
+
+- إحالة جديدة.
+- إحالة خاصة.
+- معاملة بانتظار الاستلام.
+- رفض الإحالة.
+- إعادة المعاملة.
+- قرب الاستحقاق.
+- استحقاق اليوم.
+- تجاوز الاستحقاق.
+- طلب اعتماد.
+- اعتماد الخطاب.
+- رفض الاعتماد.
+- طلب توقيع.
+- اكتمال التوقيع.
+- سحب الإحالة.
+- إعادة تشغيل المعاملة.
+- تسليم الصادر.
+- تعثر التكامل.
+- انتهاء التفويض.
+- اقتراب اجتماع أو مهمة.
+
+## التصعيد
 
 ```text
-┌──────────────────────────────────┐
-│           GESW OFFICE            │
-├──────────────────────────────────┤
-│ الوارد          الصادر           │
-│ الداخلي         معاملاتي         │
-│ صندوقي          مهامي            │
-│ المستحق اليوم   المتأخر          │
-└──────────────────────────────────┘
+قبل الاستحقاق
+→ المستلم
+
+عند الاستحقاق
+→ المستلم + منسق الإدارة
+
+بعد التأخير الأول
+→ المستلم + المدير
+
+بعد التأخير الثاني
+→ المدير الأعلى أو مسؤول المتابعة
 ```
 
-## 29.2 متطلبات UX
+---
 
-- تكون الواجهة عربية وRTL افتراضيًا.
-- تكون أسماء الحقول الداخلية باللغة الإنجليزية.
-- تعرض التسميات للمستخدم باللغة العربية.
-- تكون أكثر الحقول استخدامًا في الجزء الأول من النموذج.
-- تستخدم الحقول الشرطية حسب نوع المعاملة.
-- لا يعرض حقل غير متعلق بالنوع إلا عند الحاجة.
-- تكون المعاملة في صفحة مركزية واحدة.
-- تعرض الإحالات والعلاقات والمرفقات في الصفحة نفسها.
-- يقل عدد الخطوات اللازمة لتسجيل معاملة.
-- تستخدم رسائل تحقق واضحة باللغة العربية.
-- تحفظ المسودة دون إصدار رقم رسمي.
-- تظهر الأزرار المتاحة حسب الحالة والصلاحية.
+# 33. التكاملات
+
+## 33.1 ERPNext
+
+- User وEmployee.
+- Department.
+- Company.
+- Contact وAddress.
+- Project عند ربط المهام بالمشروعات.
+- Holiday List لحساب أيام العمل.
+- Email Account.
+- File.
+
+## 33.2 البريد الإلكتروني
+
+- تحويل بريد إلى مسودة واردة.
+- حفظ المرسل والموضوع والتاريخ.
+- حفظ المرفقات.
+- عدم التسجيل النهائي دون مراجعة.
+- ربط الرد بالبريد الأصلي.
+- منع إرسال الملفات السرية دون سياسة.
+
+## 33.3 Active Directory/SSO
+
+متطلبات اختيارية:
+
+- OIDC أو OAuth/SAML عبر موفر الهوية.
+- مزامنة المستخدم والاسم والبريد.
+- تعطيل حساب النظام عند تعطيل الحساب المؤسسي.
+- MFA لدى موفر الهوية.
+
+## 33.4 الماسح الضوئي
+
+خيارات التنفيذ:
+
+1. رفع ملف PDF من جهاز المسح.
+2. خدمة محلية Scanner Agent تتواصل مع الجهاز.
+3. TWAIN/WIA Connector على أجهزة Windows.
+4. تطبيق جوال للالتقاط إذا اعتُمد لاحقًا.
+
+متصفح الويب لا يستطيع التحكم بجميع الماسحات مباشرة دون وسيط محلي.
+
+## 33.5 الباركود
+
+- QR افتراضي.
+- Code 128 اختياري.
+- طباعة ملصق.
+- مسح الباركود لفتح المعاملة بعد التحقق من الصلاحية.
+- عدم تضمين الموضوع أو السرية داخل الرمز.
+
+يدعم Frappe حقول Barcode وواجهات مسح باستخدام كاميرا الجهاز.  
+[Scanner API](https://docs.frappe.io/framework/user/en/api/scanner) — [Field Types](https://docs.frappe.io/framework/user/en/basics/doctypes/fieldtypes)
 
 ---
 
-# 30. التوطين
+# 34. REST API المقترحة
 
-- اللغة الأساسية: العربية.
-- الاتجاه الأساسي: RTL.
-- اللغة الإنجليزية اختيارية مستقبلًا.
-- تخزن القيم التقنية الثابتة باللغة الإنجليزية.
-- تعرض ترجمتها العربية في الواجهة.
-- يعتمد التقويم الميلادي كأساس للتخزين.
-- يمكن إضافة عرض هجري مستقبلًا دون تغيير التاريخ الأصلي.
-- تكون المنطقة الزمنية قابلة للإعداد.
-- تخزن التواريخ الزمنية بطريقة متسقة على الخادم.
-- تعرض الأوقات حسب إعداد المؤسسة أو المستخدم.
-
----
-
-# 31. المتطلبات غير الوظيفية
-
-## 31.1 الأداء
-
-يجب قياس الأداء على بيئة إنتاج مماثلة وببيانات اختبار واقعية.
-
-الأهداف الأساسية:
-
-|العملية|الهدف|
-|---|---|
-|تحميل أول صفحة من القائمة|أقل من ثانيتين لـ95% من الطلبات|
-|فتح المعاملة دون ملفات كبيرة|أقل من 3 ثوانٍ لـ95%|
-|حفظ المعاملة|أقل من ثانيتين لـ95%|
-|البحث في الحقول المفهرسة|أقل من 3 ثوانٍ لـ95%|
-|فتح My Inbox|أقل من 3 ثوانٍ|
-|إنشاء PDF عادي|أقل من 10 ثوانٍ|
-|تسجيل انتقال Workflow|أقل من 3 ثوانٍ|
-
-الافتراضات التصميمية:
-
-- حتى 500,000 معاملة.
-- حتى 2,000,000 مرفق.
-- حتى 500 مستخدم مسجل.
-- حتى 100 مستخدم متزامن.
-- متوسط 3 إلى 5 مرفقات لكل معاملة.
-
-إذا تجاوز الحجم هذه الحدود، يجب إجراء اختبار تحميل جديد ومراجعة الفهارس والتخزين.
-
-## 31.2 التوافر
-
-الهدف التشغيلي:
+## معاملات
 
 ```text
-99.5% شهريًا
+POST   /api/method/aamali_correspondence.api.create_draft
+POST   /api/method/aamali_correspondence.api.register
+GET    /api/method/aamali_correspondence.api.get_correspondence
+POST   /api/method/aamali_correspondence.api.link_correspondence
+POST   /api/method/aamali_correspondence.api.close
+POST   /api/method/aamali_correspondence.api.reopen
+POST   /api/method/aamali_correspondence.api.cancel
 ```
 
-باستثناء الصيانة المجدولة المعتمدة.
-
-## 31.3 النسخ الاحتياطي
-
-يجب أن يشمل النسخ الاحتياطي:
-
-- قاعدة البيانات.
-- الملفات العامة.
-- الملفات الخاصة.
-- إعدادات الموقع.
-- إعدادات التطبيق اللازمة للاستعادة.
-
-الأهداف:
+## إحالات
 
 ```text
-RPO: لا يزيد على 4 ساعات
-RTO: لا يزيد على 8 ساعات
+POST /api/method/aamali_correspondence.api.refer
+POST /api/method/aamali_correspondence.api.receive
+POST /api/method/aamali_correspondence.api.reject
+POST /api/method/aamali_correspondence.api.return_referral
+POST /api/method/aamali_correspondence.api.complete_referral
+POST /api/method/aamali_correspondence.api.withdraw_referral
 ```
 
-تخضع القيم النهائية لاعتماد البنية التحتية.
+## مستندات
 
-يجب تنفيذ اختبار استعادة دوري، وليس الاكتفاء بإنشاء النسخ.
+```text
+POST /api/method/aamali_correspondence.api.upload_document
+GET  /api/method/aamali_correspondence.api.download_document
+POST /api/method/aamali_correspondence.api.create_document_version
+POST /api/method/aamali_correspondence.api.verify_document_hash
+```
 
-## 31.4 الأمان
+## اعتماد
 
-- استخدام HTTPS في الإنتاج.
-- عدم تخزين كلمات المرور داخل التطبيق.
-- استخدام Authentication الخاص بـFrappe.
-- تطبيق مبدأ أقل صلاحية.
-- عدم تسجيل الأسرار في Logs.
-- حماية مفاتيح API.
-- تحديد مدة الجلسات.
-- تطبيق سياسة كلمات المرور.
-- تقييد محاولات الدخول.
-- مراجعة صلاحيات Administrator.
-- تحديث Frappe والتبعيات وفق سياسة أمنية.
-- فحص الملفات المرفوعة عند توفر خدمة مكافحة البرمجيات الضارة.
+```text
+POST /api/method/aamali_correspondence.api.request_approval
+POST /api/method/aamali_correspondence.api.approve
+POST /api/method/aamali_correspondence.api.sign
+POST /api/method/aamali_correspondence.api.return_for_revision
+POST /api/method/aamali_correspondence.api.reject_approval
+```
 
-## 31.5 التوافق
+## بحث وتتبع
 
-يجب دعم آخر إصدارين مستقرين وقت القبول من:
+```text
+GET /api/method/aamali_correspondence.api.search
+GET /api/method/aamali_correspondence.api.timeline
+GET /api/method/aamali_correspondence.api.inbox
+GET /api/method/aamali_correspondence.api.statistics
+```
 
-- Google Chrome.
-- Microsoft Edge.
-- Firefox، إذا اعتمدته المؤسسة.
+كل API يجب أن:
 
-تكون الأولوية لواجهة سطح المكتب، مع دعم استخدام أساسي من الهاتف دون تطبيق مستقل.
-
-## 31.6 قابلية الصيانة
-
-- كتابة التطبيق بصورة Modular.
-- استخدام DocTypes قياسية.
-- تجنب تعديل Core.
-- كتابة الاختبارات الآلية للقواعد الحرجة.
-- توثيق الوظائف العامة.
-- وضع Migrations داخل التطبيق.
-- استخدام Version Control.
-- تطبيق Code Review.
-- توفير بيئة Development وStaging وProduction.
+- يتحقق من الجلسة أو API Token.
+- يطبق الصلاحيات نفسها المطبقة في Desk.
+- يمنع تمرير أسماء مستخدمين أو إدارات غير مسموحة.
+- يسجل العمليات الحساسة.
+- يستخدم Rate Limiting.
+- يعيد معرف طلب للتتبع.
 
 ---
 
-# 32. التسجيل والمراقبة
+# 35. المتطلبات غير الوظيفية
+
+## 35.1 الأداء
+
+- فتح صندوق يحوي النتائج الأولى خلال 3 ثوانٍ في الظروف الطبيعية.
+- البحث برقم المعاملة خلال ثانيتين.
+- تحميل القوائم باستخدام Pagination.
+- عدم تحميل المرفقات داخل List View.
+- تنفيذ التقارير الثقيلة في Background Job.
+- استخدام فهارس على:
+    - رقم المعاملة.
+    - الاتجاه.
+    - الحالة.
+    - الإدارة الحالية.
+    - المستلم.
+    - تاريخ الاستحقاق.
+    - رقم الخطاب.
+    - الجهة الخارجية.
+    - السرية.
+    - الأهمية.
+
+## 35.2 السعة
+
+خط أساس مقترح قابل للتعديل:
+
+- مليون معاملة.
+- 10 ملايين إحالة.
+- 20 مليون ملف.
+- 5,000 مستخدم.
+- 500 مستخدم متزامن.
+- ملفات حتى 25 MB افتراضيًا.
+
+## 35.3 التوافر
+
+- الهدف: 99.9% شهريًا، باستثناء الصيانة المخطط لها.
+- مراقبة Web وWorkers وScheduler وRedis وقاعدة البيانات والتخزين.
+- تنبيه عند فشل الوظائف الخلفية.
+
+## 35.4 النسخ الاحتياطي
+
+- نسخة قاعدة بيانات يومية على الأقل.
+- نسخ ملفات Private وPublic.
+- نسخ مشفر خارج الخادم.
+- اختبار استعادة ربع سنوي.
+- تحديد RPO وRTO تعاقديًا.
+
+خط أساس مقترح:
+
+- RPO: ساعة.
+- RTO: أربع ساعات.
+
+## 35.5 الأمن
+
+- HTTPS فقط.
+- MFA للمستخدمين ذوي الصلاحيات الحساسة.
+- ملفات Private.
+- تشفير التخزين أو القرص.
+- إدارة أسرار خارج المستودع.
+- التحقق من نوع وحجم الملف.
+- فحص برمجيات خبيثة.
+- منع الملفات التنفيذية.
+- CSRF للحسابات المعتمدة على الجلسة.
+- Rate Limiting.
+- تسجيل التنزيل والطباعة للسرية.
+- Content Security Policy.
+- جلسات محدودة المدة.
+- إلغاء الجلسات عند تعطيل المستخدم.
+- مراجعة دورية للصلاحيات.
+- اختبار اختراق قبل الإنتاج.
+
+## 35.6 سهولة الاستخدام
+
+- العربية RTL أساسية.
+- الإنجليزية اختيارية.
+- دعم سطح المكتب واللوحي.
+- اختصارات لوحة مفاتيح.
+- رسائل تحقق عربية واضحة.
+- حفظ تلقائي للمسودة اختياري.
+- منع فقدان البيانات عند مغادرة النموذج.
+- إمكانية الوصول WCAG 2.1 AA قدر الإمكان.
+
+---
+
+# 36. سجل التدقيق
 
 يجب تسجيل:
 
-- أخطاء الخادم.
-- فشل المهام الخلفية.
-- فشل الإشعارات.
-- فشل إنشاء الملفات أو PDF.
-- محاولات الانتقال غير الصالحة.
-- العمليات الإدارية الحساسة.
-- أخطاء التكاملات المستقبلية.
+- الإنشاء والتسجيل.
+- تعديل الحقول الحساسة.
+- تغيير السرية.
+- تغيير الأهمية.
+- الإحالة.
+- الاستلام.
+- الرفض والإعادة.
+- السحب.
+- الاعتماد والتوقيع.
+- إضافة أو استبدال ملف.
+- التنزيل والطباعة للسرية.
+- فتح معاملة سرية عند تفعيل التدقيق الموسع.
+- الإغلاق وإعادة التشغيل.
+- استخدام التفويض.
+- محاولات الوصول المرفوضة.
+- عمليات API الحساسة.
 
-يجب ألا تتضمن Logs:
-
-- كلمات المرور.
-- مفاتيح API الكاملة.
-- محتوى الوثائق السرية دون حاجة.
-- رموز الجلسات.
-- بيانات شخصية زائدة.
+يجب منع تعديل `ACM Correspondence Action` من الواجهة، ولا يعتمد النظام على `Version` وحده لأن سجل Version ليس بديلًا كاملًا لسجل أمني مخصص.
 
 ---
 
-# 33. API
+# 37. الوظائف المجدولة
 
-## 33.1 Phase 1
+## كل خمس دقائق
 
-لا يلزم توفير API أعمال مخصص للعامة.
+- تحديث الإحالات المتأخرة.
+- إرسال إشعارات الاستحقاق.
+- معالجة طوابير التكامل.
 
-يجب ألا يؤدي استخدام REST API القياسي إلى تجاوز:
+## يوميًا
 
+- حساب مؤشرات SLA.
+- تنبيه التفويضات المنتهية.
+- إحصائيات الإدارات.
+- فحص معاملات بلا إجراء.
+- أرشفة السجلات المؤهلة.
+
+## أسبوعيًا
+
+- تقرير المعاملات المتأخرة للمديرين.
+- فحص المرفقات المفقودة.
+- تقرير الصادر غير المسلّم.
+
+## شهريًا
+
+- مؤشرات إنتاجية الإدارات.
+- تقرير الوصول للمعاملات السرية.
+- تقرير استخدام التخزين.
+- مراجعة التفويضات والصلاحيات المؤقتة.
+
+---
+
+# 38. Print Formats
+
+1. بطاقة معاملة.
+2. ملصق باركود.
+3. خطاب داخلي.
+4. خطاب صادر.
+5. غلاف معاملة.
+6. كشف إحالات.
+7. بيان تسليم.
+8. إيصال استلام.
+9. تقرير تتبع المعاملة.
+10. محضر اجتماع.
+11. قرار لجنة.
+12. تقرير معاملات متأخرة.
+13. تقرير إنتاجية.
+14. نسخة بعلامة مائية.
+
+---
+
+# 39. حالات الاستخدام الرئيسية
+
+## UC-01 تسجيل وارد خارجي
+
+1. يفتح الموظف «تسجيل معاملة واردة خارجية».
+2. يدخل بيانات الجهة والخطاب.
+3. يحدد السرية والأهمية.
+4. يضيف المستند الرئيسي.
+5. يضيف المرفقات.
+6. يربط معاملات سابقة.
+7. يحدد المستلمين.
+8. يرسل.
+9. يولد النظام رقم المعاملة والإحالات.
+10. يرسل الإشعارات.
+
+## UC-02 استلام إحالة
+
+1. تظهر المعاملة في «غير المستلم».
+2. يفتح المستخدم الملخص المسموح.
+3. يختار «استلام».
+4. يسجل النظام الوقت والمستخدم.
+5. تتحول إلى In Progress.
+
+## UC-03 رفض إحالة
+
+1. يختار المستخدم «رفض».
+2. يحدد السبب.
+3. يكتب الملاحظة عند الحاجة.
+4. تعاد إلى المرسل.
+5. يرسل النظام إشعارًا.
+6. يسجل الحدث.
+
+## UC-04 إعداد رد صادر
+
+1. يفتح المختص المعاملة الواردة.
+2. يختار «إضافة رد».
+3. ينشئ خطابًا إلكترونيًا.
+4. يرفع المسودة.
+5. يرسل للمراجعة والاعتماد.
+6. يعتمد ويوقع الخطاب.
+7. يسجله موظف الصادر.
+8. يجهزه للتسليم.
+9. يسجل إثبات التسليم.
+10. يغلق المعاملة.
+
+## UC-05 إحالة متعددة
+
+1. يختار المستخدم «إحالة متعددة».
+2. يضيف عدة مستلمين.
+3. يحدد توجيهًا واستحقاقًا لكل مستلم.
+4. يرسل.
+5. ينشئ النظام إحالة مستقلة لكل صف.
+6. تبقى حالة كل إحالة مستقلة.
+
+---
+
+# 40. معايير القبول العامة
+
+يُعد النظام مقبولًا عندما:
+
+1. يمكن تسجيل الداخلي والوارد والصادر.
+2. يعمل المعالج الثلاثي دون فقد بيانات.
+3. تُولد أرقام فريدة.
+4. يمكن حفظ المسودة واستكمالها.
+5. تعمل الإحالة الفردية والمتعددة.
+6. تعمل حالات الاستلام والرفض والإكمال والسحب.
+7. لا تظهر المعاملة لغير المخولين.
+8. لا يمكن الوصول إلى مرفق سري برابط مباشر دون صلاحية.
+9. يسجل التتبع كل انتقال.
+10. يظهر تاريخ الاستحقاق الهجري والميلادي بصورة صحيحة.
+11. تعمل إشعارات التأخير.
+12. يمكن طباعة الباركود ومسحه.
+13. يمكن ربط المعاملات.
+14. يعمل مسار الاعتماد والتوقيع.
+15. ينتج الصادر بيان تسليم.
+16. تعمل التفويضات ضمن الفترة فقط.
+17. تعرض التقارير البيانات وفق صلاحية المستخدم.
+18. لا يمكن حذف معاملة مسجلة.
+19. يحتفظ النظام بالنسخ السابقة للمستندات.
+20. تنجح استعادة نسخة احتياطية في بيئة الاختبار.
+
+---
+
+# 41. مراحل التنفيذ المقترحة
+
+## المرحلة الأولى: الأساس
+
+- التطبيق والوحدة.
+- البيانات المرجعية.
+- الإدارات والمستخدمون.
+- المعاملة الرئيسية.
+- الوارد والداخلي والصادر.
+- المرفقات.
+- الإحالات.
+- صندوق المعاملات.
 - الصلاحيات.
-- Workflow.
-- التحقق من البيانات.
-- قواعد السرية.
-- منع الحذف.
-
-## 33.2 Phase 5
-
-يمكن توفير API مخصص لـ:
-
-- إنشاء معاملة.
-- الاستعلام عن حالة.
-- إرفاق ملف.
-- تنفيذ إحالة.
-- الحصول على العلاقات.
-- الربط مع الأنظمة الخارجية.
-
-يجب استخدام:
-
-- Authentication معتمد.
-- Rate Limiting.
-- Audit Logging.
-- Versioned Endpoints.
-- Idempotency للعمليات الحساسة.
-
----
-
-# 34. مراحل التنفيذ
-
-## Phase 1 — Core Operational System
-
-يشمل:
-
-- GESW Correspondence.
-- Incoming/Outgoing/Internal.
-- GESW Party.
-- GESW Department.
-- التصنيفات.
-- الأولوية.
-- السرية.
-- الرقم الرسمي.
-- الرقم الخارجي.
-- المرفقات الخاصة.
-- Workflow الأساسي.
-- الإحالة الأساسية.
-- Current Owner وCurrent Department.
-- Due Date.
-- My Inbox الأساسي.
-- البحث والفلاتر.
-- ربط Reply To وRelated To.
-- Timeline.
-- التعليقات.
-- الطباعة.
-- الصلاحيات الأساسية.
-- التقارير الأساسية.
-- منع الحذف بعد التسجيل.
-
-## Phase 2 — Workflow and Tasks
-
-يشمل:
-
-- Correspondence Actions.
-- ToDo Integration.
-- My Tasks.
-- إشعارات الموعد.
-- التصعيد.
-- الموافقات المتعددة.
-- مسارات إرجاع وإعادة تقديم متقدمة.
-- قواعد إسناد تلقائية.
-
-## Phase 3 — Advanced Management
-
-يشمل:
-
-- Correspondence Chain.
-- Document Metadata.
-- File Versioning.
-- Advanced Permissions.
-- Explicit Access Lists.
-- Archive State.
-- Retention Policies.
-- Advanced Reports.
-- Performance Indicators.
-
-## Phase 4 — Digital Office
-
-يشمل:
-
-- Email Integration.
-- Scanner Intake.
-- OCR.
-- Full-Text File Search.
-- QR/Barcode.
-- Digital Approval.
-- Digital Signature.
-- Advanced Notifications.
-
-## Phase 5 — Integrations
-
-يشمل:
-
-- REST API للأعمال.
-- Mobile Application.
-- External Systems.
-- Government Systems.
-- Messaging Platforms.
-- AI Services.
-
----
-
-# 35. معايير القبول الرئيسية
-
-## AC-001 إنشاء مسودة
-
-**Given:** مستخدم يملك صلاحية الإنشاء.  
-**When:** ينشئ معاملة جديدة ويحفظها كمسودة.  
-**Then:**
-
-- تحفظ المعاملة.
-- لا يصدر رقم رسمي.
-- يظهر منشئها ووقت الإنشاء.
-- لا يراها إلا من تسمح له الصلاحيات.
-
-## AC-002 تسجيل وارد
-
-**Given:** معاملة Incoming في Draft مستوفية الحقول المطلوبة.  
-**When:** يختار المستخدم Register.  
-**Then:**
-
-- يصدر رقم بالنمط `IN-YYYY-NNNNN`.
-- يكون الرقم فريدًا.
-- تصبح الحالة Registered.
-- لا يمكن تعديل النوع أو الرقم.
-- يسجل الحدث في Timeline.
-
-## AC-003 إرسال صادر
-
-**Given:** معاملة Outgoing معتمدة ومستوفية البيانات.  
-**When:** ينفذ المستخدم Mark as Sent.  
-**Then:**
-
-- يصدر الرقم وفق سياسة الصادر إذا لم يكن صدر سابقًا.
-- تحفظ جهة الاستلام وطريقة الإرسال والتاريخ.
-- تصبح الحالة Sent.
-- يظهر الحدث في Timeline.
-
-## AC-004 إرسال داخلي
-
-**Given:** معاملة Internal تحتوي على إدارة مرسلة ومستلمة.  
-**When:** ينفذ المستخدم Send.  
-**Then:**
-
-- يصدر رقم `INT-YYYY-NNNNN`.
-- تظهر المعاملة في صندوق الإدارة المستلمة.
-- تصبح الحالة Sent.
-- يسجل وقت الإرسال.
-
-## AC-005 منع التكرار
-
-عند محاولة إنشاء رقم رسمي مستخدم، يجب رفض العملية وعدم إنشاء سجل مكرر.
-
-## AC-006 الإحالة
-
-**Given:** معاملة مسجلة ومستخدم يملك صلاحية الإحالة.  
-**When:** يحيلها إلى إدارة أو مستخدم.  
-**Then:**
-
-- ينشأ Routing جديد.
-- يحتفظ بالسجل السابق.
-- تتحدث الإدارة أو المسؤول الحالي.
-- تظهر في My Inbox للمستلم.
-- يسجل الحدث في Timeline.
-
-## AC-007 منع الإحالة غير الصالحة
-
-يجب رفض الإحالة إلى مستخدم غير نشط أو جهة داخلية غير صالحة.
-
-## AC-008 البحث بالرقم
-
-عند إدخال الرقم الرسمي الكامل، يجب أن تظهر المعاملة إذا كان المستخدم مخولًا.
-
-## AC-009 البحث بالرقم الخارجي
-
-يجب دعم البحث الكامل والجزئي في رقم الجهة.
-
-## AC-010 الصلاحيات
-
-لا يجوز لمستخدم من إدارة غير مخولة:
-
-- رؤية المعاملة في القائمة.
-- فتحها بالرابط المباشر.
-- الحصول عليها عبر API.
-- تنزيل مرفقاتها.
-- إظهارها في التقرير.
-
-## AC-011 السرية المقيدة
-
-لا تظهر معاملة Restricted إلا للمستخدمين المفوضين صراحة أو للأدوار الأمنية المعتمدة.
-
-## AC-012 حماية الملفات
-
-إذا لم يكن للمستخدم Read على المعاملة، يجب أن يفشل تنزيل الملف حتى لو عرف الرابط.
-
-## AC-013 تغيير الحالة
-
-لا يجوز تغيير الحالة مباشرة، وإنما من خلال Transition مسموح للدور والحالة والنوع.
-
-## AC-014 الإغلاق
-
-لا تغلق المعاملة إلا بواسطة مستخدم مخول وبعد استيفاء شروط الإغلاق.
-
-## AC-015 إعادة الفتح
-
-يجب طلب سبب إعادة الفتح وتسجيل المستخدم والوقت والحالة الناتجة.
-
-## AC-016 الإلغاء
-
-يجب ألا يؤدي الإلغاء إلى حذف الرقم أو المرفقات أو السجل التاريخي.
-
-## AC-017 العلاقة بين الوارد والصادر
-
-يجب أن يستطيع المستخدم ربط صادر بوارد من خلال Reply To، وأن تظهر العلاقة في الطرفين وفق الصلاحيات.
-
-## AC-018 Timeline
-
-يجب أن يعرض Timeline على الأقل:
-
-- الإنشاء.
-- التسجيل.
-- تغيير الحالة.
-- الإحالة.
-- إضافة المرفق.
-- التعليق.
-- الإغلاق.
-- إعادة الفتح.
-- الإلغاء.
-
-## AC-019 الطباعة
-
-يجب إنشاء PDF عربي RTL يحتوي على البيانات الأساسية دون كشف حقول غير مصرح بها.
-
-## AC-020 التقارير
-
-يجب أن تعيد التقارير نتائج متوافقة مع فلاتر الفترة والنوع والحالة والإدارة وصلاحية المستخدم.
-
-## AC-021 الأداء
-
-يجب تحقيق أهداف الأداء المحددة في القسم 31 على بيئة القبول المتفق عليها.
-
-## AC-022 عدم الحذف
-
-لا يستطيع المستخدم العادي أو المدير حذف معاملة تحمل رقمًا رسميًا.
-
-## AC-023 الإدخال عبر API
-
-يجب أن تطبق العمليات عبر API قواعد الصلاحيات والتحقق نفسها المطبقة في الواجهة.
-
-## AC-024 واجهة RTL
-
-يجب ألا تظهر مشكلات محاذاة أو تداخل في الحقول والقوائم والمطبوعات العربية الأساسية.
-
----
-
-# 36. الاختبارات المطلوبة
-
-يجب على الفريق توفير:
-
-## 36.1 Unit Tests
-
-لـ:
-
-- الترقيم.
-- التحقق من الحقول.
-- الانتقالات.
-- منع الحذف.
-- السرية.
-- الإحالة.
-- العلاقات.
-- حساب التأخير.
-
-## 36.2 Integration Tests
-
-لـ:
-
-- Frappe Permissions.
-- File Access.
-- Workflow.
-- Notifications.
-- Print Format.
-- Reports.
-- REST API.
-
-## 36.3 Security Tests
-
-- الوصول المباشر بالرابط.
-- الوصول إلى الملفات.
-- تجاوز صلاحيات الإدارة.
-- تجاوز Workflow عبر API.
-- Export غير المصرح.
-- Print غير المصرح.
-- اختبار مستخدم Restricted.
-
-## 36.4 Performance Tests
-
-- البحث في حجم بيانات كبير.
-- تحميل القوائم.
-- فتح Timeline طويل.
+- التتبع.
+
+## المرحلة الثانية: الإجراءات المتقدمة
+
+- الاعتماد.
+- التوقيع.
+- الردود.
+- السحب والإعادة.
+- الإغلاق وإعادة التشغيل.
+- التفويضات.
+- المجلدات.
+- المتابعة.
+
+## المرحلة الثالثة: التسليم والتقارير
+
+- الباركود.
+- النسخ الورقية.
+- بيانات التسليم.
+- مؤشرات SLA.
 - التقارير.
-- إنشاء PDF.
-- المستخدمون المتزامنون.
+- لوحات المعلومات.
 
-## 36.5 User Acceptance Testing
+## المرحلة الرابعة: المهام واللجان
 
-يجب تنفيذ سيناريو كامل لكل من:
+- إدارة المهام.
+- الاجتماعات.
+- اللجان.
+- القرارات.
+- ربط القرارات بالمهام والمعاملات.
 
-- الوارد.
-- الصادر.
-- الداخلي.
-- الإحالة متعددة المستويات.
-- الإغلاق.
-- الإلغاء.
-- إعادة الفتح.
-- المعاملة السرية.
-- ربط صادر بوارد.
+## المرحلة الخامسة: التكامل والأمن المتقدم
 
----
-
-# 37. مخرجات فريق البرمجة
-
-يجب تسليم:
-
-1. مستودع الكود المصدري.
-2. Custom Frappe App قابل للتثبيت.
-3. تعليمات التثبيت.
-4. تعليمات الترقية.
-5. إعدادات الأدوار والصلاحيات.
-6. DocTypes وFixtures المطلوبة.
-7. Workflows.
-8. Print Formats.
-9. Reports.
-10. اختبارات آلية.
-11. دليل المستخدم.
-12. دليل مسؤول النظام.
-13. وصف نموذج البيانات.
-14. قائمة الإعدادات.
-15. خطة النسخ الاحتياطي والاستعادة.
-16. سجل المشكلات المعروفة.
-17. Release Notes.
-18. ملف بيانات تجريبية لبيئة الاختبار.
-19. تقرير نتائج اختبار الأداء.
-20. تقرير إغلاق اختبار القبول.
+- SSO.
+- البريد.
+- OCR.
+- الماسح المحلي.
+- التوقيع الرقمي الخارجي.
+- التخزين الخارجي.
+- التكاملات الحكومية.
 
 ---
 
-# 38. شروط الجاهزية للإنتاج
+# 42. قرارات معمارية نهائية
 
-لا يعتبر النظام جاهزًا للإنتاج قبل:
+1. **المعاملة ليست Frappe Workflow فقط**؛ بل DocType رئيسي مع Referral مستقل.
+2. كل مستلم ينتج Referral مستقلًا.
+3. المرفقات الحساسة تحفظ كسجلات مستقلة مرتبطة بملفات Private.
+4. لا تستخدم Child Table للإحالات المنفذة؛ يستخدم Child Table فقط قبل الإرسال.
+5. Department هو المرجع التنظيمي الأساسي.
+6. User هو الهوية الأمنية، وEmployee هو الملف الوظيفي.
+7. التاريخ الميلادي هو قيمة التخزين الأساسية، والهجري قيمة عرض أو قيمة مشتقة.
+8. السجلات المسجلة لا تُحذف.
+9. كل اعتماد يرتبط بنسخة محددة من المستند.
+10. الباركود لا يحمل معلومات سرية.
+11. الصلاحية تطبق في الخادم وليس الواجهة فقط.
+12. يجب أن يكون التطبيق Custom App في Git، لا مجرد Customizations داخل قاعدة البيانات.
+13. يجب تضمين Custom Fields وRoles وWorkflows وPrint Formats وReports في Fixtures أو ملفات التطبيق.
+14. يجب تثبيت إصدارات Frappe وERPNext في الإنتاج وعدم التحديث دون اختبار Migration وRegression.
+15. جميع التسميات العربية تحفظ في ملفات الترجمة، بينما تستخدم أسماء DocTypes وfieldnames الإنجليزية المستقرة برمجيًا.
 
-- نجاح معايير القبول.
-- عدم وجود ثغرات حرجة أو عالية غير معالجة.
-- نجاح اختبار استعادة النسخة الاحتياطية.
-- اعتماد مصفوفة الصلاحيات.
-- اعتماد مسارات العمل.
-- اعتماد Print Formats.
-- اختبار صلاحيات الملفات.
-- تدريب المستخدمين الأساسيين.
-- توفير بيئة Production منفصلة.
-- اعتماد خطة الرجوع Rollback.
-- توثيق الإصدار المنشور.
-- اعتماد مالك النظام.
-
----
-
-# 39. ما لن يتم بناؤه
-
-لن يبني المشروع:
-
-- نظام ERP جديد.
-- نظام محاسبة.
-- نظام موارد بشرية.
-- CRM.
-- نظام مخزون.
-- نظام مالي.
-- Frontend مستقل في الإصدار الأول.
-- Authentication مستقل.
-- Workflow Engine مستقل دون حاجة.
-- File Storage مستقل دون حاجة.
-- Search Engine مستقل في Phase 1.
-- إدارة بريد إلكتروني كاملة في Phase 1.
-- نظام توقيع رقمي في Phase 1.
-- صلاحيات قائمة على إخفاء الواجهة فقط.
-
----
-
-# 40. القيود
-
-- يجب أن يتوافق الكود مع Frappe Framework 16.
-- يمنع تعديل ملفات Core.
-- يجب أن تعمل الترقية من خلال Migrations.
-- يجب تطبيق الصلاحيات على الخادم.
-- يجب أن تكون الملفات الحساسة Private.
-- يجب الحفاظ على العلاقات التاريخية.
-- يجب عدم حذف المعاملات الرسمية.
-- يجب عدم إدخال قيم التصنيف المهمة بصورة Hard-coded متى كانت قابلة للإدارة.
-- يجب ألا تؤدي إضافة نوع معاملة مستقبلي إلى إعادة بناء النظام بالكامل.
-
----
-
-# 41. المخاطر
-
-|الخطر|الأثر|المعالجة|
-|---|---|---|
-|تعقيد الصلاحيات حسب الإدارة والسرية|كشف بيانات|اختبارات صلاحيات تفصيلية|
-|تعدد حالات Workflow|صعوبة الاستخدام|مسارات بسيطة وأزرار شرطية|
-|تضخم Timeline|بطء فتح المعاملة|Pagination وعدم تحميل كل السجل|
-|كبر حجم المرفقات|استهلاك التخزين|حدود حجم وسياسة تخزين|
-|تكرار الجهات|ضعف التقارير|Party Master ومنع التكرار|
-|الاعتماد على حقول نصية|صعوبة البحث|استخدام Link وMaster Data|
-|الترقيم المتزامن|أرقام مكررة|قيد فريد ومعاملة قاعدة بيانات|
-|خلط Assignment مع Routing|بيانات غير متسقة|تعريف واضح ومصدر حقيقة واحد|
-|تعديل السجلات المغلقة|ضعف التدقيق|تحقق خادمي وصلاحيات استثنائية|
-|اختلاف الأسماء العربية|ضعف البحث|تطبيع البحث دون تغيير الأصل|
-
----
-
-# 42. افتراضات الاعتماد
-
-تعتمد هذه الوثيقة الافتراضات التالية:
-
-1. يوجد مستخدم Frappe مستقل لكل موظف يستخدم النظام.
-2. تعتمد المؤسسة السنة الميلادية في الترقيم.
-3. لا يعاد استخدام الأرقام الملغاة.
-4. لا يوجد حذف آلي في الإصدار الأول.
-5. تكون الملفات Private افتراضيًا.
-6. الجهة الخارجية Master Data من Phase 1.
-7. الإحالة الأساسية جزء من Phase 1.
-8. الربط الأساسي بين الوارد والصادر جزء من Phase 1.
-9. يستخدم DocType موحد لجميع أنواع المعاملات.
-10. يعتمد Workflow واحد يحتوي على حالات ومسارات شرطية حسب النوع.
-11. لا تعد خاصية Versioning للسجل نظامًا لإدارة نسخ الملفات.
-12. ERPNext متوافق اختياريًا، وليس اعتمادًا وظيفيًا إلزاميًا ما لم يعتمد خلاف ذلك رسميًا.
-
----
-
-# 43. التعريف النهائي لنجاح الإصدار الأول
-
-يعتبر الإصدار الأول ناجحًا عندما يستطيع المستخدم المخول تنفيذ الدورة التالية:
-
-```text
-إنشاء معاملة
-→ إدخال البيانات
-→ إرفاق الوثائق
-→ تسجيل رقم رسمي
-→ إحالة المعاملة
-→ ظهورها للمستلم
-→ بدء المعالجة
-→ تسجيل التعليقات والإجراءات الأساسية
-→ ربطها بمعاملة أخرى
-→ إكمالها
-→ إغلاقها
-→ البحث عنها
-→ مراجعة تاريخها
-→ طباعتها
-→ إظهارها في التقارير
-```
-
-مع ضمان:
-
-- عدم تكرار الرقم.
-- عدم فقد الإحالات السابقة.
-- عدم حذف المعاملة الرسمية.
-- عدم كشف الملفات لغير المخولين.
-- عدم تجاوز Workflow.
-- عدم ظهور المعاملات خارج النطاق التنظيمي.
-- الاحتفاظ بتاريخ العمليات الأساسية.
-
----
-
-# 44. المبدأ النهائي
-
-يجب أن يكون GESW Office:
-
-> **بسيطًا بما يكفي للاستخدام اليومي، وقويًا بما يكفي للنمو المؤسسي.**
-
-```text
-GESW OFFICE
-     │
-     ▼
-Correspondence
-     │
-     ├── Incoming
-     ├── Outgoing
-     └── Internal
-     │
-     ├── Parties
-     ├── Departments
-     ├── Attachments
-     ├── Routing
-     ├── Assignments
-     ├── Actions
-     ├── Relations
-     ├── Workflow
-     ├── Timeline
-     ├── Search
-     └── Reports
-```
-
-هذه الوثيقة هي **Implementation Baseline** للمشروع. ويجب على فريق البرمجة تنفيذ الإصدار الأول وفق المتطلبات الإلزامية ومعايير القبول الواردة فيها، مع توثيق أي انحراف أو قرار تقني مؤثر قبل اعتماده وتنفيذه.
-
----
-
-# 45. الاعتماد
-
-|الصفة|الاسم|التوقيع|التاريخ|
-|---|---|---|---|
-|مالك النظام||||
-|مدير المشروع||||
-|ممثل المستخدمين||||
-|المسؤول التقني||||
-|ممثل فريق البرمجة||||
-|مسؤول أمن المعلومات||||
+هذه الوثيقة تمثل **SRS تنفيذية كاملة للإصدار الأول من النظام**، وتشمل نموذج البيانات، الـDocTypes، الحقول، الأدوار، دورات العمل، الأمن، التقارير، التكاملات، الاختبارات ومعايير القبول. وهي مصممة بحيث يستطيع فريق Frappe البدء منها مباشرة في إعداد التطبيق والـDocTypes والـWorkflows دون الاعتماد على التخمينات العامة حول نظام المراسلات.
