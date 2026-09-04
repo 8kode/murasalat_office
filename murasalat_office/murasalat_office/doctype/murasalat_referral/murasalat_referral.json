@@ -6,7 +6,10 @@
   "field_order": [
     "reference_section",
     "correspondence",
-    "status",
+    "parent_referral",
+    "root_referral",
+    "referral_batch",
+    "referral_sequence",
     "source_section",
     "from_user",
     "from_department",
@@ -14,6 +17,7 @@
     "recipient_type",
     "to_user",
     "to_department",
+    "recipient_employee",
     "routing_section",
     "routing_purpose",
     "priority_level",
@@ -25,51 +29,339 @@
     "paper_correspondence",
     "send_copy",
     "for_follow_up",
+    "action_required",
+    "is_copy",
     "tracking_section",
     "sent_on",
     "received_on",
+    "opened_on",
+    "read_on",
+    "accepted_on",
+    "returned_on",
+    "returned_by",
+    "return_reason",
+    "withdrawn_on",
+    "withdrawn_by",
+    "withdrawal_reason",
     "completed_on",
+    "completed_by",
+    "completion_notes",
+    "is_overdue",
+    "overdue_days",
     "response_notes",
     "response_document"
   ],
   "fields": [
-    {"fieldname":"reference_section","fieldtype":"Section Break","label":"Referral Reference"},
-    {"fieldname":"correspondence","fieldtype":"Link","in_list_view":1,"label":"Correspondence","options":"Murasalat Correspondence","reqd":1},
-    {"default":"Draft","fieldname":"status","fieldtype":"Select","in_list_view":1,"label":"Status","options":"Draft\nSent\nReceived\nIn Progress\nCompleted\nReturned\nWithdrawn\nCancelled","read_only":1},
-    {"fieldname":"source_section","fieldtype":"Section Break","label":"Referral Source"},
-    {"fieldname":"from_user","fieldtype":"Link","label":"From User","options":"User","read_only":1},
-    {"fieldname":"from_department","fieldtype":"Link","label":"From Department","options":"Department","reqd":1},
-    {"fieldname":"recipient_section","fieldtype":"Section Break","label":"Referral Recipient"},
-    {"default":"Department","fieldname":"recipient_type","fieldtype":"Select","label":"Recipient Type","options":"Department\nUser","reqd":1},
-    {"depends_on":"eval:doc.recipient_type=='User'","fieldname":"to_user","fieldtype":"Link","in_list_view":1,"label":"To User","options":"User"},
-    {"depends_on":"eval:doc.recipient_type=='Department'","fieldname":"to_department","fieldtype":"Link","in_list_view":1,"label":"To Department","options":"Department"},
-    {"fieldname":"routing_section","fieldtype":"Section Break","label":"Routing Details"},
-    {"fieldname":"routing_purpose","fieldtype":"Link","in_list_view":1,"label":"Routing Purpose","options":"Murasalat Routing Purpose","reqd":1},
-    {"fieldname":"priority_level","fieldtype":"Link","label":"Priority Level","options":"Murasalat Priority Level","reqd":1},
-    {"fieldname":"due_date","fieldtype":"Date","label":"Due Date"},
-    {"fieldname":"due_date_hijri","fieldtype":"Data","label":"Due Date Hijri","read_only":1},
-    {"fieldname":"instructions","fieldtype":"Small Text","label":"Instructions"},
-    {"fieldname":"options_section","fieldtype":"Section Break","label":"Referral Options"},
-    {"fieldname":"is_private","fieldtype":"Check","label":"Private"},
-    {"fieldname":"paper_correspondence","fieldtype":"Check","label":"Paper Correspondence"},
-    {"fieldname":"send_copy","fieldtype":"Check","label":"Send Copy"},
-    {"fieldname":"for_follow_up","fieldtype":"Check","label":"For Follow Up"},
-    {"fieldname":"tracking_section","fieldtype":"Section Break","label":"Tracking Information"},
-    {"fieldname":"sent_on","fieldtype":"Datetime","label":"Sent On","read_only":1},
-    {"fieldname":"received_on","fieldtype":"Datetime","label":"Received On","read_only":1},
-    {"fieldname":"completed_on","fieldtype":"Datetime","label":"Completed On","read_only":1},
-    {"fieldname":"response_notes","fieldtype":"Long Text","label":"Response Notes"},
-    {"fieldname":"response_document","fieldtype":"Link","label":"Response Document","options":"Murasalat Correspondence Document"}
+    {
+      "fieldname": "reference_section",
+      "fieldtype": "Section Break",
+      "label": "Referral Reference"
+    },
+    {
+      "fieldname": "correspondence",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Correspondence",
+      "options": "Murasalat Correspondence",
+      "reqd": 1
+    },
+    {
+      "fieldname": "parent_referral",
+      "fieldtype": "Link",
+      "label": "Parent Referral",
+      "options": "Murasalat Referral"
+    },
+    {
+      "fieldname": "root_referral",
+      "fieldtype": "Link",
+      "label": "Root Referral",
+      "options": "Murasalat Referral"
+    },
+    {
+      "fieldname": "referral_batch",
+      "fieldtype": "Data",
+      "label": "Referral Batch",
+      "read_only": 1
+    },
+    {
+      "fieldname": "referral_sequence",
+      "fieldtype": "Int",
+      "label": "Referral Sequence",
+      "read_only": 1
+    },
+    {
+      "fieldname": "source_section",
+      "fieldtype": "Section Break",
+      "label": "Referral Source"
+    },
+    {
+      "fieldname": "from_user",
+      "fieldtype": "Link",
+      "label": "From User",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "from_department",
+      "fieldtype": "Link",
+      "label": "From Department",
+      "options": "Department",
+      "reqd": 1
+    },
+    {
+      "fieldname": "recipient_section",
+      "fieldtype": "Section Break",
+      "label": "Referral Recipient"
+    },
+    {
+      "default": "Department",
+      "fieldname": "recipient_type",
+      "fieldtype": "Select",
+      "label": "Recipient Type",
+      "options": "Department\nUser",
+      "reqd": 1
+    },
+    {
+      "depends_on": "eval:doc.recipient_type=='User'",
+      "fieldname": "to_user",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "To User",
+      "options": "User"
+    },
+    {
+      "depends_on": "eval:doc.recipient_type=='Department'",
+      "fieldname": "to_department",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "To Department",
+      "options": "Department"
+    },
+    {
+      "fieldname": "recipient_employee",
+      "fieldtype": "Link",
+      "label": "Recipient Employee",
+      "options": "Employee"
+    },
+    {
+      "fieldname": "routing_section",
+      "fieldtype": "Section Break",
+      "label": "Routing Details"
+    },
+    {
+      "fieldname": "routing_purpose",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Routing Purpose",
+      "options": "Murasalat Routing Purpose",
+      "reqd": 1
+    },
+    {
+      "fieldname": "priority_level",
+      "fieldtype": "Link",
+      "label": "Priority Level",
+      "options": "Murasalat Priority Level",
+      "reqd": 1
+    },
+    {
+      "fieldname": "due_date",
+      "fieldtype": "Date",
+      "label": "Due Date"
+    },
+    {
+      "fieldname": "due_date_hijri",
+      "fieldtype": "Data",
+      "label": "Due Date Hijri",
+      "read_only": 1
+    },
+    {
+      "fieldname": "instructions",
+      "fieldtype": "Small Text",
+      "label": "Instructions"
+    },
+    {
+      "fieldname": "options_section",
+      "fieldtype": "Section Break",
+      "label": "Referral Options"
+    },
+    {
+      "fieldname": "is_private",
+      "fieldtype": "Check",
+      "label": "Private"
+    },
+    {
+      "fieldname": "paper_correspondence",
+      "fieldtype": "Check",
+      "label": "Paper Correspondence"
+    },
+    {
+      "fieldname": "send_copy",
+      "fieldtype": "Check",
+      "label": "Send Copy"
+    },
+    {
+      "fieldname": "for_follow_up",
+      "fieldtype": "Check",
+      "label": "For Follow Up"
+    },
+    {
+      "default": "1",
+      "fieldname": "action_required",
+      "fieldtype": "Check",
+      "label": "Action Required"
+    },
+    {
+      "default": "0",
+      "fieldname": "is_copy",
+      "fieldtype": "Check",
+      "label": "Is Copy"
+    },
+    {
+      "fieldname": "tracking_section",
+      "fieldtype": "Section Break",
+      "label": "Tracking Information"
+    },
+    {
+      "fieldname": "sent_on",
+      "fieldtype": "Datetime",
+      "label": "Sent On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "received_on",
+      "fieldtype": "Datetime",
+      "label": "Received On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "opened_on",
+      "fieldtype": "Datetime",
+      "label": "Opened On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "read_on",
+      "fieldtype": "Datetime",
+      "label": "Read On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "accepted_on",
+      "fieldtype": "Datetime",
+      "label": "Accepted On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "returned_on",
+      "fieldtype": "Datetime",
+      "label": "Returned On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "returned_by",
+      "fieldtype": "Link",
+      "label": "Returned By",
+      "options": "User"
+    },
+    {
+      "fieldname": "return_reason",
+      "fieldtype": "Small Text",
+      "label": "Return Reason"
+    },
+    {
+      "fieldname": "withdrawn_on",
+      "fieldtype": "Datetime",
+      "label": "Withdrawn On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "withdrawn_by",
+      "fieldtype": "Link",
+      "label": "Withdrawn By",
+      "options": "User"
+    },
+    {
+      "fieldname": "withdrawal_reason",
+      "fieldtype": "Small Text",
+      "label": "Withdrawal Reason"
+    },
+    {
+      "fieldname": "completed_on",
+      "fieldtype": "Datetime",
+      "label": "Completed On",
+      "read_only": 1
+    },
+    {
+      "fieldname": "completed_by",
+      "fieldtype": "Link",
+      "label": "Completed By",
+      "options": "User"
+    },
+    {
+      "fieldname": "completion_notes",
+      "fieldtype": "Long Text",
+      "label": "Completion Notes"
+    },
+    {
+      "fieldname": "is_overdue",
+      "fieldtype": "Check",
+      "label": "Is Overdue",
+      "read_only": 1
+    },
+    {
+      "fieldname": "overdue_days",
+      "fieldtype": "Int",
+      "label": "Overdue Days",
+      "read_only": 1
+    },
+    {
+      "fieldname": "response_notes",
+      "fieldtype": "Long Text",
+      "label": "Response Notes"
+    },
+    {
+      "fieldname": "response_document",
+      "fieldtype": "Link",
+      "label": "Response Document",
+      "options": "Murasalat Correspondence Document"
+    }
   ],
   "links": [],
   "module": "Murasalat Office",
   "name": "Murasalat Referral",
   "permissions": [
-    {"role":"Murasalat User","read":1,"write":1,"create":1},
-    {"role":"Murasalat Clerk","read":1,"write":1,"create":1},
-    {"role":"Murasalat Manager","read":1,"write":1,"create":1,"delete":1},
-    {"role":"Murasalat Auditor","read":1,"export":1},
-    {"role":"Murasalat System Manager","read":1,"write":1,"create":1,"delete":1,"export":1}
+    {
+      "role": "Murasalat User",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Murasalat Clerk",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    },
+    {
+      "role": "Murasalat Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    },
+    {
+      "role": "Murasalat Auditor",
+      "read": 1,
+      "export": 1
+    },
+    {
+      "role": "Murasalat System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "export": 1
+    }
   ],
   "search_fields": "correspondence,from_user,to_user,to_department",
   "sort_field": "modified",

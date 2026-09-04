@@ -1,42 +1,121 @@
 {
-  "actions": [],
-  "autoname": "field:rule_name",
-  "doctype": "DocType",
-  "engine": "InnoDB",
-  "field_order": [
-    "rule_name",
-    "direction",
-    "correspondence_type",
-    "prefix",
-    "digits",
-    "include_year",
-    "year_type",
-    "is_default",
-    "is_active"
-  ],
-  "fields": [
-    {"fieldname":"rule_name","fieldtype":"Data","label":"Rule Name","reqd":1,"unique":1},
-    {"fieldname":"direction","fieldtype":"Select","label":"Direction","options":"Internal\nIncoming\nOutgoing","reqd":1},
-    {"fieldname":"correspondence_type","fieldtype":"Link","label":"Correspondence Type","options":"Murasalat Correspondence Type"},
-    {"fieldname":"prefix","fieldtype":"Data","label":"Prefix","reqd":1},
-    {"default":"6","fieldname":"digits","fieldtype":"Int","label":"Number of Digits","reqd":1},
-    {"default":"1","fieldname":"include_year","fieldtype":"Check","label":"Include Year"},
-    {"default":"Gregorian","depends_on":"include_year","fieldname":"year_type","fieldtype":"Select","label":"Year Type","options":"Gregorian\nHijri"},
-    {"fieldname":"is_default","fieldtype":"Check","label":"Is Default"},
-    {"default":"1","fieldname":"is_active","fieldtype":"Check","label":"Is Active"}
-  ],
-  "links": [],
-  "module": "Murasalat Office",
-  "name": "Murasalat Numbering Rule",
-  "permissions": [
-    {"role":"Murasalat User","read":1},
-    {"role":"Murasalat Clerk","read":1},
-    {"role":"Murasalat Manager","read":1},
-    {"role":"Murasalat Auditor","read":1},
-    {"role":"Murasalat System Manager","read":1,"write":1,"create":1,"delete":1}
-  ],
-  "sort_field": "rule_name",
-  "sort_order": "ASC",
-  "title_field": "rule_name",
-  "track_changes": 1
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_name",
+ "creation": "2026-09-03 23:45:43.777847",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_name",
+  "direction",
+  "correspondence_type",
+  "prefix",
+  "digits",
+  "include_year",
+  "year_type",
+  "is_default",
+  "is_active"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Rule Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "direction",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Direction",
+   "options": "Internal\nIncoming\nOutgoing",
+   "reqd": 1
+  },
+  {
+   "fieldname": "correspondence_type",
+   "fieldtype": "Link",
+   "label": "Correspondence Type",
+   "options": "Murasalat Correspondence Type"
+  },
+  {
+   "fieldname": "prefix",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Prefix",
+   "reqd": 1
+  },
+  {
+   "default": "6",
+   "fieldname": "digits",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Number of Digits",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "include_year",
+   "fieldtype": "Check",
+   "label": "Include Year"
+  },
+  {
+   "default": "Gregorian",
+   "depends_on": "include_year",
+   "fieldname": "year_type",
+   "fieldtype": "Select",
+   "label": "Year Type",
+   "options": "Gregorian\nHijri"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Is Default"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-04 05:15:16.462889",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Numbering Rule",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "Murasalat User"
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Clerk"
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Manager"
+  },
+  {
+   "read": 1,
+   "role": "Murasalat Auditor"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Murasalat System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "rule_name",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "rule_name",
+ "track_changes": 1
 }
