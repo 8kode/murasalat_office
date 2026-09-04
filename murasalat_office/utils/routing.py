@@ -9,6 +9,7 @@ COMPLETED_STATUSES = {
 }
 
 INACTIVE_STATUSES = {
+	"Returned",
 	"Withdrawn",
 	"Cancelled",
 }
@@ -32,8 +33,17 @@ def sync_correspondence_summary(doc, method=None):
 
 
 def update_correspondence_routing_summary(
-	correspondence: str,
+	correspondence,
 ):
+	if not correspondence:
+		return
+
+	if not frappe.db.exists(
+		"Murasalat Correspondence",
+		correspondence,
+	):
+		return
+
 	referrals = frappe.get_all(
 		"Murasalat Referral",
 		filters={
@@ -50,7 +60,7 @@ def update_correspondence_routing_summary(
 		],
 	)
 
-	today = getdate(nowdate())
+	today_date = getdate(nowdate())
 
 	active_count = 0
 	pending_count = 0
@@ -75,7 +85,8 @@ def update_correspondence_routing_summary(
 
 			if (
 				referral.due_date
-				and getdate(referral.due_date) < today
+				and getdate(referral.due_date)
+				< today_date
 			):
 				overdue_count += 1
 
@@ -93,7 +104,7 @@ def update_correspondence_routing_summary(
 				referral.modified
 			)
 
-	routing_status = get_routing_status(
+	routing_status = determine_routing_status(
 		total=len(referrals),
 		active=active_count,
 		completed=completed_count,
@@ -124,12 +135,12 @@ def update_correspondence_routing_summary(
 	)
 
 
-def get_routing_status(
-	total: int,
-	active: int,
-	completed: int,
-	overdue: int,
-) -> str:
+def determine_routing_status(
+	total,
+	active,
+	completed,
+	overdue,
+):
 	if total == 0:
 		return "No Referrals"
 
