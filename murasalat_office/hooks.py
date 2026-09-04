@@ -6,7 +6,6 @@ app_email = "qupnext.erp@gmail.com"
 app_license = "mit"
 
 
-
 fixtures = [
     {
         "dt": "Workspace Sidebar",
@@ -15,5 +14,11 @@ fixtures = [
     {
         "dt": "Desktop Icon",
         "filters": [["name", "like", "Murasalat Office%"]]
+    },
+    {
+        "dt": "Client Script",
+        "filters": [
+            ["name", "=", "Set Owner Department Automatically"]
+        ]
     }
 ]

@@ -119,7 +119,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-04 04:42:09.484444",
+ "modified": "2026-09-04 22:47:19.382034",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence Document",
@@ -157,6 +157,7 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
  "search_fields": "correspondence,file_name,document_type",
  "sort_field": "uploaded_on",

@@ -18,7 +18,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "All Linked of Corspondeng",
-   "link_count": 12,
+   "link_count": 13,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -142,9 +142,19 @@
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat User Profile",
+   "link_count": 0,
+   "link_to": "Murasalat User Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-09-04 02:08:21.616187",
+ "modified": "2026-09-04 23:19:54.072364",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",

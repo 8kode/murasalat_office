@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "field:user",
- "creation": "2026-09-04 00:00:00.000000",
+ "creation": "2026-09-04 00:00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -42,6 +42,8 @@
    "reqd": 1
   },
   {
+   "fetch_from": "employee.department",
+   "fetch_if_empty": 1,
    "fieldname": "default_department",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -93,7 +95,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-04 00:00:00.000000",
+ "modified": "2026-09-04 23:31:55.395389",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat User Profile",

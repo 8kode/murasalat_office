@@ -9,25 +9,27 @@
   "data_tab",
   "identity_section",
   "correspondence_number",
+  "company",
   "direction",
-  "correspondence_type",
   "column_break_identity",
   "workflow_state",
+  "correspondence_type",
+  "column_break_qqwf",
   "routing_status",
-  "company",
   "owner_department",
   "subject_section",
   "subject",
-  "classification_section",
+  "due_date",
+  "column_break_scke",
   "confidentiality_level",
   "priority_level",
-  "column_break_classification",
-  "due_date",
-  "due_date_hijri",
   "page_count",
+  "due_date_hijri",
   "internal_section",
   "origin_department",
+  "column_break_gafe",
   "prepared_by",
+  "column_break_wgly",
   "prepared_by_employee",
   "incoming_section",
   "external_from_party",
@@ -64,6 +66,7 @@
   "column_break_referral_summary",
   "last_referred_on",
   "last_activity_on",
+  "section_break_pcbm",
   "referrals_intro_html",
   "referrals_html",
   "referrals_actions_html",
@@ -84,8 +87,8 @@
   "letter_number",
   "letter_date",
   "letter_date_hijri",
-  "current_user",
   "current_department",
+  "current_user",
   "amended_from"
  ],
  "fields": [
@@ -120,6 +123,7 @@
    "search_index": 1
   },
   {
+   "default": "\u0645\u0630\u0643\u0631\u0629",
    "fieldname": "correspondence_type",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -162,6 +166,7 @@
    "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -170,6 +175,7 @@
    "in_standard_filter": 1,
    "label": "Owner Department",
    "options": "Department",
+   "read_only": 1,
    "reqd": 1,
    "search_index": 1
   },
@@ -184,11 +190,6 @@
    "in_global_search": 1,
    "label": "Subject",
    "reqd": 1
-  },
-  {
-   "fieldname": "classification_section",
-   "fieldtype": "Section Break",
-   "label": "Classification"
   },
   {
    "fieldname": "confidentiality_level",
@@ -211,10 +212,7 @@
    "search_index": 1
   },
   {
-   "fieldname": "column_break_classification",
-   "fieldtype": "Column Break"
-  },
-  {
+   "default": "Today",
    "fieldname": "due_date",
    "fieldtype": "Date",
    "in_standard_filter": 1,
@@ -299,6 +297,7 @@
    "search_index": 1
   },
   {
+   "default": "Today",
    "depends_on": "eval:doc.direction=='Incoming'",
    "fieldname": "external_letter_date",
    "fieldtype": "Date",
@@ -352,6 +351,7 @@
    "search_index": 1
   },
   {
+   "default": "Today",
    "depends_on": "eval:doc.direction=='Outgoing'",
    "fieldname": "outgoing_letter_date",
    "fieldtype": "Date",
@@ -373,7 +373,7 @@
   },
   {
    "fieldname": "notes",
-   "fieldtype": "Long Text",
+   "fieldtype": "Small Text",
    "label": "Notes"
   },
   {
@@ -619,9 +619,9 @@
    "read_only": 1
   },
   {
+   "default": "__user",
    "fieldname": "current_user",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Legacy Current User",
    "options": "User",
    "read_only": 1
@@ -643,8 +643,29 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_pcbm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_qqwf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_gafe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_scke",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_wgly",
+   "fieldtype": "Column Break"
   }
  ],
+ "hide_toolbar": 1,
  "is_submittable": 1,
  "links": [
   {
@@ -658,7 +679,7 @@
    "link_fieldname": "correspondence"
   }
  ],
- "modified": "2026-09-04 04:13:20.463503",
+ "modified": "2026-09-05 00:34:09.345776",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

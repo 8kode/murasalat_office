@@ -1,0 +1,20 @@
+{
+ "app": "murasalat_office",
+ "bg_color": "gray",
+ "creation": "2026-09-04 22:28:28.563588",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "Link",
+ "idx": 0,
+ "label": "Murasalat Office",
+ "link_to": "Murasalat Office",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-09-04 23:11:50.923806",
+ "modified_by": "Administrator",
+ "name": "Murasalat Office",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}

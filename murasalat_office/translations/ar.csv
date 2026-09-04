@@ -252,10 +252,12 @@
 "Additional Details","تفاصيل إضافية",""
 
 "Internal Correspondence Information","بيانات المعاملة الداخلية",""
-"Origin Department","الإدارة المنشئة",""
+"Origin Department","القسم المُصدِر",""
 "Prepared By","أعدت بواسطة",""
 "Internal From Department","من الإدارة",""
 "Internal To Department","إلى الإدارة",""
+" Prepared By Employee "," الموظف المُعِد للمراسلة",""
+
 
 "External Correspondence Information","بيانات المعاملة الخارجية",""
 "External Incoming Information","بيانات المعاملة الواردة",""
@@ -283,7 +285,7 @@
 
 "System Information","معلومات النظام",""
 "Lifecycle Information","معلومات دورة الحياة",""
-"Owner Department","الإدارة المالكة",""
+"Owner Department","القسم المسؤول",""
 "Registered By","مسجل المعاملة",""
 "Registered On","تاريخ ووقت التسجيل",""
 "Closed By","أغلق بواسطة",""
@@ -518,10 +520,10 @@
 "Please select the confidentiality level.","يرجى تحديد مستوى السرية.",""
 "Please select the priority level.","يرجى تحديد درجة الأهمية.",""
 "Please enter the subject.","يرجى إدخال الموضوع.",""
-"Please select the origin department.","يرجى اختيار الإدارة المنشئة.",""
+"Please select the origin department.","يرجى اختيار القسم المصدر.",""
 "Please select the external party.","يرجى اختيار الجهة الخارجية.",""
-"Please select the incoming department.","يرجى اختيار الإدارة المستلمة.",""
-"Please select the outgoing department.","يرجى اختيار الإدارة المرسلة.",""
+"Please select the incoming department.","يرجى اختيار القسم المستلم.",""
+"Please select the outgoing department.","يرجى اختيار القسم المرسل.",""
 "Please enter the external letter number.","يرجى إدخال رقم الخطاب الخارجي.",""
 "Please enter the external letter date.","يرجى إدخال تاريخ الخطاب الخارجي.",""
 "Please enter the outgoing letter number.","يرجى إدخال رقم الخطاب الصادر.",""

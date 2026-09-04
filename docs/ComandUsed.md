@@ -60,3 +60,46 @@ touch docs/data-model.md
 # including DocTypes, relationships, fields, and other database structures.
 ```
 
+#to fetch lateast 10 commits from git hup
+
+#know name of current banch
+
+git branch --show-current
+
+#
+
+git log origin/HelpWithAi -10 --oneline
+
+#لمشاهده التغيرات
+git show 18f7da7
+#للجلب
+git switch --detach 18f7da7
+
+........................
+#مسح جميع السجلات من DocType
+~/frappe-bench
+cd ~/frappe-bench
+bench --site murasalat.localhost console
+
+ثم أولًا اعرض عدد السجلات:
+
+frappe.db.count("Murasalat Correspondence")
+
+إذا كان العدد مثلًا 25، وللتأكد قبل الحذف:
+
+إذا كان العدد مثلًا 25، وللتأكد قبل الحذف:
+
+frappe.db.get_all(
+    "Murasalat Correspondence",
+    fields=["name", "subject", "docstatus"],
+    limit_page_length=20
+)
+
+لذلك أفضّل لك:
+
+frappe.db.delete("Murasalat Correspondence")
+frappe.db.commit()
+
+ثم تحقق:
+
+frappe.db.count("Murasalat Correspondence")

@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Murasalat Correspondence",
+  "enabled": 1,
+  "modified": "2026-09-05 00:40:54.999897",
+  "module": "Murasalat Office",
+  "name": "Set Owner Department Automatically",
+  "script": "frappe.ui.form.on(\"Murasalat Correspondence\", {\n    onload(frm) {\n        if (!frm.is_new() || frm.doc.current_department) {\n            return;\n        }\n\n        frappe.db\n            .get_value(\n                \"Employee\",\n                { user_id: frappe.session.user },\n                \"department\"\n            )\n            .then(({ message }) => {\n                if (message?.department) {\n                    frm.set_value(\n                        \"current_department\",\n                        message.department\n                    );\n                }\n            });\n    }\n});",
+  "view": "Form"
+ }
+]
