@@ -36,16 +36,20 @@
    "reqd": 1
   },
   {
+   "default": "\u0627\u0644\u062e\u0637\u0627\u0628 \u0627\u0644\u0631\u0626\u064a\u0633\u064a",
    "fieldname": "document_category",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Document Category",
    "options": "Murasalat Document Category",
    "reqd": 1
   },
   {
+   "default": "\u0645\u0644\u0641",
    "fieldname": "document_type",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Document Type",
    "options": "Murasalat Document Type",
    "reqd": 1
@@ -59,6 +63,7 @@
   {
    "fieldname": "file_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "File Name",
    "read_only": 1
   },
@@ -119,10 +124,11 @@
   }
  ],
  "links": [],
- "modified": "2026-09-04 22:47:19.382034",
+ "modified": "2026-09-05 10:10:38.391655",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence Document",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {

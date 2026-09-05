@@ -1,1095 +1,2032 @@
 ﻿"Murasalat Office","مكتب المراسلات",""
+
 "Murasalat Settings","إعدادات المراسلات",""
+
 "Murasalat Correspondence","معاملة المراسلات",""
+
 "Murasalat Correspondence Type","نوع معاملة المراسلات",""
-"Murasalat External Party","جهة خارجية",""
+
+"Murasalat External Party","الجهة الخارجية",""
+
 "Murasalat Confidentiality Level","مستوى السرية",""
+
 "Murasalat Priority Level","درجة الأهمية",""
+
 "Murasalat Routing Purpose","غرض التوجيه",""
+
 "Murasalat Document Category","تصنيف المستند",""
+
 "Murasalat Document Type","نوع المستند",""
+
 "Murasalat Numbering Rule","قاعدة ترقيم المراسلات",""
-"Murasalat Correspondence Link","رابط معاملة",""
+
+"Murasalat Correspondence Link","ارتباط المعاملة",""
+
 "Murasalat Concerned Person","الشخص المعني",""
+
 "Murasalat Correspondence Document","مستند المعاملة",""
-"Murasalat Referral","إحالة",""
-"Murasalat Delegation","تفويض",""
+
+"Murasalat Referral","إحالة المراسلات",""
+
+"Murasalat Delegation","تفويض المراسلات",""
+
 "Murasalat User Profile","ملف مستخدم المراسلات",""
 
 "Organization","المؤسسة",""
+
 "Company","الشركة",""
+
 "Department","الإدارة",""
+
 "Default Department","الإدارة الافتراضية",""
+
 "Defaults","القيم الافتراضية",""
+
 "Default Confidentiality","السرية الافتراضية",""
+
 "Default Confidentiality Level","مستوى السرية الافتراضي",""
+
 "Default Priority","الأهمية الافتراضية",""
+
 "Default Priority Level","درجة الأهمية الافتراضية",""
+
 "Default Routing Purpose","غرض التوجيه الافتراضي",""
+
 "Default Correspondence Type","نوع المعاملة الافتراضي",""
+
 "Default Document Category","تصنيف المستند الافتراضي",""
+
 "Default Document Type","نوع المستند الافتراضي",""
-"Default Due Days","أيام الاستحقاق الافتراضية",""
+
+"Default Due Days","عدد أيام الاستحقاق الافتراضي",""
+
 "Default Company","الشركة الافتراضية",""
+
 "Default User","المستخدم الافتراضي",""
 
 "Dates","التواريخ",""
+
 "Enable Hijri Dates","تفعيل التواريخ الهجرية",""
+
 "Gregorian","ميلادي",""
+
 "Hijri","هجري",""
+
 "Gregorian Year","السنة الميلادية",""
+
 "Hijri Year","السنة الهجرية",""
+
 "Gregorian Date","التاريخ الميلادي",""
+
 "Hijri Date","التاريخ الهجري",""
+
 "Date","التاريخ",""
+
 "Date and Time","التاريخ والوقت",""
+
 "Created On","تاريخ الإنشاء",""
+
 "Modified On","تاريخ آخر تعديل",""
+
 "Last Updated On","تاريخ آخر تحديث",""
 
 "Attachments","المرفقات",""
+
 "Attachment","المرفق",""
+
 "Attachment Settings","إعدادات المرفقات",""
+
 "Maximum Attachment Size MB","الحد الأقصى لحجم المرفق بالميجابايت",""
+
 "Allow Secret Attachments","السماح بالمرفقات السرية",""
-"Allowed File Extensions","امتدادات الملفات المسموحة",""
-"Force Private Files","فرض حفظ الملفات بشكل خاص",""
+
+"Allowed File Extensions","امتدادات الملفات المسموح بها",""
+
+"Force Private Files","فرض حفظ الملفات كملفات خاصة",""
+
 "Private File","ملف خاص",""
+
 "Is Private File","ملف خاص",""
+
 "File Extension","امتداد الملف",""
+
 "File Size","حجم الملف",""
+
 "File URL","رابط الملف",""
 
 "Controls","الضوابط",""
+
 "Prevent Registered Correspondence Deletion","منع حذف المعاملات المسجلة",""
+
 "Enable Barcode","تفعيل الباركود",""
+
 "Enable QR Code","تفعيل رمز الاستجابة السريعة",""
+
 "Enable Audit Log","تفعيل سجل التدقيق",""
+
 "Enable Delegations","تفعيل التفويضات",""
+
 "Enable Multiple Referral","تفعيل الإحالة المتعددة",""
+
 "Enable Follow Up","تفعيل المتابعة",""
+
 "Allow Cancellation","السماح بالإلغاء",""
+
 "Allow Reopening","السماح بإعادة الفتح",""
-"Require Cancellation Reason","إلزام سبب الإلغاء",""
-"Require Completion Notes","إلزام ملاحظات الإنجاز",""
+
+"Require Cancellation Reason","إلزام إدخال سبب الإلغاء",""
+
+"Require Completion Notes","إلزام إدخال ملاحظات الإنجاز",""
 
 "Type Information","بيانات النوع",""
+
 "Type Name","اسم النوع",""
+
 "Type Code","رمز النوع",""
+
 "Code","الرمز",""
+
 "Direction","اتجاه المعاملة",""
-"Internal","داخلي",""
-"Incoming","وارد",""
-"Outgoing","صادر",""
+
+"Internal","داخلية",""
+
+"Incoming","واردة",""
+
+"Outgoing","صادرة",""
+
 "Allow Internal","السماح بالمعاملات الداخلية",""
+
 "Allow Incoming","السماح بالمعاملات الواردة",""
+
 "Allow Outgoing","السماح بالمعاملات الصادرة",""
+
 "Requires External Party","يتطلب جهة خارجية",""
-"Requires Letter Number","يتطلب رقم خطاب",""
-"Requires Letter Date","يتطلب تاريخ خطاب",""
+
+"Requires Letter Number","يتطلب رقم الخطاب",""
+
+"Requires Letter Date","يتطلب تاريخ الخطاب",""
+
 "Requires Due Date","يتطلب تاريخ استحقاق",""
+
 "Requires Response","يتطلب ردًا",""
+
 "Requires Attachments","يتطلب مرفقات",""
+
 "Requires Main Document","يتطلب مستندًا رئيسيًا",""
+
 "Is Active","نشط",""
+
 "Disabled","معطل",""
+
 "Description","الوصف",""
 
 "External Party Information","بيانات الجهة الخارجية",""
+
 "Party Name","اسم الجهة",""
+
 "Party Code","رمز الجهة",""
+
 "Short Name","الاسم المختصر",""
+
 "Party Type","نوع الجهة",""
+
 "Government","حكومية",""
+
 "Private","خاصة",""
+
 "Individual","فرد",""
+
 "Other","أخرى",""
+
 "Parent Party","الجهة الأم",""
+
 "Registration Number","رقم التسجيل",""
+
 "Tax ID","الرقم الضريبي",""
+
 "City","المدينة",""
+
 "Country","الدولة",""
+
 "Contact Information","معلومات الاتصال",""
-"Contact Person","الشخص المسؤول",""
+
+"Contact Person","جهة الاتصال",""
+
 "Email","البريد الإلكتروني",""
+
 "Phone","الهاتف",""
-"Mobile","الجوال",""
+
+"Mobile","رقم الجوال",""
+
 "Address","العنوان",""
+
 "Postal Code","الرمز البريدي",""
+
 "Website","الموقع الإلكتروني",""
+
 "Notes","ملاحظات",""
 
 "Confidentiality Information","بيانات السرية",""
+
 "Level Name","اسم المستوى",""
+
 "Rank","الترتيب",""
-"Clearance Rank","رتبة التصريح الأمني",""
+
+"Clearance Rank","درجة التصريح الأمني",""
+
 "Color","اللون",""
+
 "Restrict Access","تقييد الوصول",""
-"Requires Clearance","يتطلب تصريحًا",""
+
+"Requires Clearance","يتطلب تصريحًا أمنيًا",""
+
 "Normal","عادي",""
+
 "Confidential","سري",""
+
 "Secret","سري للغاية",""
+
 "Top Secret","سري جدًا",""
 
 "Priority Information","بيانات الأهمية",""
+
 "Priority Name","اسم درجة الأهمية",""
+
 "Normal Priority","أهمية عادية",""
+
 "Urgent","عاجل",""
+
 "Very Urgent","عاجل جدًا",""
-"Immediate","حالًا",""
-"Default Due Days for Priority","أيام الاستحقاق الافتراضية للأهمية",""
+
+"Immediate","فوري",""
+
+"Default Due Days for Priority","عدد أيام الاستحقاق الافتراضي للأهمية",""
 
 "Routing Purpose Information","بيانات غرض التوجيه",""
-"Purpose Name","غرض التوجيه",""
+
+"Purpose Name","اسم الغرض",""
+
 "Requires Response","يتطلب ردًا",""
-"Closes on Completion","يغلق عند الإنجاز",""
+
+"Closes on Completion","يُغلق عند الإنجاز",""
+
 "For Signature","للتوقيع",""
+
 "For Necessary Action","لإكمال اللازم",""
-"For Review","للمشاهدة",""
+
+"For Review","للمراجعة",""
+
 "For Approval","للموافقة",""
+
 "For Circulation","للتعميم",""
+
 "For Study and Opinion","للدراسة وإبداء الرأي",""
-"For Information","للإحاطة",""
+
+"For Information","للاطلاع",""
+
 "For Follow Up","للمتابعة",""
+
 "For Reply","للرد",""
+
 "For Filing","للحفظ",""
+
 "For Implementation","للتنفيذ",""
 
 "Category Information","بيانات التصنيف",""
+
 "Category Name","اسم التصنيف",""
+
 "Display Order","ترتيب العرض",""
+
 "Allow Multiple","السماح بأكثر من ملف",""
+
 "Main Letter","الخطاب الرئيسي",""
-"Attachment Document","مستند مرفق",""
+
+"Attachment Document","المستند المرفق",""
+
 "Reply","الرد",""
+
 "Supporting Document","مستند داعم",""
+
 "Internal Memo","مذكرة داخلية",""
-"Evidence","إثبات",""
+
+"Evidence","مستند إثبات",""
 
 "Document Type Information","بيانات نوع المستند",""
+
 "Document Type Name","اسم نوع المستند",""
+
 "Document Type Code","رمز نوع المستند",""
-"Allowed Extensions","الامتدادات المسموحة",""
+
+"Allowed Extensions","الامتدادات المسموح بها",""
+
 "Maximum File Size MB","الحد الأقصى لحجم الملف بالميجابايت",""
+
 "Allow Multiple Files","السماح بملفات متعددة",""
-"Requires Confidentiality","يتطلب تحديد السرية",""
+
+"Requires Confidentiality","يتطلب تحديد مستوى السرية",""
+
 "Default Category","التصنيف الافتراضي",""
 
 "Numbering Information","بيانات الترقيم",""
+
 "Rule Name","اسم قاعدة الترقيم",""
+
 "Correspondence Type","نوع المعاملة",""
+
 "Prefix","بادئة الرقم",""
+
 "Number of Digits","عدد الخانات",""
+
 "Include Year","تضمين السنة",""
+
 "Year Type","نوع السنة",""
+
 "Separator","الفاصل",""
+
 "Starting Number","رقم البداية",""
+
 "Current Number","الرقم الحالي",""
+
 "Reset Every Year","إعادة الترقيم سنويًا",""
+
 "Is Default","افتراضي",""
+
 "Example Number","مثال الرقم",""
+
 "Numbering Series","سلسلة الترقيم",""
+
 "Generated Number","الرقم المولد",""
+
 "No active numbering rule was found.","لم يتم العثور على قاعدة ترقيم نشطة.",""
+
 "No numbering rule was found for this correspondence direction.","لم يتم العثور على قاعدة ترقيم لاتجاه هذه المعاملة.",""
+
 "Unable to generate the correspondence number.","تعذر توليد رقم المعاملة.",""
 
 "Linked Correspondence","المعاملة المرتبطة",""
+
 "Relationship Type","نوع العلاقة",""
+
 "Related","مرتبطة",""
+
 "Reply To","رد على",""
+
 "Follow-up To","متابعة لـ",""
+
 "Reference","مرجع",""
+
 "Supersedes","تحل محل",""
+
 "Primary Reference","المرجع الرئيسي",""
+
 "Is Primary Reference","مرجع رئيسي",""
-"Duplicate correspondence link is not allowed.","لا يُسمح بتكرار رابط المعاملة.",""
+
+"Duplicate correspondence link is not allowed.","لا يُسمح بتكرار ارتباط المعاملة.",""
+
 "A correspondence cannot be linked to itself.","لا يمكن ربط المعاملة بنفسها.",""
-"Only one primary correspondence reference is allowed.","يسمح بمرجع رئيسي واحد فقط للمعاملة.",""
+
+"Only one primary correspondence reference is allowed.","يُسمح بمرجع رئيسي واحد فقط للمعاملة.",""
 
 "Concerned Person Information","بيانات الشخص المعني",""
+
 "Person Type","نوع الشخص",""
+
 "Employee","الموظف",""
+
 "Internal User","مستخدم داخلي",""
+
 "External Person","شخص خارجي",""
+
 "Full Name","الاسم الكامل",""
+
 "National ID","رقم الهوية",""
+
 "Mobile Number","رقم الجوال",""
+
 "Relationship","الصفة أو العلاقة",""
+
 "Role / Capacity","الصفة أو الدور",""
+
 "External Person Name","اسم الشخص الخارجي",""
+
 "Please select an employee.","يرجى اختيار الموظف.",""
+
 "Please enter the external person's name.","يرجى إدخال اسم الشخص الخارجي.",""
 
 "Data","البيانات",""
+
 "Correspondence Identity","هوية المعاملة",""
+
 "Correspondence Number","رقم المعاملة",""
+
 "Workflow State","حالة سير العمل",""
+
 "Status","الحالة",""
+
 "Routing Status","حالة التوجيه",""
+
 "Draft","مسودة",""
+
 "Registered","مسجلة",""
+
 "In Progress","قيد المعالجة",""
+
 "Completed","منجزة",""
+
 "Closed","مغلقة",""
+
 "Cancelled","ملغاة",""
+
 "Not Routed","غير محالة",""
+
 "Partially Active","نشطة جزئيًا",""
-"Active","نشط",""
+
+"Active","نشطة",""
+
 "Awaiting Completion","بانتظار الإنجاز",""
+
 "Overdue","متأخرة",""
+
 "Pending","معلقة",""
-"Processing","قيد التنفيذ",""
+
+"Processing","قيد المعالجة",""
 
 "Subject Information","بيانات الموضوع",""
+
 "Subject","الموضوع",""
+
 "Classification","التصنيف",""
-"Confidentiality Level","درجة السرية",""
+
+"Confidentiality Level","مستوى السرية",""
+
 "Priority Level","درجة الأهمية",""
+
 "Due Date","تاريخ الاستحقاق",""
+
 "Due Date Hijri","تاريخ الاستحقاق الهجري",""
+
 "Page Count","عدد الصفحات",""
+
 "Additional Details","تفاصيل إضافية",""
 
 "Internal Correspondence Information","بيانات المعاملة الداخلية",""
-"Origin Department","القسم المُصدِر",""
-"Prepared By","أعدت بواسطة",""
-"Internal From Department","من الإدارة",""
-"Internal To Department","إلى الإدارة",""
-" Prepared By Employee "," الموظف المُعِد للمراسلة",""
 
+"Origin Department","الإدارة المُصدِرة",""
+
+"Prepared By","أُعدّت بواسطة",""
+
+"Internal From Department","الإدارة المُرسِلة",""
+
+"Internal To Department","الإدارة المستلمة",""
+
+" Prepared By Employee "," الموظف المُعِد للمراسلة ",""
 
 "External Correspondence Information","بيانات المعاملة الخارجية",""
+
 "External Incoming Information","بيانات المعاملة الواردة",""
+
 "External Outgoing Information","بيانات المعاملة الصادرة",""
+
 "External Party","الجهة الخارجية",""
-"External From Party","واردة من الجهة الخارجية",""
-"External To Party","صادرة إلى الجهة الخارجية",""
-"Recipient Department","الجهة المرسل إليها",""
+
+"External From Party","الجهة الخارجية المُرسِلة",""
+
+"External To Party","الجهة الخارجية المستلمة",""
+
+"Recipient Department","الإدارة المستلمة",""
+
 "Incoming To Department","الإدارة المستلمة",""
-"Outgoing From Department","الإدارة المرسلة",""
+
+"Outgoing From Department","الإدارة المُرسِلة",""
+
 "Letter Number","رقم الخطاب",""
+
 "Letter Date","تاريخ الخطاب",""
+
 "Letter Date Hijri","تاريخ الخطاب الهجري",""
+
 "External Letter Number","رقم الخطاب الخارجي",""
+
 "External Letter Date","تاريخ الخطاب الخارجي",""
+
 "External Letter Date Hijri","تاريخ الخطاب الخارجي الهجري",""
+
 "Outgoing Letter Number","رقم الخطاب الصادر",""
+
 "Outgoing Letter Date","تاريخ الخطاب الصادر",""
+
 "Outgoing Letter Date Hijri","تاريخ الخطاب الصادر الهجري",""
 
 "Links","الروابط",""
-"Link to Other Correspondence","اربط بمعاملة أخرى",""
+
+"Link to Other Correspondence","ربط بمعاملة أخرى",""
+
 "Correspondence Links","روابط المعاملات",""
-"Concerned Persons","بيانات الأشخاص المعنيين",""
+
+"Concerned Persons","الأشخاص المعنيون",""
 
 "System Information","معلومات النظام",""
+
 "Lifecycle Information","معلومات دورة الحياة",""
-"Owner Department","القسم المسؤول",""
+
+"Owner Department","الإدارة المسؤولة",""
+
 "Registered By","مسجل المعاملة",""
+
 "Registered On","تاريخ ووقت التسجيل",""
-"Closed By","أغلق بواسطة",""
+
+"Closed By","أُغلقت بواسطة",""
+
 "Closed On","تاريخ ووقت الإغلاق",""
-"Cancelled By","ألغي بواسطة",""
+
+"Cancelled By","أُلغيت بواسطة",""
+
 "Cancelled On","تاريخ ووقت الإلغاء",""
+
 "Cancellation Reason","سبب الإلغاء",""
-"Reopened By","أعيد فتحها بواسطة",""
+
+"Reopened By","أُعيد فتحها بواسطة",""
+
 "Reopened On","تاريخ ووقت إعادة الفتح",""
+
 "Current Department","الإدارة الحالية",""
+
 "Current User","المستخدم الحالي",""
+
 "Last Activity On","تاريخ آخر نشاط",""
+
 "Barcode","الباركود",""
+
 "QR Code","رمز الاستجابة السريعة",""
+
 "Audit","التدقيق",""
+
 "Audit Information","بيانات التدقيق",""
-"Created By","أنشئ بواسطة",""
-"Modified By","عدل بواسطة",""
+
+"Created By","أنشأها",""
+
+"Modified By","عدّلها",""
 
 "Referral Summary","ملخص الإحالات",""
+
 "Active Referral Count","عدد الإحالات النشطة",""
+
 "Pending Referral Count","عدد الإحالات المعلقة",""
+
 "Completed Referral Count","عدد الإحالات المنجزة",""
+
 "Overdue Referral Count","عدد الإحالات المتأخرة",""
+
 "Total Referral Count","إجمالي عدد الإحالات",""
+
 "Last Referred On","تاريخ آخر إحالة",""
+
 "Last Referral On","تاريخ آخر إحالة",""
+
 "Has Active Referrals","توجد إحالات نشطة",""
+
 "Has Overdue Referrals","توجد إحالات متأخرة",""
 
 "Document Information","بيانات المستند",""
+
 "Correspondence","المعاملة",""
+
 "Document Category","تصنيف المستند",""
+
 "Document Type","نوع المستند",""
+
 "File","الملف",""
+
 "File Name","اسم الملف",""
+
 "Source Type","نوع المصدر",""
+
 "Scanner","الماسح الضوئي",""
+
 "Device","الجهاز",""
+
 "Manual Upload","رفع يدوي",""
+
 "Document Security","أمان المستند",""
-"Is Secret","مرفق سري",""
-"Is Confidential","سري",""
+
+"Is Secret","مستند سري",""
+
+"Is Confidential","مستند سري",""
+
 "Confidentiality","السرية",""
+
 "Version Information","معلومات الإصدار",""
+
 "Document Version","إصدار المستند",""
+
 "Version Number","رقم الإصدار",""
+
 "Is Main Document","المستند الرئيسي",""
-"Uploaded By","أُرفق بواسطة",""
+
+"Uploaded By","أرفقه",""
+
 "Uploaded On","تاريخ ووقت الإرفاق",""
+
 "Upload Source","مصدر الإرفاق",""
+
 "Checksum","بصمة الملف",""
+
 "Documents","المستندات",""
+
 "No documents have been added.","لم تتم إضافة أي مستندات.",""
+
 "Loading documents...","جارٍ تحميل المستندات...",""
+
 "Save the correspondence before adding documents.","احفظ المعاملة قبل إضافة المستندات.",""
+
 "Document uploaded successfully.","تم رفع المستند بنجاح.",""
+
 "The selected file type is not allowed.","نوع الملف المحدد غير مسموح به.",""
+
 "The selected file exceeds the maximum allowed size.","حجم الملف المحدد يتجاوز الحد الأقصى المسموح به.",""
+
 "You do not have permission to access this confidential document.","ليس لديك صلاحية للوصول إلى هذا المستند السري.",""
-"Only one main document is allowed.","يسمح بمستند رئيسي واحد فقط.",""
+
+"Only one main document is allowed.","يُسمح بمستند رئيسي واحد فقط.",""
 
 "Referral Information","بيانات الإحالة",""
+
 "Referral Reference","مرجع الإحالة",""
+
 "Referral Source","مصدر الإحالة",""
+
 "Parent Referral","الإحالة الأصلية",""
+
 "Root Referral","الإحالة الجذرية",""
+
 "Referral Batch","دفعة الإحالات",""
+
 "Referral Sequence","تسلسل الإحالة",""
+
 "From User","من المستخدم",""
+
 "From Department","من الإدارة",""
+
 "Referral Recipient","مستلم الإحالة",""
+
 "Recipient Type","نوع المستلم",""
+
 "User","مستخدم",""
+
 "To User","إلى المستخدم",""
+
 "To Department","إلى الإدارة",""
+
 "Recipient Employee","الموظف المستلم",""
+
 "Routing Details","تفاصيل التوجيه",""
+
 "Routing Purpose","غرض التوجيه",""
+
 "Action Required","الإجراء المطلوب",""
-"Instructions","تعليمات للمستلم",""
+
+"Instructions","التعليمات",""
+
 "Referral Options","خيارات الإحالة",""
+
 "Is Private","خاص",""
-"Paper Correspondence","مراسلة ورقية",""
-"Send Copy","إرسال صورة",""
-"Is Copy","صورة",""
-"Copy","صورة",""
+
+"Paper Correspondence","معاملة ورقية",""
+
+"Send Copy","إرسال نسخة",""
+
+"Is Copy","نسخة",""
+
+"Copy","نسخة",""
+
 "Original","أصل",""
+
 "Routing Type","نوع التوجيه",""
+
 "Follow Up","متابعة",""
+
 "Requires Follow Up","يتطلب متابعة",""
 
 "Tracking Information","معلومات التتبع",""
+
 "Created","تم الإنشاء",""
+
 "Sent","مرسلة",""
+
 "Opened","مفتوحة",""
+
 "Read","مقروءة",""
+
 "Received","مستلمة",""
+
 "Accepted","مقبولة",""
-"Started","بدأ تنفيذها",""
+
+"Started","بدأت المعالجة",""
+
 "Returned","معادة",""
+
 "Withdrawn","مسحوبة",""
+
 "Rejected","مرفوضة",""
+
 "Sent On","تاريخ الإرسال",""
+
 "Opened On","تاريخ الفتح",""
+
 "Read On","تاريخ القراءة",""
+
 "Received On","تاريخ الاستلام",""
+
 "Accepted On","تاريخ القبول",""
+
 "Processing Started On","تاريخ بدء المعالجة",""
+
 "Completed On","تاريخ الإنجاز",""
+
 "Returned On","تاريخ الإعادة",""
+
 "Withdrawn On","تاريخ السحب",""
+
 "Response Notes","ملاحظات الإجراء",""
+
 "Response Document","مستند الرد",""
+
 "Completion Notes","ملاحظات الإنجاز",""
+
 "Return Reason","سبب الإعادة",""
+
 "Withdrawal Reason","سبب السحب",""
+
 "Is Overdue","متأخرة",""
+
 "Overdue Days","أيام التأخير",""
+
 "Days Overdue","عدد أيام التأخير",""
+
 "Last Status Update","تاريخ آخر تحديث للحالة",""
+
 "No referrals have been created.","لم يتم إنشاء أي إحالات.",""
+
 "Loading referrals...","جارٍ تحميل الإحالات...",""
+
 "Save the correspondence before creating referrals.","احفظ المعاملة قبل إنشاء الإحالات.",""
 
 "Multiple Referral","إحالة متعددة",""
+
 "Multiple Referrals","إحالات متعددة",""
+
 "Referral Recipients","مستلمو الإحالة",""
+
 "Add Recipient","إضافة مستلم",""
+
 "Add Row","إضافة صف",""
+
 "Remove Row","حذف الصف",""
+
 "Recipient","المستلم",""
+
 "Send Referrals","إرسال الإحالات",""
+
 "Create Referrals","إنشاء الإحالات",""
+
 "Referrals created successfully.","تم إنشاء الإحالات بنجاح.",""
+
 "Referral created successfully.","تم إنشاء الإحالة بنجاح.",""
+
 "Referral sent successfully.","تم إرسال الإحالة بنجاح.",""
+
 "Please add at least one referral recipient.","يرجى إضافة مستلم إحالة واحد على الأقل.",""
+
 "Please select a recipient type.","يرجى تحديد نوع المستلم.",""
+
 "Please select a user or department.","يرجى اختيار مستخدم أو إدارة.",""
+
 "Please select the recipient user.","يرجى اختيار المستخدم المستلم.",""
+
 "Please select the recipient department.","يرجى اختيار الإدارة المستلمة.",""
+
 "Please select a routing purpose.","يرجى اختيار غرض التوجيه.",""
+
 "Duplicate recipients are not allowed.","لا يُسمح بتكرار المستلمين.",""
+
 "The same recipient cannot be added more than once.","لا يمكن إضافة المستلم نفسه أكثر من مرة.",""
+
 "You cannot refer the correspondence to yourself.","لا يمكنك إحالة المعاملة إلى نفسك.",""
+
 "You do not have permission to create referrals.","ليس لديك صلاحية لإنشاء الإحالات.",""
+
 "You do not have permission to perform this referral action.","ليس لديك صلاحية لتنفيذ هذا الإجراء على الإحالة.",""
+
 "The correspondence must be registered before creating referrals.","يجب تسجيل المعاملة قبل إنشاء الإحالات.",""
+
 "This referral has already been sent.","تم إرسال هذه الإحالة مسبقًا.",""
+
 "This referral has already been completed.","تم إنجاز هذه الإحالة مسبقًا.",""
+
 "This referral has been withdrawn.","تم سحب هذه الإحالة.",""
+
 "Only the recipient can receive this referral.","يمكن للمستلم فقط تأكيد استلام هذه الإحالة.",""
+
 "Only the recipient can start processing this referral.","يمكن للمستلم فقط بدء معالجة هذه الإحالة.",""
+
 "Only the recipient can complete this referral.","يمكن للمستلم فقط إنجاز هذه الإحالة.",""
+
 "An active referral cannot be deleted.","لا يمكن حذف إحالة نشطة.",""
 
 "Delegation Information","بيانات التفويض",""
+
 "Delegator","المفوِّض",""
+
 "Delegate","المفوَّض إليه",""
-"Valid From","صالح من",""
-"Valid To","صالح إلى",""
+
+"Valid From","ساري من",""
+
+"Valid To","ساري حتى",""
+
 "Expired","منتهي",""
-"Delegated Permissions","صلاحيات التفويض",""
+
+"Delegated Permissions","الصلاحيات المفوّضة",""
+
 "Allow Read","السماح بالقراءة",""
+
 "Allow Write","السماح بالتعديل",""
+
 "Allow Referral","السماح بالإحالة",""
+
 "Allow Complete","السماح بالإنجاز",""
-"Maximum Confidentiality","أعلى درجة سرية",""
+
+"Maximum Confidentiality","أعلى مستوى سرية مسموح به",""
+
 "Reason","السبب",""
+
 "Delegation Status","حالة التفويض",""
+
 "Invalid Date Range","نطاق زمني غير صالح",""
+
 "The delegation end date cannot be before the start date.","لا يمكن أن يكون تاريخ انتهاء التفويض قبل تاريخ بدايته.",""
+
 "The delegator and delegate cannot be the same user.","لا يمكن أن يكون المفوِّض والمفوَّض إليه المستخدم نفسه.",""
+
 "This delegation is not currently active.","هذا التفويض غير نشط حاليًا.",""
 
 "User Profile Information","بيانات ملف المستخدم",""
+
 "Profile Information","بيانات الملف",""
+
 "User Profile","ملف المستخدم",""
+
 "Employee Profile","ملف الموظف",""
+
 "Clearance Information","بيانات التصريح الأمني",""
-"Maximum Confidentiality Level","أعلى مستوى سرية",""
-"Can View Confidential","يمكنه مشاهدة السري",""
-"Can View Secret","يمكنه مشاهدة السري للغاية",""
+
+"Maximum Confidentiality Level","أعلى مستوى سرية مسموح به",""
+
+"Can View Confidential","يمكنه عرض المستندات السرية",""
+
+"Can View Secret","يمكنه عرض المستندات شديدة السرية",""
+
 "Can Register Internal","يمكنه تسجيل معاملات داخلية",""
+
 "Can Register Incoming","يمكنه تسجيل معاملات واردة",""
+
 "Can Register Outgoing","يمكنه تسجيل معاملات صادرة",""
+
 "Can Create Referrals","يمكنه إنشاء الإحالات",""
+
 "Can Complete Referrals","يمكنه إنجاز الإحالات",""
+
 "Can Manage Documents","يمكنه إدارة المستندات",""
+
 "Can Scan Documents","يمكنه مسح المستندات ضوئيًا",""
+
 "Can Print Barcode","يمكنه طباعة الباركود",""
+
 "Can Reopen Correspondence","يمكنه إعادة فتح المعاملات",""
+
 "Can Cancel Correspondence","يمكنه إلغاء المعاملات",""
+
 "User Profile is inactive.","ملف المستخدم غير نشط.",""
+
 "No active Murasalat User Profile was found.","لم يتم العثور على ملف مستخدم مراسلات نشط.",""
 
 "Workflow","سير العمل",""
+
 "Workflow Actions","إجراءات سير العمل",""
+
 "Register","تسجيل",""
+
 "Close","إغلاق",""
+
 "Reopen","إعادة فتح",""
+
 "Cancel","إلغاء",""
+
 "Submit","اعتماد",""
+
 "Approve","موافقة",""
+
 "Reject","رفض",""
+
 "Registration","التسجيل",""
+
 "Register Correspondence","تسجيل المعاملة",""
+
 "Close Correspondence","إغلاق المعاملة",""
+
 "Reopen Correspondence","إعادة فتح المعاملة",""
+
 "Cancel Correspondence","إلغاء المعاملة",""
+
 "Correspondence registered successfully.","تم تسجيل المعاملة بنجاح.",""
+
 "Correspondence closed successfully.","تم إغلاق المعاملة بنجاح.",""
+
 "Correspondence reopened successfully.","تمت إعادة فتح المعاملة بنجاح.",""
+
 "Correspondence cancelled successfully.","تم إلغاء المعاملة بنجاح.",""
-"Only draft correspondence can be registered.","يمكن تسجيل المعاملات المسودة فقط.",""
-"Only registered correspondence can be closed.","يمكن إغلاق المعاملات المسجلة فقط.",""
+
+"Only draft correspondence can be registered.","لا يمكن تسجيل سوى المعاملات المسودة.",""
+
+"Only registered correspondence can be closed.","لا يمكن إغلاق سوى المعاملات المسجلة.",""
+
 "Closed correspondence cannot be edited.","لا يمكن تعديل المعاملة المغلقة.",""
+
 "Cancelled correspondence cannot be edited.","لا يمكن تعديل المعاملة الملغاة.",""
+
 "Complete all active referrals before closing the correspondence.","يجب إنجاز جميع الإحالات النشطة قبل إغلاق المعاملة.",""
+
 "Correspondence with active referrals cannot be cancelled.","لا يمكن إلغاء معاملة تحتوي على إحالات نشطة.",""
+
 "Please enter the cancellation reason.","يرجى إدخال سبب الإلغاء.",""
-"Registered correspondence cannot be deleted.","لا يمكن حذف معاملة مسجلة.",""
-"Closed correspondence cannot be deleted.","لا يمكن حذف معاملة مغلقة.",""
-"Cancelled correspondence cannot be deleted.","لا يمكن حذف معاملة ملغاة.",""
+
+"Registered correspondence cannot be deleted.","لا يمكن حذف المعاملة المسجلة.",""
+
+"Closed correspondence cannot be deleted.","لا يمكن حذف المعاملة المغلقة.",""
+
+"Cancelled correspondence cannot be deleted.","لا يمكن حذف المعاملة الملغاة.",""
 
 "Validation","التحقق",""
+
 "Mandatory fields required","الحقول الإلزامية مطلوبة",""
+
 "Please complete all mandatory fields.","يرجى استكمال جميع الحقول الإلزامية.",""
+
 "Please select the correspondence direction.","يرجى تحديد اتجاه المعاملة.",""
+
 "Please select the correspondence type.","يرجى تحديد نوع المعاملة.",""
+
 "Please select the confidentiality level.","يرجى تحديد مستوى السرية.",""
+
 "Please select the priority level.","يرجى تحديد درجة الأهمية.",""
+
 "Please enter the subject.","يرجى إدخال الموضوع.",""
-"Please select the origin department.","يرجى اختيار القسم المصدر.",""
+
+"Please select the origin department.","يرجى اختيار الإدارة المُصدِرة.",""
+
 "Please select the external party.","يرجى اختيار الجهة الخارجية.",""
-"Please select the incoming department.","يرجى اختيار القسم المستلم.",""
-"Please select the outgoing department.","يرجى اختيار القسم المرسل.",""
+
+"Please select the incoming department.","يرجى اختيار الإدارة المستلمة.",""
+
+"Please select the outgoing department.","يرجى اختيار الإدارة المُرسِلة.",""
+
 "Please enter the external letter number.","يرجى إدخال رقم الخطاب الخارجي.",""
+
 "Please enter the external letter date.","يرجى إدخال تاريخ الخطاب الخارجي.",""
+
 "Please enter the outgoing letter number.","يرجى إدخال رقم الخطاب الصادر.",""
+
 "Please enter the outgoing letter date.","يرجى إدخال تاريخ الخطاب الصادر.",""
+
 "Page count cannot be negative.","لا يمكن أن يكون عدد الصفحات سالبًا.",""
+
 "Due date cannot be before the correspondence date.","لا يمكن أن يكون تاريخ الاستحقاق قبل تاريخ المعاملة.",""
+
 "Letter date cannot be in the future.","لا يمكن أن يكون تاريخ الخطاب في المستقبل.",""
+
 "Invalid correspondence direction.","اتجاه المعاملة غير صالح.",""
+
 "The selected correspondence type is not allowed for this direction.","نوع المعاملة المحدد غير مسموح لهذا الاتجاه.",""
-"The selected confidentiality level exceeds your clearance.","مستوى السرية المحدد يتجاوز تصريحك الأمني.",""
+
+"The selected confidentiality level exceeds your clearance.","مستوى السرية المحدد يتجاوز مستوى تصريحك الأمني.",""
+
 "You do not have permission to register this correspondence direction.","ليس لديك صلاحية لتسجيل معاملات بهذا الاتجاه.",""
+
 "You do not have permission to access this correspondence.","ليس لديك صلاحية للوصول إلى هذه المعاملة.",""
+
 "Changes have been saved.","تم حفظ التغييرات.",""
+
 "An unexpected error occurred.","حدث خطأ غير متوقع.",""
 
-"New Correspondence","مراسلة جديدة",""
+"New Correspondence","معاملة جديدة",""
+
 "Register Internal Correspondence","تسجيل معاملة داخلية",""
+
 "Internal Correspondence Drafts","مسودات المعاملات الداخلية",""
+
 "Register External Incoming Correspondence","تسجيل معاملة واردة خارجية",""
+
 "Register External Outgoing Correspondence","تسجيل معاملة صادرة خارجية",""
+
 "Incoming Correspondence Drafts","مسودات المعاملات الواردة",""
+
 "Outgoing Correspondence Drafts","مسودات المعاملات الصادرة",""
+
 "All Correspondence","جميع المعاملات",""
+
 "Draft Correspondence","المعاملات المسودة",""
+
 "Registered Correspondence","المعاملات المسجلة",""
+
 "Closed Correspondence","المعاملات المغلقة",""
+
 "Overdue Correspondence","المعاملات المتأخرة",""
 
 "Correspondence Box","صندوق المعاملات",""
+
 "My Inbox","صندوق الوارد",""
-"Department Inbox","صندوق الإدارة",""
+
+"Department Inbox","صندوق وارد الإدارة",""
+
 "Sent Referrals","الإحالات المرسلة",""
+
 "Received Referrals","الإحالات المستلمة",""
+
 "Active Referrals","الإحالات النشطة",""
+
 "Pending Referrals","الإحالات المعلقة",""
+
 "Completed Referrals","الإحالات المنجزة",""
+
 "Overdue Referrals","الإحالات المتأخرة",""
+
 "Returned Referrals","الإحالات المعادة",""
+
 "Follow-up","المتابعة",""
+
 "Follow-up Referrals","إحالات المتابعة",""
 
 "Search","بحث",""
+
 "Simple Search","بحث بسيط",""
+
 "Advanced Search","بحث متقدم",""
+
 "Search Correspondence","البحث في المعاملات",""
+
 "Search Results","نتائج البحث",""
+
 "No results found.","لم يتم العثور على نتائج.",""
+
 "Clear Filters","مسح عوامل التصفية",""
+
 "Apply Filters","تطبيق عوامل التصفية",""
 
 "Delegations","التفويضات",""
+
 "My Delegations","تفويضاتي",""
-"Delegated to Me","المفوّض إليّ",""
+
+"Delegated to Me","المفوَّض إليّ",""
+
 "Active Delegations","التفويضات النشطة",""
+
 "Expired Delegations","التفويضات المنتهية",""
 
-"Setup","الإعدادات",""
+"Setup","الإعداد",""
+
 "Correspondence Types","أنواع المعاملات",""
+
 "External Parties","الجهات الخارجية",""
+
 "Confidentiality Levels","مستويات السرية",""
+
 "Priority Levels","درجات الأهمية",""
+
 "Routing Purposes","أغراض التوجيه",""
+
 "Document Categories","تصنيفات المستندات",""
+
 "Document Types","أنواع المستندات",""
+
 "Numbering Rules","قواعد الترقيم",""
+
 "User Profiles","ملفات المستخدمين",""
+
 "Settings","الإعدادات",""
 
 "Clear Fields","تفريغ الحقول",""
+
 "Save as Draft","حفظ كمسودة",""
+
 "Print Barcode","طباعة الباركود",""
+
 "Print QR Code","طباعة رمز الاستجابة السريعة",""
+
 "Print","طباعة",""
+
 "Next","التالي",""
+
 "Previous","السابق",""
+
 "Scan","مسح ضوئي",""
-"Attach from Device","إرفاق من جهازك",""
+
+"Attach from Device","إرفاق من الجهاز",""
+
 "Upload","رفع",""
+
 "Upload Document","رفع مستند",""
+
 "Add Document","إضافة مستند",""
+
 "Open Document","فتح المستند",""
+
 "Download","تنزيل",""
+
 "Refresh","تحديث",""
+
 "Reload","إعادة تحميل",""
+
 "Newest","الأحدث",""
+
 "Oldest","الأقدم",""
+
 "Grid View","عرض شبكي",""
+
 "List View","عرض قائمة",""
+
 "Sort By","ترتيب حسب",""
+
 "Referral","إحالة",""
+
 "Add Referral","إضافة إحالة",""
+
 "Send","إرسال",""
+
 "Mark as Received","تأكيد الاستلام",""
+
 "Start Processing","بدء المعالجة",""
+
 "Complete","إنجاز",""
+
 "Return","إعادة",""
+
 "Withdraw","سحب",""
+
 "Save","حفظ",""
+
 "Delete","حذف",""
+
 "Edit","تعديل",""
+
 "View","عرض",""
+
 "Open","فتح",""
+
 "Yes","نعم",""
+
 "No","لا",""
+
 "OK","موافق",""
+
 "Confirm","تأكيد",""
+
 "Are you sure?","هل أنت متأكد؟",""
+
 "Please wait...","يرجى الانتظار...",""
+
 "Loading...","جارٍ التحميل...",""
+
 "Processing...","جارٍ التنفيذ...",""
+
 "Sending...","جارٍ الإرسال...",""
+
 "Saving...","جارٍ الحفظ...",""
 
 "Data Tab","تبويب البيانات",""
+
 "Attachments Tab","تبويب المرفقات",""
+
 "Referral Tab","تبويب الإحالة",""
+
 "Audit Tab","تبويب التدقيق",""
+
 "Identity Section","قسم هوية المعاملة",""
+
 "Subject Section","قسم الموضوع",""
+
 "Internal Section","قسم المعاملة الداخلية",""
+
 "Incoming Section","قسم المعاملة الواردة",""
+
 "Outgoing Section","قسم المعاملة الصادرة",""
+
 "Attachments Section","قسم المرفقات",""
+
 "Referral Section","قسم الإحالات",""
+
 "Audit Section","قسم التدقيق",""
 
 "Go to Data","الانتقال إلى البيانات",""
+
 "Go to Attachments","الانتقال إلى المرفقات",""
+
 "Go to Referral","الانتقال إلى الإحالة",""
+
 "Go to Audit","الانتقال إلى التدقيق",""
+
 "Continue to Attachments","المتابعة إلى المرفقات",""
+
 "Continue to Referral","المتابعة إلى الإحالة",""
+
 "Back to Data","العودة إلى البيانات",""
+
 "Back to Attachments","العودة إلى المرفقات",""
 
 "Clear all fields?","هل تريد تفريغ جميع الحقول؟",""
+
 "All unsaved values will be removed.","ستتم إزالة جميع القيم غير المحفوظة.",""
+
 "Draft saved successfully.","تم حفظ المسودة بنجاح.",""
+
 "Please save the correspondence first.","يرجى حفظ المعاملة أولًا.",""
+
 "Please register the correspondence first.","يرجى تسجيل المعاملة أولًا.",""
+
 "Barcode is not available.","الباركود غير متوفر.",""
+
 "QR Code is not available.","رمز الاستجابة السريعة غير متوفر.",""
+
 "Scanner integration is not configured.","تكامل الماسح الضوئي غير مهيأ.",""
+
 "Opening document upload form...","جارٍ فتح نموذج رفع المستند...",""
 
 "Murasalat User","مستخدم المراسلات",""
+
 "Murasalat Clerk","موظف المراسلات",""
+
 "Murasalat Manager","مدير المراسلات",""
+
 "Murasalat Auditor","مدقق المراسلات",""
+
 "System Manager","مدير النظام",""
+
 "Administrator","مدير النظام",""
 
 "Permission Denied","تم رفض الصلاحية",""
+
 "Not Permitted","غير مسموح",""
+
 "Insufficient Permission","صلاحية غير كافية",""
+
 "Access Denied","تم رفض الوصول",""
+
 "Confidentiality access denied.","تم رفض الوصول بسبب مستوى السرية.",""
-"You are not authorized to perform this action.","غير مصرح لك بتنفيذ هذا الإجراء.",""
+
+"You are not authorized to perform this action.","ليس لديك تصريح لتنفيذ هذا الإجراء.",""
+
 "You cannot access correspondence outside your department.","لا يمكنك الوصول إلى معاملات خارج إدارتك.",""
-"You cannot modify correspondence owned by another department.","لا يمكنك تعديل معاملة مملوكة لإدارة أخرى.",""
+
+"You cannot modify correspondence owned by another department.","لا يمكنك تعديل معاملة مسؤولة عنها إدارة أخرى.",""
 
 "Original Recipient","مستلم الأصل",""
-"Copy Recipient","مستلم الصورة",""
+
+"Copy Recipient","مستلم النسخة",""
+
 "Send as Original","إرسال كأصل",""
-"Send as Copy","إرسال كصورة",""
-"Original referral","إحالة أصل",""
-"Copy referral","إحالة صورة",""
-"Only one active original referral is allowed.","يسمح بإحالة أصل نشطة واحدة فقط.",""
-"Copy referrals do not transfer correspondence ownership.","إحالات الصورة لا تنقل ملكية المعاملة.",""
+
+"Send as Copy","إرسال كنسخة",""
+
+"Original referral","إحالة أصلية",""
+
+"Copy referral","إحالة نسخة",""
+
+"Only one active original referral is allowed.","يُسمح بإحالة أصلية نشطة واحدة فقط.",""
+
+"Copy referrals do not transfer correspondence ownership.","إحالات النسخة لا تنقل مسؤولية المعاملة.",""
+
 "Original referral transfers correspondence responsibility.","إحالة الأصل تنقل مسؤولية المعاملة.",""
 
 "Today","اليوم",""
+
 "Yesterday","أمس",""
+
 "Tomorrow","غدًا",""
+
 "This Week","هذا الأسبوع",""
+
 "This Month","هذا الشهر",""
+
 "All","الكل",""
+
 "None","لا شيء",""
+
 "Ascending","تصاعدي",""
+
 "Descending","تنازلي",""
+
 "Save the correspondence first, then add the main letter, attachments, or reply documents.","احفظ المعاملة أولًا، ثم أضف الخطاب الرئيسي أو المرفقات أو مستندات الرد.",""
-"Save the correspondence first, then add the main letter, attachments, or reply documents","احفظ المعاملة أولًا، ثم أضف الخطاب الرئيسي أو المرفقات أو مستندات الرد.",""
+
+"Save the correspondence first, then add the main letter, attachments, or reply documents","احفظ المعاملة أولًا، ثم أضف الخطاب الرئيسي أو المرفقات أو مستندات الرد",""
+
 "Save the correspondence first.","احفظ المعاملة أولًا.",""
-"Save the correspondence first","احفظ المعاملة أولًا.",""
+
+"Save the correspondence first","احفظ المعاملة أولًا",""
+
 "Please save the correspondence first.","يرجى حفظ المعاملة أولًا.",""
-"Please save the correspondence first","يرجى حفظ المعاملة أولًا.",""
+
+"Please save the correspondence first","يرجى حفظ المعاملة أولًا",""
 
 "Register the correspondence before sending referrals.","سجّل المعاملة قبل إرسال الإحالات.",""
-"Register the correspondence before sending referrals","سجّل المعاملة قبل إرسال الإحالات.",""
+
+"Register the correspondence before sending referrals","سجّل المعاملة قبل إرسال الإحالات",""
+
 "Register the correspondence first, then send referrals.","سجّل المعاملة أولًا، ثم أرسل الإحالات.",""
-"Register the correspondence first, then send referrals","سجّل المعاملة أولًا، ثم أرسل الإحالات.",""
+
+"Register the correspondence first, then send referrals","سجّل المعاملة أولًا، ثم أرسل الإحالات",""
+
 "Please register the correspondence before sending referrals.","يرجى تسجيل المعاملة قبل إرسال الإحالات.",""
-"Please register the correspondence before sending referrals","يرجى تسجيل المعاملة قبل إرسال الإحالات.",""
+
+"Please register the correspondence before sending referrals","يرجى تسجيل المعاملة قبل إرسال الإحالات",""
+
 "The correspondence must be registered before sending referrals.","يجب تسجيل المعاملة قبل إرسال الإحالات.",""
-"The correspondence must be registered before sending referrals","يجب تسجيل المعاملة قبل إرسال الإحالات.",""
+
+"The correspondence must be registered before sending referrals","يجب تسجيل المعاملة قبل إرسال الإحالات",""
+
 "The correspondence must be registered before creating referrals.","يجب تسجيل المعاملة قبل إنشاء الإحالات.",""
-"The correspondence must be registered before creating referrals","يجب تسجيل المعاملة قبل إنشاء الإحالات.",""
+
+"The correspondence must be registered before creating referrals","يجب تسجيل المعاملة قبل إنشاء الإحالات",""
 
 "Single Referral","إحالة فردية",""
+
 "Single referral","إحالة فردية",""
+
 "Create Single Referral","إنشاء إحالة فردية",""
+
 "Add Single Referral","إضافة إحالة فردية",""
+
 "Send Single Referral","إرسال إحالة فردية",""
+
 "New Single Referral","إحالة فردية جديدة",""
 
 "Singal Referral","إحالة فردية",""
+
 "Singal referral","إحالة فردية",""
+
 "Single Refferal","إحالة فردية",""
+
 "single refferal","إحالة فردية",""
+
 "Singal Refferal","إحالة فردية",""
+
 "singal refferal","إحالة فردية",""
 
 "Multiple Referral","إحالة متعددة",""
+
 "Multiple referral","إحالة متعددة",""
+
 "Multiple Referrals","إحالات متعددة",""
+
 "Create Multiple Referrals","إنشاء إحالات متعددة",""
+
 "Add Multiple Referrals","إضافة إحالات متعددة",""
+
 "Send Multiple Referrals","إرسال إحالات متعددة",""
+
 "Open Multiple Referral","فتح الإحالة المتعددة",""
+
 "Multiple Referral Dialog","نافذة الإحالة المتعددة",""
 
 "Add Scanned Document","إضافة مستند ممسوح ضوئيًا",""
+
 "Add scanned document","إضافة مستند ممسوح ضوئيًا",""
-"Scan Document","مسح مستند ضوئيًا",""
-"Scan document","مسح مستند ضوئيًا",""
+
+"Scan Document","مسح المستند ضوئيًا",""
+
+"Scan document","مسح المستند ضوئيًا",""
+
 "Add Scan Document","إضافة مستند ممسوح ضوئيًا",""
+
 "Add Scanned File","إضافة ملف ممسوح ضوئيًا",""
+
 "Upload Scanned Document","رفع مستند ممسوح ضوئيًا",""
+
 "Open Scanner","فتح الماسح الضوئي",""
+
 "Scanner","الماسح الضوئي",""
+
 "Scanned Document","مستند ممسوح ضوئيًا",""
+
 "Scanned Documents","مستندات ممسوحة ضوئيًا",""
 
 "Add Scann Document","إضافة مستند ممسوح ضوئيًا",""
+
 "Add Scann Docment","إضافة مستند ممسوح ضوئيًا",""
+
 "add scann docment","إضافة مستند ممسوح ضوئيًا",""
+
 "Add Scan Docment","إضافة مستند ممسوح ضوئيًا",""
 
 "Refresh Panels","تحديث اللوحات",""
+
 "Refresh panels","تحديث اللوحات",""
+
 "refresh panels","تحديث اللوحات",""
+
 "Refresh Panel","تحديث اللوحة",""
+
 "Reload Panels","إعادة تحميل اللوحات",""
+
 "Update Panels","تحديث اللوحات",""
+
 "Refreshing Panels...","جارٍ تحديث اللوحات...",""
+
 "Refreshing panels...","جارٍ تحديث اللوحات...",""
+
 "Panels refreshed successfully.","تم تحديث اللوحات بنجاح.",""
+
 "Panels updated successfully.","تم تحديث اللوحات بنجاح.",""
 
 "Murasalat Draft","مسودة المراسلات",""
+
 "Murasalat Drafts","مسودات المراسلات",""
-"Murasalat Registered","مراسلات مسجلة",""
-"Murasalat Closed","مراسلات مغلقة",""
-"Murasalat Cancelled","مراسلات ملغاة",""
+
+"Murasalat Registered","المعاملات المسجلة",""
+
+"Murasalat Closed","المعاملات المغلقة",""
+
+"Murasalat Cancelled","المعاملات الملغاة",""
+
 "Murasalat Workflow","سير عمل المراسلات",""
+
 "Murasalat Correspondence Workflow","سير عمل معاملات المراسلات",""
+
 "Murasalat Referral Workflow","سير عمل إحالات المراسلات",""
 
 "Main Letter","الخطاب الرئيسي",""
+
 "Add Main Letter","إضافة الخطاب الرئيسي",""
+
 "Upload Main Letter","رفع الخطاب الرئيسي",""
+
 "Open Main Letter","فتح الخطاب الرئيسي",""
+
 "Main Letter Document","مستند الخطاب الرئيسي",""
+
 "Main Letter File","ملف الخطاب الرئيسي",""
+
 "Replace Main Letter","استبدال الخطاب الرئيسي",""
+
 "Download Main Letter","تنزيل الخطاب الرئيسي",""
+
 "No main letter has been added.","لم تتم إضافة الخطاب الرئيسي.",""
+
 "Main letter added successfully.","تمت إضافة الخطاب الرئيسي بنجاح.",""
 
 "Reply Document","مستند الرد",""
+
 "Reply Documents","مستندات الرد",""
+
 "Add Reply Document","إضافة مستند رد",""
+
 "Upload Reply Document","رفع مستند رد",""
+
 "Open Reply Document","فتح مستند الرد",""
+
 "No reply documents have been added.","لم تتم إضافة مستندات رد.",""
 
 "Other Attachment","مرفق آخر",""
+
 "Other Attachments","مرفقات أخرى",""
+
 "Add Attachment","إضافة مرفق",""
+
 "Add Attachments","إضافة مرفقات",""
+
 "Upload Attachment","رفع مرفق",""
+
 "Upload Attachments","رفع مرفقات",""
+
 "Add File","إضافة ملف",""
+
 "Add Files","إضافة ملفات",""
+
 "Attach File","إرفاق ملف",""
+
 "Attach Files","إرفاق ملفات",""
+
 "Attach from Device","إرفاق من الجهاز",""
+
 "Add from Device","إضافة من الجهاز",""
+
 "Select File","اختيار ملف",""
+
 "Select Files","اختيار الملفات",""
+
 "Choose File","اختيار ملف",""
+
 "Choose Files","اختيار الملفات",""
+
 "No file selected.","لم يتم اختيار ملف.",""
+
 "No attachments have been added.","لم تتم إضافة مرفقات.",""
+
 "Attachment added successfully.","تمت إضافة المرفق بنجاح.",""
+
 "Attachments added successfully.","تمت إضافة المرفقات بنجاح.",""
 
 "Correspondence Documents","مستندات المعاملة",""
+
 "Related Documents","المستندات المرتبطة",""
+
 "Document Panels","لوحات المستندات",""
+
 "Documents Panel","لوحة المستندات",""
+
 "Attachments Panel","لوحة المرفقات",""
+
 "Referrals Panel","لوحة الإحالات",""
+
 "Referral Panel","لوحة الإحالة",""
+
 "Summary Panel","لوحة الملخص",""
+
 "Activity Panel","لوحة النشاط",""
+
 "Audit Panel","لوحة التدقيق",""
 
 "Loading document panels...","جارٍ تحميل لوحات المستندات...",""
+
 "Loading attachment panel...","جارٍ تحميل لوحة المرفقات...",""
+
 "Loading attachments...","جارٍ تحميل المرفقات...",""
+
 "Loading referral panel...","جارٍ تحميل لوحة الإحالات...",""
+
 "Loading referrals...","جارٍ تحميل الإحالات...",""
+
 "Loading correspondence data...","جارٍ تحميل بيانات المعاملة...",""
+
 "Unable to load panels.","تعذر تحميل اللوحات.",""
+
 "Unable to load documents.","تعذر تحميل المستندات.",""
+
 "Unable to load referrals.","تعذر تحميل الإحالات.",""
+
 "Unable to refresh panels.","تعذر تحديث اللوحات.",""
+
 "Failed to load documents.","فشل تحميل المستندات.",""
+
 "Failed to load referrals.","فشل تحميل الإحالات.",""
+
 "Failed to refresh panels.","فشل تحديث اللوحات.",""
 
 "No documents found.","لم يتم العثور على مستندات.",""
+
 "No attachments found.","لم يتم العثور على مرفقات.",""
+
 "No referrals found.","لم يتم العثور على إحالات.",""
+
 "No documents have been added.","لم تتم إضافة أي مستندات.",""
+
 "No referrals have been created.","لم يتم إنشاء أي إحالات.",""
+
 "No related records found.","لم يتم العثور على سجلات مرتبطة.",""
+
 "No data available.","لا توجد بيانات متاحة.",""
+
 "No records found.","لم يتم العثور على سجلات.",""
 
 "Add Recipient","إضافة مستلم",""
+
 "Add Recipients","إضافة مستلمين",""
+
 "Referral Recipients","مستلمو الإحالة",""
+
 "Recipient Details","بيانات المستلم",""
+
 "Recipient User","المستخدم المستلم",""
+
 "Recipient Department","الإدارة المستلمة",""
+
 "Recipient Employee","الموظف المستلم",""
+
 "Select Recipient","اختيار المستلم",""
+
 "Select Recipient Type","اختيار نوع المستلم",""
+
 "Select User","اختيار المستخدم",""
+
 "Select Department","اختيار الإدارة",""
+
 "Select Employee","اختيار الموظف",""
+
 "Select Routing Purpose","اختيار غرض التوجيه",""
+
 "Select Priority","اختيار درجة الأهمية",""
+
 "Select Due Date","اختيار تاريخ الاستحقاق",""
 
 "Send as Original","إرسال كأصل",""
-"Send as Copy","إرسال كصورة",""
+
+"Send as Copy","إرسال كنسخة",""
+
 "Original","أصل",""
-"Copy","صورة",""
-"Original Referral","إحالة أصل",""
-"Copy Referral","إحالة صورة",""
+
+"Copy","نسخة",""
+
+"Original Referral","إحالة أصلية",""
+
+"Copy Referral","إحالة نسخة",""
+
 "Original Recipient","مستلم الأصل",""
-"Copy Recipient","مستلم الصورة",""
-"Is Copy","صورة",""
-"Send Copy","إرسال صورة",""
+
+"Copy Recipient","مستلم النسخة",""
+
+"Is Copy","نسخة",""
+
+"Send Copy","إرسال نسخة",""
+
 "Private Referral","إحالة خاصة",""
+
 "Paper Referral","إحالة ورقية",""
+
 "Follow-up Referral","إحالة متابعة",""
+
 "Requires Follow Up","تتطلب متابعة",""
 
 "Referral Instructions","تعليمات الإحالة",""
+
 "Enter instructions","أدخل التعليمات",""
+
 "Enter referral instructions","أدخل تعليمات الإحالة",""
+
 "Action Required","الإجراء المطلوب",""
+
 "Due Date","تاريخ الاستحقاق",""
+
 "Priority","الأهمية",""
+
 "Routing Purpose","غرض التوجيه",""
+
 "Referral Type","نوع الإحالة",""
+
 "Referral Status","حالة الإحالة",""
 
 "Create Referral","إنشاء إحالة",""
+
 "Add Referral","إضافة إحالة",""
+
 "Send Referral","إرسال الإحالة",""
+
 "Open Referral","فتح الإحالة",""
+
 "View Referral","عرض الإحالة",""
+
 "Refresh Referrals","تحديث الإحالات",""
+
 "Referral created successfully.","تم إنشاء الإحالة بنجاح.",""
+
 "Referral sent successfully.","تم إرسال الإحالة بنجاح.",""
+
 "Referrals created successfully.","تم إنشاء الإحالات بنجاح.",""
+
 "Referrals sent successfully.","تم إرسال الإحالات بنجاح.",""
+
 "Referral received successfully.","تم استلام الإحالة بنجاح.",""
+
 "Referral processing started.","تم بدء معالجة الإحالة.",""
+
 "Referral completed successfully.","تم إنجاز الإحالة بنجاح.",""
+
 "Referral returned successfully.","تمت إعادة الإحالة بنجاح.",""
+
 "Referral withdrawn successfully.","تم سحب الإحالة بنجاح.",""
 
 "Please add at least one recipient.","يرجى إضافة مستلم واحد على الأقل.",""
+
 "Please add at least one referral recipient.","يرجى إضافة مستلم إحالة واحد على الأقل.",""
+
 "Please select a recipient.","يرجى اختيار المستلم.",""
+
 "Please select the recipient type.","يرجى تحديد نوع المستلم.",""
+
 "Please select the recipient user.","يرجى اختيار المستخدم المستلم.",""
+
 "Please select the recipient department.","يرجى اختيار الإدارة المستلمة.",""
+
 "Please select a routing purpose.","يرجى اختيار غرض التوجيه.",""
+
 "Please enter referral instructions.","يرجى إدخال تعليمات الإحالة.",""
+
 "Duplicate recipient.","مستلم مكرر.",""
+
 "Duplicate recipients are not allowed.","لا يُسمح بتكرار المستلمين.",""
+
 "The same recipient cannot be added more than once.","لا يمكن إضافة المستلم نفسه أكثر من مرة.",""
+
 "Remove duplicate recipients before sending.","احذف المستلمين المكررين قبل الإرسال.",""
+
 "At least one original recipient is required.","يجب تحديد مستلم أصل واحد على الأقل.",""
 
 "Are you sure you want to send this referral?","هل أنت متأكد من رغبتك في إرسال هذه الإحالة؟",""
+
 "Are you sure you want to send these referrals?","هل أنت متأكد من رغبتك في إرسال هذه الإحالات؟",""
+
 "Are you sure you want to complete this referral?","هل أنت متأكد من رغبتك في إنجاز هذه الإحالة؟",""
+
 "Are you sure you want to return this referral?","هل أنت متأكد من رغبتك في إعادة هذه الإحالة؟",""
+
 "Are you sure you want to withdraw this referral?","هل أنت متأكد من رغبتك في سحب هذه الإحالة؟",""
+
 "Send referral now?","هل تريد إرسال الإحالة الآن؟",""
+
 "Send referrals now?","هل تريد إرسال الإحالات الآن؟",""
 
 "Correspondence must be saved before adding documents.","يجب حفظ المعاملة قبل إضافة المستندات.",""
+
 "Correspondence must be saved before creating referrals.","يجب حفظ المعاملة قبل إنشاء الإحالات.",""
+
 "Correspondence must be registered before creating referrals.","يجب تسجيل المعاملة قبل إنشاء الإحالات.",""
+
 "Correspondence must be registered before sending referrals.","يجب تسجيل المعاملة قبل إرسال الإحالات.",""
+
 "Draft correspondence cannot be referred.","لا يمكن إحالة معاملة مسودة.",""
+
 "Cancelled correspondence cannot be referred.","لا يمكن إحالة معاملة ملغاة.",""
+
 "Closed correspondence cannot receive new referrals.","لا يمكن إنشاء إحالات جديدة لمعاملة مغلقة.",""
 
 "Register Correspondence","تسجيل المعاملة",""
+
 "Register Now","التسجيل الآن",""
+
 "Registration Required","التسجيل مطلوب",""
+
 "Save Required","الحفظ مطلوب",""
+
 "Document Required","المستند مطلوب",""
+
 "Main Letter Required","الخطاب الرئيسي مطلوب",""
+
 "Referral Required","الإحالة مطلوبة",""
-"Please add the main letter before registration.","يرجى إضافة الخطاب الرئيسي قبل التسجيل.",""
-"Please save all changes before registration.","يرجى حفظ جميع التغييرات قبل التسجيل.",""
+
+"Please add the main letter before registration.","يرجى إضافة الخطاب الرئيسي قبل تسجيل المعاملة.",""
+
+"Please save all changes before registration.","يرجى حفظ جميع التغييرات قبل تسجيل المعاملة.",""
+
 "Please save all changes before sending referrals.","يرجى حفظ جميع التغييرات قبل إرسال الإحالات.",""
 
 "Correspondence saved successfully.","تم حفظ المعاملة بنجاح.",""
+
 "Correspondence registered successfully.","تم تسجيل المعاملة بنجاح.",""
+
 "Correspondence updated successfully.","تم تحديث المعاملة بنجاح.",""
+
 "Correspondence closed successfully.","تم إغلاق المعاملة بنجاح.",""
+
 "Correspondence reopened successfully.","تمت إعادة فتح المعاملة بنجاح.",""
+
 "Correspondence cancelled successfully.","تم إلغاء المعاملة بنجاح.",""
+
 "Draft saved successfully.","تم حفظ المسودة بنجاح.",""
 
 "Refresh Correspondence","تحديث المعاملة",""
+
 "Refresh Documents","تحديث المستندات",""
+
 "Refresh Attachments","تحديث المرفقات",""
+
 "Refresh Referrals","تحديث الإحالات",""
+
 "Refresh Summary","تحديث الملخص",""
+
 "Refresh Activity","تحديث النشاط",""
+
 "Refresh Data","تحديث البيانات",""
+
 "Reload Form","إعادة تحميل النموذج",""
+
 "Reload Data","إعادة تحميل البيانات",""
 
 "Data","البيانات",""
+
 "Attachments","المرفقات",""
+
 "Referrals","الإحالات",""
+
 "Referral","الإحالة",""
+
 "Audit","التدقيق",""
+
 "Activity","النشاط",""
+
 "Summary","الملخص",""
+
 "Details","التفاصيل",""
+
 "Actions","الإجراءات",""
+
 "Options","الخيارات",""
+
 "More Actions","إجراءات إضافية",""
 
 "Go to Data","الانتقال إلى البيانات",""
+
 "Go to Attachments","الانتقال إلى المرفقات",""
+
 "Go to Referrals","الانتقال إلى الإحالات",""
+
 "Go to Referral","الانتقال إلى الإحالة",""
+
 "Go to Audit","الانتقال إلى التدقيق",""
+
 "Next: Attachments","التالي: المرفقات",""
+
 "Next: Referral","التالي: الإحالة",""
+
 "Previous: Data","السابق: البيانات",""
+
 "Previous: Attachments","السابق: المرفقات",""
 
 "Print Barcode","طباعة الباركود",""
+
 "Print QR Code","طباعة رمز الاستجابة السريعة",""
+
 "Barcode Preview","معاينة الباركود",""
+
 "QR Code Preview","معاينة رمز الاستجابة السريعة",""
+
 "Barcode is not available.","الباركود غير متوفر.",""
+
 "QR Code is not available.","رمز الاستجابة السريعة غير متوفر.",""
+
 "Save the correspondence before printing the barcode.","احفظ المعاملة قبل طباعة الباركود.",""
+
 "Register the correspondence before printing the barcode.","سجّل المعاملة قبل طباعة الباركود.",""
 
 "Clear Fields","تفريغ الحقول",""
+
 "Clear Form","تفريغ النموذج",""
+
 "Reset Form","إعادة تعيين النموذج",""
+
 "Are you sure you want to clear all fields?","هل أنت متأكد من رغبتك في تفريغ جميع الحقول؟",""
+
 "All unsaved changes will be lost.","ستفقد جميع التغييرات غير المحفوظة.",""
+
 "Fields cleared successfully.","تم تفريغ الحقول بنجاح.",""
 
 "Open Document","فتح المستند",""
+
 "View Document","عرض المستند",""
+
 "Download Document","تنزيل المستند",""
+
 "Delete Document","حذف المستند",""
+
 "Replace Document","استبدال المستند",""
+
 "Document uploaded successfully.","تم رفع المستند بنجاح.",""
+
 "Document deleted successfully.","تم حذف المستند بنجاح.",""
+
 "Document updated successfully.","تم تحديث المستند بنجاح.",""
+
 "Unable to upload document.","تعذر رفع المستند.",""
+
 "Unable to delete document.","تعذر حذف المستند.",""
 
 "Source Type","نوع المصدر",""
+
 "Manual Upload","رفع يدوي",""
+
 "Scanner Upload","رفع بواسطة الماسح الضوئي",""
+
 "Uploaded from Device","مرفوع من الجهاز",""
+
 "Scanned","ممسوح ضوئيًا",""
+
 "Upload Source","مصدر الرفع",""
+
 "Select Document Type","اختيار نوع المستند",""
+
 "Select Document Category","اختيار تصنيف المستند",""
+
 "Document Category","تصنيف المستند",""
+
 "Document Type","نوع المستند",""
+
 "Document Description","وصف المستند",""
+
 "Document Notes","ملاحظات المستند",""
 
 "Confidential Document","مستند سري",""
+
 "Private Document","مستند خاص",""
+
 "Mark as Confidential","تحديد كمستند سري",""
+
 "Mark as Main Document","تحديد كمستند رئيسي",""
+
 "Is Main Document","المستند الرئيسي",""
+
 "Is Confidential","سري",""
+
 "You do not have permission to view this document.","ليس لديك صلاحية لعرض هذا المستند.",""
+
 "You do not have permission to download this document.","ليس لديك صلاحية لتنزيل هذا المستند.",""
-"Your clearance level does not allow access to this document.","مستوى تصريحك لا يسمح بالوصول إلى هذا المستند.",""
+
+"Your clearance level does not allow access to this document.","مستوى تصريحك الأمني لا يسمح بالوصول إلى هذا المستند.",""
 
 "Active Referral Count","عدد الإحالات النشطة",""
+
 "Pending Referral Count","عدد الإحالات المعلقة",""
+
 "Completed Referral Count","عدد الإحالات المنجزة",""
+
 "Overdue Referral Count","عدد الإحالات المتأخرة",""
+
 "Total Referrals","إجمالي الإحالات",""
+
 "Last Referred On","تاريخ آخر إحالة",""
+
 "Last Activity On","تاريخ آخر نشاط",""
+
 "No Active Referrals","لا توجد إحالات نشطة",""
+
 "No Pending Referrals","لا توجد إحالات معلقة",""
+
 "No Overdue Referrals","لا توجد إحالات متأخرة",""
 
 "Not Routed","غير محالة",""
+
 "Partially Active","نشطة جزئيًا",""
+
 "Awaiting Completion","بانتظار الإنجاز",""
+
 "Routing Active","التوجيه نشط",""
+
 "Routing Completed","اكتمل التوجيه",""
+
 "Referral Overdue","الإحالة متأخرة",""
+
 "Overdue by {0} day(s)","متأخرة بمقدار {0} يوم",""
 
 "Murasalat User Profile","ملف مستخدم المراسلات",""
+
 "Murasalat Document Type","نوع مستند المراسلات",""
+
 "User Clearance","تصريح المستخدم",""
+
 "Confidentiality Clearance","تصريح السرية",""
-"Clearance Rank","رتبة التصريح الأمني",""
+
+"Clearance Rank","درجة التصريح الأمني",""
+
 "Registration Permissions","صلاحيات التسجيل",""
+
 "Can Register Internal","يمكنه تسجيل معاملات داخلية",""
+
 "Can Register Incoming","يمكنه تسجيل معاملات واردة",""
+
 "Can Register Outgoing","يمكنه تسجيل معاملات صادرة",""
+
 "Can Create Referrals","يمكنه إنشاء الإحالات",""
+
 "Can Manage Documents","يمكنه إدارة المستندات",""
 
 "Close Correspondence","إغلاق المعاملة",""
+
 "Reopen Correspondence","إعادة فتح المعاملة",""
+
 "Cancel Correspondence","إلغاء المعاملة",""
+
 "Complete all active referrals before closing the correspondence.","أنجز جميع الإحالات النشطة قبل إغلاق المعاملة.",""
+
 "Cannot close correspondence with active referrals.","لا يمكن إغلاق معاملة تحتوي على إحالات نشطة.",""
+
 "Cannot cancel correspondence with active referrals.","لا يمكن إلغاء معاملة تحتوي على إحالات نشطة.",""
+
 "Please enter a cancellation reason.","يرجى إدخال سبب الإلغاء.",""
+
 "Please enter completion notes.","يرجى إدخال ملاحظات الإنجاز.",""
 
 "Success","نجاح",""
+
 "Information","معلومات",""
+
 "Warning","تنبيه",""
+
 "Error","خطأ",""
+
 "Validation Error","خطأ في التحقق",""
+
 "Permission Error","خطأ في الصلاحيات",""
+
 "Operation completed successfully.","اكتملت العملية بنجاح.",""
+
 "Unable to complete the operation.","تعذر إكمال العملية.",""
+
 "An unexpected error occurred.","حدث خطأ غير متوقع.",""
+
 "Please try again.","يرجى المحاولة مرة أخرى.",""
+"Prepared By Employee","الموظف المُعِدّ للمعاملة",""
