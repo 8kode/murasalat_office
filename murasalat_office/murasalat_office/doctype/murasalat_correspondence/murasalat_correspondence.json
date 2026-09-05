@@ -10,21 +10,13 @@
   "identity_section",
   "correspondence_number",
   "company",
-  "direction",
+  "owner_department",
   "column_break_identity",
   "workflow_state",
-  "correspondence_type",
+  "direction",
   "column_break_qqwf",
   "routing_status",
-  "owner_department",
-  "subject_section",
-  "subject",
-  "due_date",
-  "column_break_scke",
-  "confidentiality_level",
-  "priority_level",
-  "page_count",
-  "due_date_hijri",
+  "correspondence_type",
   "internal_section",
   "origin_department",
   "column_break_gafe",
@@ -33,9 +25,9 @@
   "prepared_by_employee",
   "incoming_section",
   "external_from_party",
-  "incoming_to_department",
-  "column_break_incoming",
   "external_letter_number",
+  "column_break_incoming",
+  "incoming_to_department",
   "external_letter_date",
   "external_letter_date_hijri",
   "outgoing_section",
@@ -45,8 +37,16 @@
   "outgoing_letter_number",
   "outgoing_letter_date",
   "outgoing_letter_date_hijri",
-  "details_section",
-  "notes",
+  "subject_section",
+  "subject",
+  "due_date",
+  "column_break_scke",
+  "confidentiality_level",
+  "priority_level",
+  "page_count",
+  "due_date_hijri",
+  "notes_section",
+  "note",
   "links_section",
   "link_to_other_correspondence",
   "correspondence_links",
@@ -272,7 +272,7 @@
    "fieldname": "external_from_party",
    "fieldtype": "Link",
    "in_standard_filter": 1,
-   "label": "External Sender",
+   "label": "External From Party",
    "mandatory_depends_on": "eval:doc.direction=='Incoming'",
    "options": "Murasalat External Party",
    "search_index": 1
@@ -281,7 +281,7 @@
    "depends_on": "eval:doc.direction=='Incoming'",
    "fieldname": "incoming_to_department",
    "fieldtype": "Link",
-   "label": "Internal Recipient Department",
+   "label": "Incoming To Department",
    "mandatory_depends_on": "eval:doc.direction=='Incoming'",
    "options": "Department"
   },
@@ -367,16 +367,6 @@
    "fieldtype": "Data",
    "label": "Outgoing Letter Date Hijri",
    "read_only": 1
-  },
-  {
-   "fieldname": "details_section",
-   "fieldtype": "Section Break",
-   "label": "Additional Details"
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "label": "Notes"
   },
   {
    "fieldname": "links_section",
@@ -665,6 +655,16 @@
   {
    "fieldname": "column_break_wgly",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
   }
  ],
  "is_submittable": 1,
@@ -680,7 +680,7 @@
    "link_fieldname": "correspondence"
   }
  ],
- "modified": "2026-09-06 00:32:14.530248",
+ "modified": "2026-09-06 02:00:44.215920",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

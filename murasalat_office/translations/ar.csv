@@ -490,13 +490,13 @@
 
 "External Party","الجهة الخارجية",""
 
-"External From Party","الجهة الخارجية المُرسِلة",""
+"External From Party","الجهة الخارجية الوارد منها",""
 
 "External To Party","الجهة الخارجية المستلمة",""
 
 "Recipient Department","الإدارة المستلمة",""
 
-"Incoming To Department","الإدارة المستلمة",""
+"Incoming To Department","الجهة المرسل إليها",""
 
 "Outgoing From Department","الإدارة المُرسِلة",""
 
@@ -614,7 +614,7 @@
 
 "Is Confidential","مستند سري",""
 
-"Confidentiality","السرية",""
+"Confidentiality","درجة السرية",""
 
 "Version Information","معلومات الإصدار",""
 
@@ -2030,3 +2030,7 @@
 
 "Please try again.","يرجى المحاولة مرة أخرى.",""
 "Prepared By Employee","الموظف المُعِدّ للمعاملة",""
+"Incoming Correspondence Information","معلومات المعاملة الواردة",""
+"Outgoing Correspondence Information","معلومات المعاملة الصادرة",""
+"External Recipient","الجهة الخارجية المصدر إليها",""
+"Sending Department","الجهة الداخلية المرسل منها",""
