@@ -105,11 +105,7 @@
   {
    "fieldname": "correspondence_number",
    "fieldtype": "Data",
-   "in_global_search": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Correspondence Number",
-   "read_only": 1,
    "unique": 1
   },
   {
@@ -667,7 +663,6 @@
    "fieldtype": "Column Break"
   }
  ],
- "hide_toolbar": 1,
  "is_submittable": 1,
  "links": [
   {
@@ -681,7 +676,7 @@
    "link_fieldname": "correspondence"
   }
  ],
- "modified": "2026-09-05 10:31:31.830141",
+ "modified": "2026-09-06 00:13:43.079765",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
