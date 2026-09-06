@@ -1,0 +1,74 @@
+[
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Draft",
+    "style": "Warning",
+    "name": "Murasalat Draft"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Registered",
+    "style": "Primary",
+    "name": "Murasalat Registered"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Closed",
+    "style": "Success",
+    "name": "Murasalat Closed"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Cancelled",
+    "style": "Danger",
+    "name": "Murasalat Cancelled"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Draft",
+    "style": "Warning",
+    "name": "Murasalat Referral Draft"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Sent",
+    "style": "Primary",
+    "name": "Murasalat Referral Sent"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Received",
+    "style": "Info",
+    "name": "Murasalat Referral Received"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral In Progress",
+    "style": "Primary",
+    "name": "Murasalat Referral In Progress"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Completed",
+    "style": "Success",
+    "name": "Murasalat Referral Completed"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Returned",
+    "style": "Warning",
+    "name": "Murasalat Referral Returned"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Withdrawn",
+    "style": "Danger",
+    "name": "Murasalat Referral Withdrawn"
+  },
+  {
+    "doctype": "Workflow State",
+    "workflow_state_name": "Murasalat Referral Cancelled",
+    "style": "Danger",
+    "name": "Murasalat Referral Cancelled"
+  }
+]

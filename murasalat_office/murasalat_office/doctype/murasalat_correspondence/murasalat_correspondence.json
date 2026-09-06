@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
+ "autoname": "MUR-COR-.YYYY.-.#####",
  "creation": "2026-09-04 03:40:51.834702",
  "doctype": "DocType",
  "document_type": "Document",
@@ -14,14 +15,12 @@
   "column_break_identity",
   "workflow_state",
   "direction",
-  "column_break_qqwf",
-  "routing_status",
   "correspondence_type",
+  "type_requires_letter_number",
+  "type_requires_letter_date",
   "internal_section",
   "origin_department",
-  "column_break_gafe",
   "prepared_by",
-  "column_break_wgly",
   "prepared_by_employee",
   "incoming_section",
   "external_from_party",
@@ -40,7 +39,6 @@
   "subject_section",
   "subject",
   "due_date",
-  "column_break_scke",
   "confidentiality_level",
   "priority_level",
   "page_count",
@@ -48,28 +46,9 @@
   "notes_section",
   "note",
   "links_section",
-  "link_to_other_correspondence",
   "correspondence_links",
   "concerned_persons_section",
   "concerned_persons",
-  "data_actions_html",
-  "attachments_tab",
-  "attachments_intro_html",
-  "documents_html",
-  "attachments_actions_html",
-  "referrals_tab",
-  "referral_summary_section",
-  "active_referral_count",
-  "pending_referral_count",
-  "completed_referral_count",
-  "overdue_referral_count",
-  "column_break_referral_summary",
-  "last_referred_on",
-  "last_activity_on",
-  "section_break_pcbm",
-  "referrals_intro_html",
-  "referrals_html",
-  "referrals_actions_html",
   "audit_tab",
   "registration_section",
   "registered_by",
@@ -80,15 +59,6 @@
   "identification_section",
   "barcode",
   "qr_code",
-  "legacy_section",
-  "status",
-  "external_party",
-  "recipient_department",
-  "letter_number",
-  "letter_date",
-  "letter_date_hijri",
-  "current_department",
-  "current_user",
   "amended_from"
  ],
  "fields": [
@@ -103,6 +73,7 @@
    "label": "Correspondence Identity"
   },
   {
+   "description": "Issued only when the correspondence is registered.",
    "fieldname": "correspondence_number",
    "fieldtype": "Data",
    "in_global_search": 1,
@@ -119,6 +90,7 @@
    "in_standard_filter": 1,
    "label": "Direction",
    "options": "Internal\nIncoming\nOutgoing",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1,
    "search_index": 1
   },
@@ -130,8 +102,27 @@
    "in_standard_filter": 1,
    "label": "Correspondence Type",
    "options": "Murasalat Correspondence Type",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "correspondence_type.requires_letter_number",
+   "fieldname": "type_requires_letter_number",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Type Requires Letter Number",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fetch_from": "correspondence_type.requires_letter_date",
+   "fieldname": "type_requires_letter_date",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Type Requires Letter Date",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_identity",
@@ -139,6 +130,7 @@
   },
   {
    "allow_on_submit": 1,
+   "default": "Murasalat Draft",
    "fieldname": "workflow_state",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -149,23 +141,12 @@
    "search_index": 1
   },
   {
-   "allow_on_submit": 1,
-   "default": "No Referrals",
-   "fieldname": "routing_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Routing Status",
-   "options": "No Referrals\nActive\nPartially Completed\nCompleted\nOverdue\nInactive",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company",
    "read_only": 1,
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1
   },
   {
@@ -176,6 +157,7 @@
    "label": "Owner Department",
    "options": "Department",
    "read_only": 1,
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1,
    "search_index": 1
   },
@@ -189,6 +171,7 @@
    "fieldtype": "Small Text",
    "in_global_search": 1,
    "label": "Subject",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1
   },
   {
@@ -199,6 +182,7 @@
    "in_standard_filter": 1,
    "label": "Confidentiality Level",
    "options": "Murasalat Confidentiality Level",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1,
    "search_index": 1
   },
@@ -210,6 +194,7 @@
    "in_standard_filter": 1,
    "label": "Priority Level",
    "options": "Murasalat Priority Level",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "reqd": 1,
    "search_index": 1
   },
@@ -245,7 +230,8 @@
    "fieldtype": "Link",
    "label": "Origin Department",
    "mandatory_depends_on": "eval:doc.direction=='Internal'",
-   "options": "Department"
+   "options": "Department",
+   "read_only_depends_on": "eval:doc.docstatus==1"
   },
   {
    "depends_on": "eval:doc.direction=='Internal'",
@@ -275,6 +261,7 @@
    "label": "External From Party",
    "mandatory_depends_on": "eval:doc.direction=='Incoming'",
    "options": "Murasalat External Party",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "search_index": 1
   },
   {
@@ -283,7 +270,8 @@
    "fieldtype": "Link",
    "label": "Incoming To Department",
    "mandatory_depends_on": "eval:doc.direction=='Incoming'",
-   "options": "Department"
+   "options": "Department",
+   "read_only_depends_on": "eval:doc.docstatus==1"
   },
   {
    "depends_on": "eval:doc.direction=='Incoming'",
@@ -297,6 +285,8 @@
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "External Letter Number",
+   "mandatory_depends_on": "eval:doc.direction=='Incoming' && doc.type_requires_letter_number",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "search_index": 1
   },
   {
@@ -305,6 +295,8 @@
    "fieldname": "external_letter_date",
    "fieldtype": "Date",
    "label": "External Letter Date",
+   "mandatory_depends_on": "eval:doc.direction=='Incoming' && doc.type_requires_letter_date",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "search_index": 1
   },
   {
@@ -326,7 +318,8 @@
    "fieldtype": "Link",
    "label": "Sending Department",
    "mandatory_depends_on": "eval:doc.direction=='Outgoing'",
-   "options": "Department"
+   "options": "Department",
+   "read_only_depends_on": "eval:doc.docstatus==1"
   },
   {
    "depends_on": "eval:doc.direction=='Outgoing'",
@@ -336,6 +329,7 @@
    "label": "External Recipient",
    "mandatory_depends_on": "eval:doc.direction=='Outgoing'",
    "options": "Murasalat External Party",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "search_index": 1
   },
   {
@@ -350,6 +344,8 @@
    "in_global_search": 1,
    "in_standard_filter": 1,
    "label": "Outgoing Letter Number",
+   "mandatory_depends_on": "eval:doc.direction=='Outgoing' && doc.type_requires_letter_number",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "search_index": 1
   },
   {
@@ -359,6 +355,8 @@
    "fieldtype": "Date",
    "in_standard_filter": 1,
    "label": "Outgoing Letter Date",
+   "mandatory_depends_on": "eval:doc.direction=='Outgoing' && doc.type_requires_letter_date",
+   "read_only_depends_on": "eval:doc.docstatus==1",
    "search_index": 1
   },
   {
@@ -374,13 +372,7 @@
    "label": "Links"
   },
   {
-   "default": "0",
-   "fieldname": "link_to_other_correspondence",
-   "fieldtype": "Check",
-   "label": "Link to Other Correspondence"
-  },
-  {
-   "depends_on": "link_to_other_correspondence",
+   "description": "Use the child table to record related, reply, follow-up, or reference correspondence.",
    "fieldname": "correspondence_links",
    "fieldtype": "Table",
    "label": "Correspondence Links",
@@ -397,106 +389,6 @@
    "fieldtype": "Table",
    "label": "Concerned Persons",
    "options": "Murasalat Concerned Person"
-  },
-  {
-   "fieldname": "data_actions_html",
-   "fieldtype": "HTML",
-   "label": "Data Actions"
-  },
-  {
-   "fieldname": "attachments_tab",
-   "fieldtype": "Tab Break",
-   "label": "Attachments"
-  },
-  {
-   "fieldname": "attachments_intro_html",
-   "fieldtype": "HTML",
-   "label": "Attachment Instructions"
-  },
-  {
-   "fieldname": "documents_html",
-   "fieldtype": "HTML",
-   "label": "Correspondence Documents"
-  },
-  {
-   "fieldname": "attachments_actions_html",
-   "fieldtype": "HTML",
-   "label": "Attachment Actions"
-  },
-  {
-   "fieldname": "referrals_tab",
-   "fieldtype": "Tab Break",
-   "label": "Referral"
-  },
-  {
-   "fieldname": "referral_summary_section",
-   "fieldtype": "Section Break",
-   "label": "Referral Summary"
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "active_referral_count",
-   "fieldtype": "Int",
-   "label": "Active Referral Count",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "pending_referral_count",
-   "fieldtype": "Int",
-   "label": "Pending Referral Count",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "completed_referral_count",
-   "fieldtype": "Int",
-   "label": "Completed Referral Count",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "default": "0",
-   "fieldname": "overdue_referral_count",
-   "fieldtype": "Int",
-   "label": "Overdue Referral Count",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_referral_summary",
-   "fieldtype": "Column Break"
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "last_referred_on",
-   "fieldtype": "Datetime",
-   "label": "Last Referred On",
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "last_activity_on",
-   "fieldtype": "Datetime",
-   "label": "Last Activity On",
-   "read_only": 1
-  },
-  {
-   "fieldname": "referrals_intro_html",
-   "fieldtype": "HTML",
-   "label": "Referral Instructions"
-  },
-  {
-   "fieldname": "referrals_html",
-   "fieldtype": "HTML",
-   "label": "Referrals"
-  },
-  {
-   "fieldname": "referrals_actions_html",
-   "fieldtype": "HTML",
-   "label": "Referral Actions"
   },
   {
    "fieldname": "audit_tab",
@@ -560,71 +452,14 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "legacy_section",
+   "fieldname": "notes_section",
    "fieldtype": "Section Break",
-   "hidden": 1,
-   "label": "Legacy Fields"
+   "label": "Notes"
   },
   {
-   "fieldname": "status",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Legacy Status",
-   "read_only": 1
-  },
-  {
-   "fieldname": "external_party",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Legacy External Party",
-   "options": "Murasalat External Party",
-   "read_only": 1
-  },
-  {
-   "fieldname": "recipient_department",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Legacy Recipient Department",
-   "options": "Department",
-   "read_only": 1
-  },
-  {
-   "fieldname": "letter_number",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Legacy Letter Number",
-   "read_only": 1
-  },
-  {
-   "fieldname": "letter_date",
-   "fieldtype": "Date",
-   "hidden": 1,
-   "label": "Legacy Letter Date",
-   "read_only": 1
-  },
-  {
-   "fieldname": "letter_date_hijri",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Legacy Letter Date Hijri",
-   "read_only": 1
-  },
-  {
-   "default": "__user",
-   "fieldname": "current_user",
-   "fieldtype": "Link",
-   "label": "Legacy Current User",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "current_department",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Legacy Current Department",
-   "options": "Department",
-   "read_only": 1
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
   },
   {
    "fieldname": "amended_from",
@@ -635,36 +470,6 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "section_break_pcbm",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_qqwf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_gafe",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_scke",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_wgly",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "notes_section",
-   "fieldtype": "Section Break",
-   "label": "Notes"
-  },
-  {
-   "fieldname": "note",
-   "fieldtype": "Small Text",
-   "label": "Note"
   }
  ],
  "is_submittable": 1,
@@ -680,10 +485,11 @@
    "link_fieldname": "correspondence"
   }
  ],
- "modified": "2026-09-06 02:00:44.215920",
+ "modified": "2026-09-06 23:48:04.791430",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -758,7 +564,7 @@
  "row_format": "Dynamic",
  "search_fields": "correspondence_number,subject,external_letter_number,outgoing_letter_number",
  "show_name_in_global_search": 1,
- "sort_field": "modified",
+ "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
  "title_field": "subject",

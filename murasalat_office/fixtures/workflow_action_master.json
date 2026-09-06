@@ -1,0 +1,52 @@
+[
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Register",
+    "name": "Register"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Close",
+    "name": "Close"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Reopen",
+    "name": "Reopen"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Cancel",
+    "name": "Cancel"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Send",
+    "name": "Send"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Mark Received",
+    "name": "Mark Received"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Start Processing",
+    "name": "Start Processing"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Complete",
+    "name": "Complete"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Return",
+    "name": "Return"
+  },
+  {
+    "doctype": "Workflow Action Master",
+    "workflow_action_name": "Withdraw",
+    "name": "Withdraw"
+  }
+]

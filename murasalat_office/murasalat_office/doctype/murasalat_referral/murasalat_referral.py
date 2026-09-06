@@ -3,17 +3,13 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import date_diff, getdate, now, today
+from frappe.utils import getdate, now, today
 
 from murasalat_office.murasalat_office.doctype.murasalat_correspondence.murasalat_correspondence import (
+    CLOSED_STATE,
     get_current_user_profile,
-    update_correspondence_routing_summary,
 )
 from murasalat_office.utils.dates import gregorian_to_hijri
-
-
-ACTIVE_STATUSES = ("Sent", "Received", "In Progress")
-FINAL_STATUSES = ("Completed", "Returned", "Withdrawn", "Cancelled")
 
 
 class MurasalatReferral(Document):
@@ -21,125 +17,71 @@ class MurasalatReferral(Document):
         self.set_defaults()
         self.set_hijri_date()
         self.set_copy_semantics()
-        self.set_overdue_values()
 
     def validate(self):
         self.validate_correspondence()
         self.validate_recipient()
         self.validate_dates()
+        self.validate_active_link_values()
         self.validate_parent_referral()
-        self.validate_status()
-
-    def after_insert(self):
-        update_correspondence_routing_summary(self.correspondence)
-
-    def on_update(self):
-        update_correspondence_routing_summary(self.correspondence)
-
-    def on_trash(self):
-        correspondence = self.correspondence
-        frappe.flags.murasalat_update_correspondence = correspondence
-
-    def after_delete(self):
-        correspondence = getattr(
-            frappe.flags,
-            "murasalat_update_correspondence",
-            None,
-        )
-
-        if correspondence:
-            update_correspondence_routing_summary(correspondence)
+        self.validate_workflow_transition()
+        self.apply_transition_metadata()
 
     def set_defaults(self):
         profile = get_current_user_profile()
 
         if not self.from_user:
             self.from_user = frappe.session.user
-
         if profile and not self.from_department:
             self.from_department = profile.default_department
 
-        if self.correspondence:
-            correspondence = frappe.db.get_value(
+        if self.correspondence and not self.priority_level:
+            self.priority_level = frappe.db.get_value(
                 "Murasalat Correspondence",
                 self.correspondence,
-                ["priority_level", "docstatus"],
-                as_dict=True,
+                "priority_level",
             )
-
-            if correspondence:
-                self.priority_level = (
-                    self.priority_level
-                    or correspondence.priority_level
-                )
 
     def set_hijri_date(self):
         self.due_date_hijri = gregorian_to_hijri(self.due_date)
 
     def set_copy_semantics(self):
         if self.send_copy:
-            self.is_copy = 1
-
-        if self.is_copy:
-            self.send_copy = 1
             self.action_required = 0
         elif self.action_required is None:
             self.action_required = 1
 
-    def set_overdue_values(self):
-        if (
-            self.status in ACTIVE_STATUSES
-            and self.due_date
-            and getdate(self.due_date) < getdate(today())
-        ):
-            self.is_overdue = 1
-            self.overdue_days = date_diff(today(), self.due_date)
-        else:
-            self.is_overdue = 0
-            self.overdue_days = 0
-
     def validate_correspondence(self):
-        if not self.correspondence:
-            frappe.throw(_("Correspondence is required."))
-
-        correspondence = frappe.get_doc(
-            "Murasalat Correspondence",
-            self.correspondence,
-        )
+        correspondence = frappe.get_doc("Murasalat Correspondence", self.correspondence)
 
         if correspondence.docstatus != 1:
-            frappe.throw(
-                _("Only registered correspondence can be referred.")
-            )
-
-        if correspondence.workflow_state == "Murasalat Closed":
+            frappe.throw(_("Only registered correspondence can be referred."))
+        if correspondence.workflow_state == CLOSED_STATE:
             frappe.throw(_("Closed correspondence cannot be referred."))
 
     def validate_recipient(self):
-        if self.recipient_type not in ("User", "Department"):
-            frappe.throw(_("Invalid Recipient Type."))
-
         if self.recipient_type == "User":
             if not self.to_user:
                 frappe.throw(_("To User is required."))
-
             self.to_department = None
-
-        if self.recipient_type == "Department":
+        elif self.recipient_type == "Department":
             if not self.to_department:
                 frappe.throw(_("To Department is required."))
-
             self.to_user = None
+        else:
+            frappe.throw(_("Invalid Recipient Type."))
 
     def validate_dates(self):
-        if (
-            self.status == "Draft"
-            and self.due_date
-            and getdate(self.due_date) < getdate(today())
+        if self.is_new() and self.due_date and getdate(self.due_date) < getdate(today()):
+            frappe.throw(_("Due Date cannot be earlier than today."))
+
+    def validate_active_link_values(self):
+        for doctype, name in (
+            ("Murasalat Routing Purpose", self.routing_purpose),
+            ("Murasalat Priority Level", self.priority_level),
         ):
-            frappe.throw(
-                _("Due Date cannot be earlier than today.")
-            )
+            if name and not frappe.db.get_value(doctype, name, "is_active"):
+                frappe.throw(_("{0} {1} is inactive.").format(doctype, name))
 
     def validate_parent_referral(self):
         if not self.parent_referral:
@@ -154,145 +96,54 @@ class MurasalatReferral(Document):
             ["correspondence", "root_referral"],
             as_dict=True,
         )
-
         if not parent:
             frappe.throw(_("Parent Referral does not exist."))
-
         if parent.correspondence != self.correspondence:
-            frappe.throw(
-                _("Parent Referral must belong to the same correspondence.")
-            )
+            frappe.throw(_("Parent Referral must belong to the same correspondence."))
 
-        self.root_referral = (
-            parent.root_referral or self.parent_referral
-        )
+        self.root_referral = parent.root_referral or self.parent_referral
 
-    def validate_status(self):
-        allowed = (
-            "Draft",
-            "Sent",
-            "Received",
-            "In Progress",
-            "Completed",
-            "Returned",
-            "Withdrawn",
-            "Cancelled",
-        )
+    def validate_workflow_transition(self):
+        old = self._doc_before_save
+        if not old or old.workflow_state == self.workflow_state:
+            return
 
-        if self.status not in allowed:
-            frappe.throw(_("Invalid referral status."))
+        target_state = self.workflow_state
+        if target_state in {"Murasalat Referral Received", "Murasalat Referral In Progress", "Murasalat Referral Completed", "Murasalat Referral Returned"}:
+            self.ensure_current_recipient()
 
-    @frappe.whitelist()
-    def send_referral(self):
-        self.check_permission("write")
+        if target_state == "Murasalat Referral Withdrawn":
+            if self.from_user != frappe.session.user and not has_manager_role():
+                frappe.throw(
+                    _("Only the sender or a Murasalat Manager can withdraw this referral."),
+                    frappe.PermissionError,
+                )
 
-        if self.status != "Draft":
-            frappe.throw(_("Only draft referrals can be sent."))
+    def apply_transition_metadata(self):
+        old_state = self._doc_before_save.workflow_state if self._doc_before_save else None
+        if old_state == self.workflow_state:
+            return
 
-        self.status = "Sent"
-        self.sent_on = now()
-        self.save()
+        current_time = now()
+        current_user = frappe.session.user
 
-        return self.as_dict()
-
-    @frappe.whitelist()
-    def mark_received(self):
-        self.ensure_current_recipient()
-
-        if self.status != "Sent":
-            frappe.throw(
-                _("Only sent referrals can be marked as received.")
-            )
-
-        self.status = "Received"
-        self.received_on = now()
-        self.accepted_on = now()
-        self.save()
-
-        return self.as_dict()
-
-    @frappe.whitelist()
-    def start_processing(self):
-        self.ensure_current_recipient()
-
-        if self.status not in ("Sent", "Received"):
-            frappe.throw(
-                _("Only sent or received referrals can be started.")
-            )
-
-        if not self.received_on:
-            self.received_on = now()
-
-        self.status = "In Progress"
-        self.save()
-
-        return self.as_dict()
-
-    @frappe.whitelist()
-    def complete_referral(self, completion_notes=None):
-        self.ensure_current_recipient()
-
-        if self.status not in ("Sent", "Received", "In Progress"):
-            frappe.throw(
-                _("This referral cannot be completed from its current status.")
-            )
-
-        if self.action_required and not completion_notes:
-            frappe.throw(
-                _("Completion Notes are required.")
-            )
-
-        self.status = "Completed"
-        self.completed_on = now()
-        self.completed_by = frappe.session.user
-        self.completion_notes = completion_notes
-        self.save()
-
-        return self.as_dict()
-
-    @frappe.whitelist()
-    def return_referral(self, reason):
-        self.ensure_current_recipient()
-
-        if self.status not in ("Sent", "Received", "In Progress"):
-            frappe.throw(
-                _("This referral cannot be returned from its current status.")
-            )
-
-        if not reason:
-            frappe.throw(_("Return Reason is required."))
-
-        self.status = "Returned"
-        self.returned_on = now()
-        self.returned_by = frappe.session.user
-        self.return_reason = reason
-        self.save()
-
-        return self.as_dict()
-
-    @frappe.whitelist()
-    def withdraw_referral(self, reason):
-        if self.from_user != frappe.session.user and not has_manager_role():
-            frappe.throw(
-                _("Only the sender or a Murasalat Manager can withdraw this referral."),
-                frappe.PermissionError,
-            )
-
-        if self.status not in ("Sent", "Received"):
-            frappe.throw(
-                _("Only sent or received referrals can be withdrawn.")
-            )
-
-        if not reason:
-            frappe.throw(_("Withdrawal Reason is required."))
-
-        self.status = "Withdrawn"
-        self.withdrawn_on = now()
-        self.withdrawn_by = frappe.session.user
-        self.withdrawal_reason = reason
-        self.save()
-
-        return self.as_dict()
+        if self.workflow_state == "Murasalat Referral Sent":
+            self.sent_on = self.sent_on or current_time
+        elif self.workflow_state == "Murasalat Referral Received":
+            self.received_on = self.received_on or current_time
+            self.accepted_on = self.accepted_on or current_time
+        elif self.workflow_state == "Murasalat Referral In Progress":
+            self.opened_on = self.opened_on or current_time
+            self.received_on = self.received_on or current_time
+        elif self.workflow_state == "Murasalat Referral Completed":
+            self.completed_on = self.completed_on or current_time
+            self.completed_by = self.completed_by or current_user
+        elif self.workflow_state == "Murasalat Referral Returned":
+            self.returned_on = self.returned_on or current_time
+            self.returned_by = self.returned_by or current_user
+        elif self.workflow_state == "Murasalat Referral Withdrawn":
+            self.withdrawn_on = self.withdrawn_on or current_time
+            self.withdrawn_by = self.withdrawn_by or current_user
 
     def ensure_current_recipient(self):
         user = frappe.session.user
@@ -300,14 +151,12 @@ class MurasalatReferral(Document):
 
         if self.recipient_type == "User" and self.to_user == user:
             return
-
         if (
             self.recipient_type == "Department"
             and profile
             and profile.default_department == self.to_department
         ):
             return
-
         if has_manager_role():
             return
 
@@ -319,13 +168,8 @@ class MurasalatReferral(Document):
 
 def has_manager_role():
     roles = set(frappe.get_roles(frappe.session.user))
-
     return bool(
         roles.intersection(
-            {
-                "Murasalat Manager",
-                "Murasalat System Manager",
-                "System Manager",
-            }
+            {"Murasalat Manager", "Murasalat System Manager", "System Manager"}
         )
     )

@@ -1,0 +1,489 @@
+[
+  {
+    "doctype": "Workflow",
+    "workflow_name": "Murasalat Correspondence Workflow",
+    "name": "Murasalat Correspondence Workflow",
+    "document_type": "Murasalat Correspondence",
+    "is_active": 1,
+    "override_status": 0,
+    "send_email_alert": 0,
+    "enable_action_confirmation": 1,
+    "workflow_state_field": "workflow_state",
+    "states": [
+      {
+        "state": "Murasalat Draft",
+        "doc_status": "0",
+        "allow_edit": "Murasalat Clerk",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Registered",
+        "doc_status": "1",
+        "allow_edit": "Murasalat Manager",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Closed",
+        "doc_status": "1",
+        "allow_edit": "Murasalat Manager",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Cancelled",
+        "doc_status": "2",
+        "allow_edit": "Murasalat Manager",
+        "send_email": 0
+      }
+    ],
+    "transitions": [
+      {
+        "state": "Murasalat Draft",
+        "action": "Register",
+        "next_state": "Murasalat Registered",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Draft",
+        "action": "Register",
+        "next_state": "Murasalat Registered",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Registered",
+        "action": "Close",
+        "next_state": "Murasalat Closed",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Closed",
+        "action": "Reopen",
+        "next_state": "Murasalat Registered",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Registered",
+        "action": "Cancel",
+        "next_state": "Murasalat Cancelled",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      }
+    ]
+  },
+  {
+    "doctype": "Workflow",
+    "workflow_name": "Murasalat Referral Workflow",
+    "name": "Murasalat Referral Workflow",
+    "document_type": "Murasalat Referral",
+    "is_active": 1,
+    "override_status": 0,
+    "send_email_alert": 0,
+    "enable_action_confirmation": 1,
+    "workflow_state_field": "workflow_state",
+    "states": [
+      {
+        "state": "Murasalat Referral Draft",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral Completed",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral Returned",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral Withdrawn",
+        "doc_status": "0",
+        "allow_edit": "Murasalat User",
+        "send_email": 0
+      },
+      {
+        "state": "Murasalat Referral Cancelled",
+        "doc_status": "0",
+        "allow_edit": "Murasalat Manager",
+        "send_email": 0
+      }
+    ],
+    "transitions": [
+      {
+        "state": "Murasalat Referral Draft",
+        "action": "Send",
+        "next_state": "Murasalat Referral Sent",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Draft",
+        "action": "Send",
+        "next_state": "Murasalat Referral Sent",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Draft",
+        "action": "Send",
+        "next_state": "Murasalat Referral Sent",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Draft",
+        "action": "Send",
+        "next_state": "Murasalat Referral Sent",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Mark Received",
+        "next_state": "Murasalat Referral Received",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Mark Received",
+        "next_state": "Murasalat Referral Received",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Mark Received",
+        "next_state": "Murasalat Referral Received",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Mark Received",
+        "next_state": "Murasalat Referral Received",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Start Processing",
+        "next_state": "Murasalat Referral In Progress",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Complete",
+        "next_state": "Murasalat Referral Completed",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral In Progress",
+        "action": "Return",
+        "next_state": "Murasalat Referral Returned",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat User",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat Clerk",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Received",
+        "action": "Withdraw",
+        "next_state": "Murasalat Referral Withdrawn",
+        "allowed": "Murasalat System Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Draft",
+        "action": "Cancel",
+        "next_state": "Murasalat Referral Cancelled",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      },
+      {
+        "state": "Murasalat Referral Sent",
+        "action": "Cancel",
+        "next_state": "Murasalat Referral Cancelled",
+        "allowed": "Murasalat Manager",
+        "allow_self_approval": 1
+      }
+    ]
+  }
+]
