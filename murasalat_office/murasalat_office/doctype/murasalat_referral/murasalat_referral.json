@@ -94,6 +94,8 @@
   {
    "fieldname": "from_user",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "From User",
    "options": "User",
    "read_only": 1
@@ -130,6 +132,7 @@
    "fieldname": "to_user",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "To User",
    "mandatory_depends_on": "eval:doc.recipient_type=='User'",
    "options": "User"
@@ -140,6 +143,7 @@
    "fieldname": "to_department",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "To Department",
    "mandatory_depends_on": "eval:doc.recipient_type=='Department'",
    "options": "Department"
@@ -176,6 +180,7 @@
    "allow_in_quick_entry": 1,
    "fieldname": "due_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Due Date"
   },
   {
@@ -333,7 +338,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-06 23:56:39.179468",
+ "modified": "2026-09-07 00:14:02.400854",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
