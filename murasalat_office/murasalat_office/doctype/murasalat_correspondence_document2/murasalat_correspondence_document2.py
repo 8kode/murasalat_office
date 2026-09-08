@@ -5,7 +5,7 @@ from frappe import _
 from frappe.model.document import Document
 
 
-class MurasalatCorrespondenceDocument(Document):
+class MurasalatCorrespondenceDocument2(Document):
     def validate(self):
         if self.is_main_document and frappe.db.exists(
             "Murasalat Correspondence Document",
@@ -15,4 +15,6 @@ class MurasalatCorrespondenceDocument(Document):
                 "name": ["!=", self.name or ""],
             },
         ):
-            frappe.throw(_("Only one main document is allowed for a correspondence."))
+            frappe.throw(
+                _("Only one main document is allowed for a correspondence.")
+            )

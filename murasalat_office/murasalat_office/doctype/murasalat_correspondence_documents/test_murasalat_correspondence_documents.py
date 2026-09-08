@@ -13,9 +13,9 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 
-class IntegrationTestMurasalatCorrespondenceDocument(IntegrationTestCase):
+class IntegrationTestMurasalatCorrespondenceDocuments(IntegrationTestCase):
 	"""
-	Integration tests for MurasalatCorrespondenceDocument.
+	Integration tests for MurasalatCorrespondenceDocuments.
 	Use this class for testing interactions between multiple components.
 	"""
 

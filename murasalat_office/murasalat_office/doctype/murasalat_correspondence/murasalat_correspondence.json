@@ -59,7 +59,10 @@
   "identification_section",
   "barcode",
   "qr_code",
-  "amended_from"
+  "amended_from",
+  "documents_tab",
+  "docment_section",
+  "attachment_area"
  ],
  "fields": [
   {
@@ -470,13 +473,28 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "documents_tab",
+   "fieldtype": "Tab Break",
+   "label": "Documents"
+  },
+  {
+   "fieldname": "docment_section",
+   "fieldtype": "Section Break",
+   "label": "\u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u0645\u0644\u0641\u0627\u062a \u0648\u0627\u0644\u0645\u0631\u0641\u0642\u0627\u062a"
+  },
+  {
+   "fieldname": "attachment_area",
+   "fieldtype": "Attachment Gallery",
+   "label": "Attachment Area"
   }
  ],
  "is_submittable": 1,
  "links": [
   {
    "group": "Documents",
-   "link_doctype": "Murasalat Correspondence Document",
+   "link_doctype": "Murasalat Correspondence Documents",
    "link_fieldname": "correspondence"
   },
   {
@@ -485,7 +503,7 @@
    "link_fieldname": "correspondence"
   }
  ],
- "modified": "2026-09-06 23:48:04.791430",
+ "modified": "2026-09-08 00:57:58.016132",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
