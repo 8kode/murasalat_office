@@ -1,0 +1,38 @@
+[
+  {
+    "doctype": "Role",
+    "role_name": "Murasalat User",
+    "desk_access": 1,
+    "name": "Murasalat User"
+  },
+  {
+    "doctype": "Role",
+    "role_name": "Murasalat Coordinator",
+    "desk_access": 1,
+    "name": "Murasalat Coordinator"
+  },
+  {
+    "doctype": "Role",
+    "role_name": "Murasalat Manager",
+    "desk_access": 1,
+    "name": "Murasalat Manager"
+  },
+  {
+    "doctype": "Role",
+    "role_name": "Murasalat Approver",
+    "desk_access": 1,
+    "name": "Murasalat Approver"
+  },
+  {
+    "doctype": "Role",
+    "role_name": "Murasalat Auditor",
+    "desk_access": 1,
+    "name": "Murasalat Auditor"
+  },
+  {
+    "doctype": "Role",
+    "role_name": "Murasalat Administrator",
+    "desk_access": 1,
+    "name": "Murasalat Administrator"
+  }
+]

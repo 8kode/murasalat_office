@@ -1,311 +1,178 @@
-from __future__ import annotations
-
 import frappe
-from frappe import _
 from frappe.model.document import Document
-from frappe.model.naming import getseries
-from frappe.utils import cint, getdate, now, today
+from frappe.utils import now_datetime, getdate
 
-from murasalat_office.utils.dates import get_hijri_year, gregorian_to_hijri
+from murasalat_office.services.records import seal, validate_immutable_fields, verify_integrity
 
-
-ACTIVE_REFERRAL_STATES = ("Murasalat Referral Sent", "Murasalat Referral Received", "Murasalat Referral In Progress")
-CLOSED_STATE = "Murasalat Closed"
+REFERRAL_OPEN_STATES = {"Pending", "Sent", "Received", "In Progress", "Overdue"}
+REFERRAL_CLOSED_STATES = {"Completed", "Rejected", "Returned", "Withdrawn", "Cancelled"}
+TERMINAL_STATUSES = {"Closed", "Withdrawn", "Rejected"}
 
 
 class MurasalatCorrespondence(Document):
-    def before_validate(self):
-        self.set_defaults()
-        self.set_direction_defaults()
-        self.set_hijri_dates()
-
     def validate(self):
-        self.validate_direction()
-        self.validate_correspondence_type()
-        self.validate_active_link_values()
-        self.validate_due_date()
-        self.validate_correspondence_links()
-        self.validate_closed_state()
+        validate_immutable_fields(self)
+        if not self.originating_organization:
+            self.originating_organization = self.source_entity or self.target_entity
+        self._validate_links()
+        self._validate_referrals()
+        self._apply_operational_timestamps()
+        self._mark_overdue_referrals()
+        self._sync_current_holder()
+        self._validate_lifecycle()
 
-    def before_submit(self):
-        self.validate_registration_requirements()
-        self.issue_correspondence_number()
+    def _validate_lifecycle(self):
+        if self.status in TERMINAL_STATUSES and self.referrals:
+            if any(r.status in REFERRAL_OPEN_STATES for r in self.referrals):
+                frappe.throw("Cannot close a correspondence while referrals are still open.")
 
-        if not self.registered_by:
-            self.registered_by = frappe.session.user
-        if not self.registered_on:
-            self.registered_on = now()
-
-    def on_submit(self):
-        self.db_set("barcode", self.correspondence_number, update_modified=False)
-        self.db_set("qr_code", self.correspondence_number, update_modified=False)
-
-    def before_cancel(self):
-        active_referrals = frappe.db.count(
-            "Murasalat Referral",
-            {
-                "correspondence": self.name,
-                "workflow_state": ["in", list(ACTIVE_REFERRAL_STATES)],
-            },
-        )
-        if active_referrals:
-            frappe.throw(
-                _(
-                    "The correspondence cannot be cancelled while it has active referrals. "
-                    "Withdraw, return, complete, or cancel the active referrals first."
-                )
-            )
-
-    def on_trash(self):
-        if self.docstatus != 0:
-            frappe.throw(_("Only draft correspondence can be deleted."))
-
-        for doctype in ("Murasalat Referral", "Murasalat Correspondence Document"):
-            if frappe.db.exists(doctype, {"correspondence": self.name}):
-                frappe.throw(
-                    _("The correspondence cannot be deleted because linked {0} records exist.").format(
-                        doctype
-                    )
-                )
-
-    def set_defaults(self):
-        profile = get_current_user_profile()
-
-        if profile:
-            self.company = self.company or profile.default_company
-            self.owner_department = self.owner_department or profile.default_department
-
-            if self.direction == "Internal":
-                self.prepared_by = self.prepared_by or frappe.session.user
-                self.prepared_by_employee = self.prepared_by_employee or profile.employee
-
-        settings = frappe.get_cached_doc("Murasalat Settings")
-        self.company = self.company or settings.company
-        self.owner_department = self.owner_department or settings.default_department
-        self.confidentiality_level = self.confidentiality_level or settings.default_confidentiality
-        self.priority_level = self.priority_level or settings.default_priority
-
-    def set_direction_defaults(self):
-        if self.direction == "Incoming":
-            self.incoming_to_department = self.incoming_to_department or self.owner_department
-        elif self.direction == "Internal":
-            self.origin_department = self.origin_department or self.owner_department
-        elif self.direction == "Outgoing":
-            self.outgoing_from_department = self.outgoing_from_department or self.owner_department
-
-    def set_hijri_dates(self):
-        self.due_date_hijri = gregorian_to_hijri(self.due_date)
-        self.external_letter_date_hijri = gregorian_to_hijri(self.external_letter_date)
-        self.outgoing_letter_date_hijri = gregorian_to_hijri(self.outgoing_letter_date)
-
-    def validate_direction(self):
-        allowed = {"Internal", "Incoming", "Outgoing"}
-        if self.direction not in allowed:
-            frappe.throw(_("Invalid correspondence direction."))
-
-    def validate_correspondence_type(self):
-        type_data = frappe.db.get_value(
-            "Murasalat Correspondence Type",
-            self.correspondence_type,
-            [
-                "allow_internal",
-                "allow_incoming",
-                "allow_outgoing",
-                "requires_letter_number",
-                "requires_letter_date",
-                "is_active",
-            ],
-            as_dict=True,
-        )
-        if not type_data or not type_data.is_active:
-            frappe.throw(_("The selected correspondence type is inactive or does not exist."))
-
-        allowed_by_direction = {
-            "Internal": type_data.allow_internal,
-            "Incoming": type_data.allow_incoming,
-            "Outgoing": type_data.allow_outgoing,
-        }
-        if not allowed_by_direction.get(self.direction):
-            frappe.throw(
-                _("The selected correspondence type is not allowed for direction {0}.").format(
-                    _(self.direction)
-                )
-            )
-
-        if type_data.requires_letter_number:
-            fieldname = (
-                "external_letter_number"
-                if self.direction == "Incoming"
-                else "outgoing_letter_number"
-                if self.direction == "Outgoing"
-                else None
-            )
-            if fieldname and not self.get(fieldname):
-                frappe.throw(_("A letter number is required for the selected correspondence type."))
-
-        if type_data.requires_letter_date:
-            fieldname = (
-                "external_letter_date"
-                if self.direction == "Incoming"
-                else "outgoing_letter_date"
-                if self.direction == "Outgoing"
-                else None
-            )
-            if fieldname and not self.get(fieldname):
-                frappe.throw(_("A letter date is required for the selected correspondence type."))
-
-    def validate_active_link_values(self):
-        checks = [
-            ("Murasalat Confidentiality Level", self.confidentiality_level),
-            ("Murasalat Priority Level", self.priority_level),
-        ]
-        if self.direction == "Incoming":
-            checks.append(("Murasalat External Party", self.external_from_party))
-        elif self.direction == "Outgoing":
-            checks.append(("Murasalat External Party", self.external_to_party))
-
-        for doctype, name in checks:
-            if name and not frappe.db.get_value(doctype, name, "is_active"):
-                frappe.throw(_("{0} {1} is inactive.").format(doctype, name))
-
-    def validate_due_date(self):
-        if self.due_date and getdate(self.due_date) < getdate(today()) and self.docstatus == 0:
-            frappe.throw(_("Due Date cannot be earlier than today."))
-
-    def validate_correspondence_links(self):
+    def _validate_links(self):
         seen = set()
-        primary_count = 0
-
-        for row in self.get("correspondence_links") or []:
+        for row in self.links or []:
             if row.linked_correspondence == self.name:
-                frappe.throw(_("A correspondence cannot be linked to itself."))
+                frappe.throw("A correspondence cannot link to itself.")
+            key = (row.linked_correspondence, row.relationship_type)
+            if key in seen:
+                frappe.throw("Duplicate correspondence link detected.")
+            seen.add(key)
 
-            if row.linked_correspondence in seen:
-                frappe.throw(
-                    _("Duplicate linked correspondence: {0}").format(row.linked_correspondence)
+    def _validate_referrals(self):
+        seen = set()
+        for row in self.referrals or []:
+            recipient = row.recipient_user or row.recipient_organization
+            if not recipient:
+                frappe.throw("Each referral must have either a recipient user or organization.")
+            key = (row.recipient_type, recipient, row.direction)
+            if key in seen:
+                frappe.throw("Duplicate recipient and direction detected in the same referral set.")
+            seen.add(key)
+
+    def _apply_operational_timestamps(self):
+        for index, row in enumerate(self.referrals or [], start=1):
+            if not row.referral_number:
+                row.referral_number = f"{self.name or 'NEW'}-R{index:03d}"
+            if row.status == "Sent" and not row.sent_on:
+                row.sent_on = now_datetime()
+            if row.status in {"Received", "In Progress", "Completed"} and not row.received_on:
+                row.received_on = now_datetime(); row.received_by = frappe.session.user
+            if row.status == "Completed" and not row.completed_on:
+                row.completed_on = now_datetime(); row.completed_by = frappe.session.user
+
+    def _mark_overdue_referrals(self):
+        today = getdate()
+        for row in self.referrals or []:
+            if row.status in REFERRAL_OPEN_STATES and row.due_date and getdate(row.due_date) < today:
+                row.status = "Overdue"
+
+    def _sync_current_holder(self):
+        open_rows = [r for r in self.referrals or [] if r.status in REFERRAL_OPEN_STATES]
+        if not open_rows:
+            self.current_holder = None; self.current_holder_user = None; return
+        row = open_rows[-1]
+        self.current_holder = row.recipient_organization if row.recipient_type == "Organization" else None
+        self.current_holder_user = row.recipient_user if row.recipient_type == "User" else None
+
+    def before_save(self):
+        old = self.get_doc_before_save()
+        if self.status == "Registered" and (not old or old.status != "Registered"):
+            if not self.registered_on:
+                self.registered_on = now_datetime()
+            seal(self, "Registered")
+
+    def after_insert(self):
+        self._append_activity("Created", details="Correspondence created.")
+        self._sync_referral_todos()
+        self._secure_secret_attachments()
+
+    def _secure_secret_attachments(self):
+        """Protect secret/classified attachments and ensure their hashes are stored.
+
+        The child table is the canonical metadata layer. Frappe's File document
+        remains the canonical file record. We do not duplicate file content.
+        """
+        classified_values = {
+            "Secret", "Confidential", "Top Secret",
+            "سري", "سري للغاية", "محدود",
+        }
+        classified = (self.confidentiality or "").strip() in classified_values
+
+        for row in self.attachments or []:
+            if not row.file:
+                continue
+
+            # A classified correspondence makes every attached file restricted.
+            if classified:
+                row.is_secret = 1
+
+            if not row.file_hash:
+                file_name = frappe.db.get_value("File", {"file_url": row.file}, "name")
+                if file_name:
+                    file_doc = frappe.get_doc("File", file_name)
+                    try:
+                        content = file_doc.get_content()
+                    except Exception:
+                        content = None
+                    if content is not None:
+                        import hashlib
+                        if isinstance(content, str):
+                            content = content.encode()
+                        row.file_hash = hashlib.sha256(content).hexdigest()
+
+            if row.is_secret:
+                file_name = frappe.db.get_value("File", {"file_url": row.file}, "name")
+                if file_name:
+                    file_doc = frappe.get_doc("File", file_name)
+                    if not file_doc.is_private:
+                        file_doc.is_private = 1
+                        file_doc.save(ignore_permissions=True)
+
+            # after_insert runs after child rows are already inserted, so persist
+            # metadata explicitly instead of relying on a later parent save.
+            if row.name and not str(row.name).startswith("new-"):
+                frappe.db.set_value(
+                    row.doctype, row.name,
+                    {"is_secret": int(bool(row.is_secret)), "file_hash": row.file_hash},
+                    update_modified=False,
                 )
-            seen.add(row.linked_correspondence)
 
-            if row.is_primary_reference:
-                primary_count += 1
+    def on_update(self):
+        old = self.get_doc_before_save()
+        if self.status == "Closed" and not self.closed_on:
+            self.closed_on = now_datetime()
+        if old and old.status != "Reopened" and self.status == "Reopened":
+            self.reopened_on = now_datetime(); self.reopened_by = frappe.session.user
+            self._append_activity("Reopened", details="Correspondence reopened; historical record retained.")
+        if self.status == "Registered" and self.integrity_hash and not verify_integrity(self):
+            frappe.throw("Integrity verification failed. Registered record content differs from its sealed snapshot.")
+        self._sync_referral_todos(); self._sync_activity_log()
 
-        if primary_count > 1:
-            frappe.throw(_("Only one linked correspondence can be the primary reference."))
+    def _append_activity(self, activity_type, referral=None, details=None):
+        self.append("activities", {"activity_type": activity_type, "activity_on": now_datetime(), "actor": frappe.session.user,
+            "organization": getattr(referral, "recipient_organization", None) if referral else self.current_holder,
+            "referral_number": getattr(referral, "referral_number", None) if referral else None, "details": details})
 
-        links = self.get("correspondence_links") or []
-        if links and primary_count == 0:
-            links[0].is_primary_reference = 1
+    def _sync_activity_log(self):
+        existing = {(r.activity_type, r.referral_number) for r in self.activities or []}
+        mapping = {"Sent":"Referral Sent","Received":"Referral Received","In Progress":"Referral Received","Completed":"Referral Completed","Rejected":"Referral Rejected","Cancelled":"Referral Closed","Withdrawn":"Referral Closed","Returned":"Referral Closed"}
+        for row in self.referrals or []:
+            activity_type = mapping.get(row.status); key = (activity_type, row.referral_number)
+            if activity_type and key not in existing:
+                self._append_activity(activity_type, referral=row, details=f"Referral status: {row.status}"); existing.add(key)
 
-    def validate_registration_requirements(self):
-        requires_main_document = frappe.db.get_value(
-            "Murasalat Correspondence Type",
-            self.correspondence_type,
-            "requires_main_document",
-        )
-        if requires_main_document and not frappe.db.exists(
-            "Murasalat Correspondence Document",
-            {"correspondence": self.name, "is_main_document": 1},
-        ):
-            frappe.throw(_("A main correspondence document is required before registration."))
+    def _sync_referral_todos(self):
+        changed = False
+        for row in self.referrals or []:
+            if row.recipient_type != "User" or not row.recipient_user: continue
+            if row.status in REFERRAL_OPEN_STATES and not row.referral_todo:
+                todo = frappe.get_doc({"doctype":"ToDo","allocated_to":row.recipient_user,"reference_type":self.doctype,"reference_name":self.name,"description":self.subject,"priority":self._todo_priority(row.importance),"date":row.due_date,"status":"Open","assigned_by":frappe.session.user}).insert(ignore_permissions=True)
+                row.referral_todo = todo.name; changed = True
+            elif row.referral_todo and row.status in REFERRAL_CLOSED_STATES and frappe.db.exists("ToDo", row.referral_todo):
+                frappe.db.set_value("ToDo", row.referral_todo, "status", "Cancelled", update_modified=False)
+        if changed and not self.is_new(): self.flags.referral_todos_synced = True
 
-    def validate_closed_state(self):
-        previous_state = self._doc_before_save.workflow_state if self._doc_before_save else None
-
-        if previous_state == CLOSED_STATE and self.workflow_state != CLOSED_STATE:
-            self.closed_by = None
-            self.closed_on = None
-
-        if self.workflow_state != CLOSED_STATE or self.is_new():
-            return
-
-        open_referrals = frappe.db.count(
-            "Murasalat Referral",
-            {
-                "correspondence": self.name,
-                "workflow_state": ["in", list(ACTIVE_REFERRAL_STATES)],
-                "action_required": 1,
-            },
-        )
-        if open_referrals:
-            frappe.throw(
-                _(
-                    "The correspondence cannot be closed while action-required referrals are active."
-                )
-            )
-
-        if not self.closed_by:
-            self.closed_by = frappe.session.user
-        if not self.closed_on:
-            self.closed_on = now()
-
-    def issue_correspondence_number(self):
-        if self.correspondence_number:
-            return
-
-        rule = get_numbering_rule(self.direction, self.correspondence_type)
-        if not rule:
-            frappe.throw(
-                _("No active numbering rule was found for direction {0}.").format(
-                    _(self.direction)
-                )
-            )
-
-        digits = max(cint(rule.digits), 1)
-        year = None
-        if rule.include_year:
-            year = (
-                str(get_hijri_year(today()))
-                if rule.year_type == "Hijri"
-                else str(getdate(today()).year)
-            )
-
-        series_key = f"Murasalat/{rule.name}/{year or 'all'}/"
-        sequence = getseries(series_key, digits)
-        prefix = (rule.prefix or "").strip().rstrip("-./")
-
-        parts = [prefix]
-        if year:
-            parts.append(year)
-        parts.append(str(sequence).zfill(digits))
-        self.correspondence_number = "-".join(parts)
-
-
-def get_current_user_profile(user: str | None = None):
-    user = user or frappe.session.user
-    profile_name = frappe.db.get_value(
-        "Murasalat User Profile",
-        {"user": user, "is_active": 1},
-        "name",
-    )
-    return frappe.get_cached_doc("Murasalat User Profile", profile_name) if profile_name else None
-
-
-def get_numbering_rule(direction: str, correspondence_type: str):
-    fields = ["name", "prefix", "digits", "include_year", "year_type"]
-
-    specific = frappe.get_all(
-        "Murasalat Numbering Rule",
-        {
-            "direction": direction,
-            "correspondence_type": correspondence_type,
-            "is_active": 1,
-        },
-        fields,
-        order_by="modified desc",
-        limit=1,
-    )
-    if specific:
-        return frappe._dict(specific[0])
-
-    default = frappe.get_all(
-        "Murasalat Numbering Rule",
-        {
-            "direction": direction,
-            "is_default": 1,
-            "is_active": 1,
-        },
-        fields,
-        order_by="modified desc",
-        limit=1,
-    )
-    return frappe._dict(default[0]) if default else None
+    @staticmethod
+    def _todo_priority(importance):
+        value = (importance or "").lower()
+        if any(t in value for t in ("critical", "very urgent", "حالًا", "عاجل جدًا")): return "High"
+        if any(t in value for t in ("urgent", "عاجل")): return "Medium"
+        return "Low"

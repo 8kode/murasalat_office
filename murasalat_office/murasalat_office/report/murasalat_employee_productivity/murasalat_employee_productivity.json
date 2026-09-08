@@ -1,0 +1,4 @@
+{
+ "doctype":"Report","name":"Murasalat Employee Productivity","ref_doctype":"Murasalat Correspondence","report_type":"Script Report","is_standard":"Yes","module":"Murasalat Office",
+ "roles":[{"role":"Murasalat Manager"},{"role":"Murasalat Auditor"},{"role":"Murasalat Administrator"}]
+}

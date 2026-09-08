@@ -1,9 +1,10 @@
-# Copyright (c) 2026, QupNext and contributors
-# For license information, please see license.txt
-
-# import frappe
+import frappe
 from frappe.model.document import Document
-
+from frappe.utils import getdate
 
 class MurasalatDelegation(Document):
-	pass
+    def validate(self):
+        if self.delegator == self.delegate:
+            frappe.throw("Delegator and delegate cannot be the same user.")
+        if getdate(self.from_date) > getdate(self.to_date):
+            frappe.throw("Delegation end date must be on or after start date.")

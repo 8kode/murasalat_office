@@ -1,33 +1,44 @@
-### Murasalat Office
+# Murasalat Office v0.12.0
 
-Administrative Correspondence Management System
+Metadata-first correspondence management for Frappe Framework 16 / ERPNext 16.
 
-### Installation
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+## v0.13.0
+- Record sealing and SHA-256 integrity snapshots.
+- Immutable identity/classification fields after registration.
+- Close guard against open referrals.
+- Reopen audit timestamps while retaining history.
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch version-16
-bench install-app murasalat_office
-```
+## v0.15.0 — Native Registration Journey
 
-### Contributing
+This release introduces a server-enforced registration journey that follows the operational pattern:
 
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
+1. Data
+2. Attachments
+3. Referrals
+4. Registration
+5. Sending
 
-```bash
-cd apps/murasalat_office
-pre-commit install
-```
+The implementation deliberately keeps Frappe as the primary UI and permission engine. Custom code only enforces cross-field and lifecycle rules that cannot be represented safely by field configuration alone.
 
-Pre-commit is configured to use the following tools for checking and formatting your code:
+### Registration gates
 
-- ruff
-- eslint
-- prettier
-- pyupgrade
+- Internal: target entity or at least one referral
+- Incoming: source entity, external letter number and date
+- Outgoing: target entity
+- All types: subject, transaction type, confidentiality, importance, at least one attachment and a Main Letter attachment
 
-### License
+### Lifecycle actions
 
-mit
+- Registration Checklist
+- Register Correspondence
+- Send Referrals
+
+Registration sealing is executed in `before_save`, ensuring integrity metadata is persisted in the same document transaction.
+
+## v0.18.0 — Operational Experience Layer
+- Added **Murasalat My Work** as a referral-centered personal work queue.
+- Added **Murasalat Due Today** for operational due-date focus.
+- Added **Murasalat Follow Up Queue** for referrals explicitly marked for follow-up.
+- The new reports use the existing Referral records as the source of truth; no duplicate inbox or analytics DocTypes were introduced.
+- The work model is deliberately: Correspondence = institutional record, Referral = actionable work unit, ToDo = optional personal notification.

@@ -1,0 +1,57 @@
+[
+  {
+    "doctype": "Permission Type",
+    "perm_type": "approve",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "withdraw",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "reopen",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "view_confidential",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "download_confidential",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "receive",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "start_referral",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "complete_referral",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "reject_referral",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "return_referral",
+    "doc_type": "Murasalat Correspondence"
+  },
+  {
+    "doctype": "Permission Type",
+    "perm_type": "close",
+    "doc_type": "Murasalat Correspondence"
+  }
+]

@@ -1,23 +1,38 @@
 {
-  "actions": [],
   "doctype": "DocType",
-  "editable_grid": 1,
+  "name": "Murasalat Correspondence Link",
+  "module": "Murasalat Office",
+  "custom": 0,
+  "istable": 1,
+  "editable_grid": 0,
   "engine": "InnoDB",
   "field_order": [
     "linked_correspondence",
     "relationship_type",
-    "is_primary_reference",
-    "notes"
+    "link_order"
   ],
   "fields": [
-    {"fieldname":"linked_correspondence","fieldtype":"Link","in_list_view":1,"label":"Linked Correspondence","options":"Murasalat Correspondence","reqd":1},
-    {"default":"Related","fieldname":"relationship_type","fieldtype":"Select","in_list_view":1,"label":"Relationship Type","options":"Related\nReply To\nFollow-up To\nReference\nSupersedes","reqd":1},
-    {"fieldname":"is_primary_reference","fieldtype":"Check","in_list_view":1,"label":"Primary Reference"},
-    {"fieldname":"notes","fieldtype":"Small Text","label":"Notes"}
+    {
+      "fieldname": "linked_correspondence",
+      "label": "Linked Correspondence",
+      "fieldtype": "Link",
+      "options": "Murasalat Correspondence",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "relationship_type",
+      "label": "Relationship Type",
+      "fieldtype": "Select",
+      "options": "Reply To\nRelated To\nParent\nChild\nPrevious\nNext",
+      "reqd": 1
+    },
+    {
+      "fieldname": "link_order",
+      "label": "Link Order",
+      "fieldtype": "Int",
+      "default": "1"
+    }
   ],
-  "istable": 1,
-  "links": [],
-  "module": "Murasalat Office",
-  "name": "Murasalat Correspondence Link",
   "permissions": []
 }
