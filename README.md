@@ -1,44 +1,55 @@
-# Murasalat Office v0.12.0
+# Murasalat Office v0.22.1
 
-Metadata-first correspondence management for Frappe Framework 16 / ERPNext 16.
+Metadata-first correspondence management for **Frappe Framework 16 / ERPNext 16**.
 
+## Architecture principle
 
-## v0.13.0
-- Record sealing and SHA-256 integrity snapshots.
-- Immutable identity/classification fields after registration.
-- Close guard against open referrals.
-- Reopen audit timestamps while retaining history.
+**Frappe/ERPNext Desk is the control plane.** Murasalat Office provides DocTypes, data integrity, reporting projections, and business data validation. It does not own a parallel permission engine or workflow state machine.
 
-## v0.15.0 — Native Registration Journey
+### Permissions
 
-This release introduces a server-enforced registration journey that follows the operational pattern:
+All document authorization is configured from native Frappe/ERPNext interfaces:
 
-1. Data
-2. Attachments
-3. Referrals
-4. Registration
-5. Sending
+- Role Permission Manager
+- User Permissions
+- Permission Levels
+- Role Profiles / Roles
+- Share / assignment features provided by Frappe/ERPNext
+- Customize Form for field metadata
 
-The implementation deliberately keeps Frappe as the primary UI and permission engine. Custom code only enforces cross-field and lifecycle rules that cannot be represented safely by field configuration alone.
+The app ships no business-role fixtures, DocPerm rows, permission hooks, or custom action-permission policy.
 
-### Registration gates
+### Workflows
 
-- Internal: target entity or at least one referral
-- Incoming: source entity, external letter number and date
-- Outgoing: target entity
-- All types: subject, transaction type, confidentiality, importance, at least one attachment and a Main Letter attachment
+`Murasalat Correspondence`, `Murasalat Approval Request`, and `Murasalat Referral` are normal DocTypes with a `workflow_state` field. Each can have an independent native Frappe Workflow configured from **Settings → Workflow**.
 
-### Lifecycle actions
+You can add, remove, rename, reorder, or redesign Workflow States and Transition Rules from Desk without changing the application code. The app does not interpret particular state names as authorization rules.
 
-- Registration Checklist
-- Register Correspondence
-- Send Referrals
+### Referral architecture
 
-Registration sealing is executed in `before_save`, ensuring integrity metadata is persisted in the same document transaction.
+`Murasalat Referral` is a **standalone DocType**, not a child-table row. This allows every referral to have its own native Workflow, permissions, User Permissions, and audit trail.
 
-## v0.18.0 — Operational Experience Layer
-- Added **Murasalat My Work** as a referral-centered personal work queue.
-- Added **Murasalat Due Today** for operational due-date focus.
-- Added **Murasalat Follow Up Queue** for referrals explicitly marked for follow-up.
-- The new reports use the existing Referral records as the source of truth; no duplicate inbox or analytics DocTypes were introduced.
-- The work model is deliberately: Correspondence = institutional record, Referral = actionable work unit, ToDo = optional personal notification.
+### Reports
+
+Reports may use SQL for projections, but every exposed DocType is first constrained through Frappe's permission-aware `get_list` API. This is necessary because raw SQL / `get_all` does not automatically apply the same document visibility semantics as `get_list`.
+
+### What remains in application code
+
+The remaining server-side code is limited to data integrity and data validation that is not a permission/workflow policy, for example:
+
+- required relationships and mutually exclusive recipient fields
+- duplicate/self-link validation
+- date consistency validation
+- attachment hashing and integrity verification
+- read-only audit/projection helpers
+- one-time migration of legacy referral rows
+
+These checks do not decide which Role may perform an action or which Workflow transition is allowed.
+
+## Desk governance
+
+See `docs/NATIVE_ONLY_GOVERNANCE_v0.22.1.md` for the operational governance model and `docs/DESK_GOVERNANCE_v16.34.md` for the Frappe/ERPNext Desk configuration checklist.
+
+## Verification
+
+The release includes static contract tests, JSON validation, Python compilation, report-reference checks, and package hygiene checks. Full runtime integration testing must be executed inside a real **Frappe 16.34.x + ERPNext 16.34.x Bench**, because the current development environment does not contain the Frappe runtime.

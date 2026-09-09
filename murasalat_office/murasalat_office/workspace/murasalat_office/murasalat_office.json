@@ -1,169 +1,276 @@
 {
-  "doctype": "Workspace",
-  "name": "Murasalat Office",
-  "label": "Murasalat Office",
-  "module": "Murasalat Office",
-  "type": "Workspace",
-  "title": "Murasalat Office",
-  "icon": "inbox",
-  "standard": 1,
-  "public": 1,
-  "for_user": "",
-  "sequence_id": 1,
-
-  "content": "[{\"id\":\"murasalat_new_correspondence\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Correspondence\",\"col\":4}},{\"id\":\"murasalat_my_inbox\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Inbox\",\"col\":4}},{\"id\":\"murasalat_my_work\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Work\",\"col\":4}},{\"id\":\"murasalat_due_today\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Due Today\",\"col\":4}},{\"id\":\"murasalat_overdue\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overdue\",\"col\":4}},{\"id\":\"murasalat_follow_up\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Follow Up\",\"col\":4}},{\"id\":\"murasalat_new_card\",\"type\":\"card\",\"data\":{\"card_name\":\"NEW\",\"col\":12}},{\"id\":\"murasalat_my_work_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MY WORK\",\"col\":12}},{\"id\":\"murasalat_correspondence_card\",\"type\":\"card\",\"data\":{\"card_name\":\"CORRESPONDENCE\",\"col\":12}},{\"id\":\"murasalat_management_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MANAGEMENT\",\"col\":12}}]",
-
-  "roles": [
-    {
-      "role": "Murasalat User"
-    },
-    {
-      "role": "Murasalat Coordinator"
-    },
-    {
-      "role": "Murasalat Manager"
-    },
-    {
-      "role": "Murasalat Approver"
-    },
-    {
-      "role": "Murasalat Auditor"
-    },
-    {
-      "role": "Murasalat Administrator"
-    }
-  ],
-
-  "shortcuts": [
-    {
-      "type": "DocType",
-      "link_to": "Murasalat Correspondence",
-      "label": "New Correspondence",
-      "doc_view": "New"
-    },
-    {
-      "type": "Report",
-      "link_to": "Murasalat Inbox",
-      "label": "My Inbox"
-    },
-    {
-      "type": "Report",
-      "link_to": "Murasalat My Work",
-      "label": "My Work"
-    },
-    {
-      "type": "Report",
-      "link_to": "Murasalat Due Today",
-      "label": "Due Today"
-    },
-    {
-      "type": "Report",
-      "link_to": "Murasalat Overdue Referrals",
-      "label": "Overdue"
-    },
-    {
-      "type": "Report",
-      "link_to": "Murasalat Follow Up Queue",
-      "label": "Follow Up"
-    }
-  ],
-
-  "links": [
-    {
-      "type": "Card Break",
-      "label": "NEW",
-      "link_count": 1
-    },
-    {
-      "type": "Link",
-      "label": "New Correspondence",
-      "link_type": "DocType",
-      "link_to": "Murasalat Correspondence",
-      "onboard": 0
-    },
-
-    {
-      "type": "Card Break",
-      "label": "MY WORK",
-      "link_count": 5
-    },
-    {
-      "type": "Link",
-      "label": "My Inbox",
-      "link_type": "Report",
-      "link_to": "Murasalat Inbox"
-    },
-    {
-      "type": "Link",
-      "label": "My Work",
-      "link_type": "Report",
-      "link_to": "Murasalat My Work"
-    },
-    {
-      "type": "Link",
-      "label": "Due Today",
-      "link_type": "Report",
-      "link_to": "Murasalat Due Today"
-    },
-    {
-      "type": "Link",
-      "label": "Overdue",
-      "link_type": "Report",
-      "link_to": "Murasalat Overdue Referrals"
-    },
-    {
-      "type": "Link",
-      "label": "Follow Up",
-      "link_type": "Report",
-      "link_to": "Murasalat Follow Up Queue"
-    },
-
-    {
-      "type": "Card Break",
-      "label": "CORRESPONDENCE",
-      "link_count": 2
-    },
-    {
-      "type": "Link",
-      "label": "Correspondence",
-      "link_type": "DocType",
-      "link_to": "Murasalat Correspondence"
-    },
-    {
-      "type": "Link",
-      "label": "Work Queue",
-      "link_type": "Report",
-      "link_to": "Murasalat Work Queue"
-    },
-
-    {
-      "type": "Card Break",
-      "label": "MANAGEMENT",
-      "link_count": 3
-    },
-    {
-      "type": "Link",
-      "label": "Employee Productivity",
-      "link_type": "Report",
-      "link_to": "Murasalat Employee Productivity",
-      "hidden": 0
-    },
-    {
-      "type": "Link",
-      "label": "Delegations",
-      "link_type": "DocType",
-      "link_to": "Murasalat Delegation"
-    },
-    {
-      "type": "Link",
-      "label": "Escalation Policies",
-      "link_type": "DocType",
-      "link_to": "Murasalat Escalation Policy"
-    }
-  ],
-
-  "charts": [],
-  "number_cards": [],
-  "custom_blocks": [],
-  "quick_lists": []
+ "app": "murasalat_office",
+ "charts": [],
+ "content": "[{\"id\":\"murasalat_new_correspondence\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Correspondence\",\"col\":4}},{\"id\":\"murasalat_my_inbox\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Inbox\",\"col\":4}},{\"id\":\"murasalat_my_work\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Work\",\"col\":4}},{\"id\":\"murasalat_due_today\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Due Today\",\"col\":4}},{\"id\":\"murasalat_overdue\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overdue\",\"col\":4}},{\"id\":\"murasalat_follow_up\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Follow Up\",\"col\":4}},{\"id\":\"murasalat_new_card\",\"type\":\"card\",\"data\":{\"card_name\":\"NEW\",\"col\":12}},{\"id\":\"murasalat_my_work_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MY WORK\",\"col\":12}},{\"id\":\"murasalat_correspondence_card\",\"type\":\"card\",\"data\":{\"card_name\":\"CORRESPONDENCE\",\"col\":12}},{\"id\":\"murasalat_governance_card\",\"type\":\"card\",\"data\":{\"card_name\":\"GOVERNANCE\",\"col\":12}},{\"id\":\"murasalat_management_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MANAGEMENT\",\"col\":12}}]",
+ "creation": "2026-09-10 00:43:11.048554",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "inbox",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Murasalat Office",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "NEW",
+   "link_count": 1,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "New Correspondence",
+   "link_count": 0,
+   "link_to": "Murasalat Correspondence",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "MY WORK",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "My Inbox",
+   "link_count": 0,
+   "link_to": "Murasalat Inbox",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "My Work",
+   "link_count": 0,
+   "link_to": "Murasalat My Work",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Due Today",
+   "link_count": 0,
+   "link_to": "Murasalat Due Today",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Overdue",
+   "link_count": 0,
+   "link_to": "Murasalat Overdue Referrals",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Follow Up",
+   "link_count": 0,
+   "link_to": "Murasalat Follow Up Queue",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "CORRESPONDENCE",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Correspondence",
+   "link_count": 0,
+   "link_to": "Murasalat Correspondence",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Work Queue",
+   "link_count": 0,
+   "link_to": "Murasalat Work Queue",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "GOVERNANCE",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Workflows",
+   "link_count": 0,
+   "link_to": "Workflow",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Workflow States",
+   "link_count": 0,
+   "link_to": "Workflow State",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "User Permissions",
+   "link_count": 0,
+   "link_to": "User Permission",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Security Health",
+   "link_count": 0,
+   "link_to": "Murasalat Security Health",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "MANAGEMENT",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Productivity",
+   "link_count": 0,
+   "link_to": "Murasalat Employee Productivity",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delegations",
+   "link_count": 0,
+   "link_to": "Murasalat Delegation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat Organization Entity",
+   "link_count": 0,
+   "link_to": "Murasalat Organization Entity",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Murasalat User Organization Membership",
+   "link_count": 0,
+   "link_to": "Murasalat User Organization Membership",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-10 01:17:44.436719",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Office",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "doc_view": "New",
+   "label": "New Correspondence",
+   "link_to": "Murasalat Correspondence",
+   "type": "DocType"
+  },
+  {
+   "label": "My Inbox",
+   "link_to": "Murasalat Inbox",
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Report"
+  },
+  {
+   "label": "My Work",
+   "link_to": "Murasalat My Work",
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Report"
+  },
+  {
+   "label": "Due Today",
+   "link_to": "Murasalat Due Today",
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Report"
+  },
+  {
+   "label": "Overdue",
+   "link_to": "Murasalat Overdue Referrals",
+   "report_ref_doctype": "Murasalat Correspondence",
+   "type": "Report"
+  },
+  {
+   "label": "Follow Up",
+   "link_to": "Murasalat Follow Up Queue",
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Report"
+  }
+ ],
+ "title": "Murasalat Office",
+ "type": "Workspace"
 }

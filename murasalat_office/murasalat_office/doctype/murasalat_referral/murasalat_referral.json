@@ -3,10 +3,12 @@
   "name": "Murasalat Referral",
   "module": "Murasalat Office",
   "custom": 0,
-  "istable": 1,
+  "istable": 0,
   "editable_grid": 0,
   "engine": "InnoDB",
+  "autoname": "hash",
   "field_order": [
+    "correspondence",
     "referral_number",
     "recipient_type",
     "recipient_organization",
@@ -19,18 +21,23 @@
     "paper_copy",
     "cc_copy",
     "follow_up",
-    "status",
     "sent_on",
     "received_by",
     "received_on",
     "completed_by",
     "completed_on",
-    "referral_todo",
-    "reminder_sent_on",
-    "manager_escalated_on",
-    "final_escalated_on"
+    "legacy_history",
+    "workflow_state"
   ],
   "fields": [
+    {
+      "fieldname": "correspondence",
+      "label": "Correspondence",
+      "fieldtype": "Link",
+      "options": "Murasalat Correspondence",
+      "reqd": 1,
+      "in_list_view": 1
+    },
     {
       "fieldname": "referral_number",
       "label": "Referral Number",
@@ -43,7 +50,6 @@
       "label": "Recipient Type",
       "fieldtype": "Select",
       "options": "Organization\nUser",
-      "default": "Organization",
       "reqd": 1,
       "in_list_view": 1
     },
@@ -113,14 +119,6 @@
       "fieldtype": "Check"
     },
     {
-      "fieldname": "status",
-      "label": "Status",
-      "fieldtype": "Select",
-      "options": "Pending\nSent\nReceived\nIn Progress\nCompleted\nRejected\nReturned\nOverdue\nWithdrawn\nCancelled",
-      "default": "Pending",
-      "in_list_view": 1
-    },
-    {
       "fieldname": "sent_on",
       "label": "Sent On",
       "fieldtype": "Datetime",
@@ -153,34 +151,19 @@
       "read_only": 1
     },
     {
-      "fieldname": "referral_todo",
-      "label": "Assignment ToDo",
-      "fieldtype": "Link",
-      "options": "ToDo",
+      "fieldname": "legacy_history",
+      "label": "Legacy History",
+      "fieldtype": "Long Text",
       "read_only": 1,
       "hidden": 1
     },
     {
-      "fieldname": "reminder_sent_on",
-      "label": "Reminder Sent On",
-      "fieldtype": "Datetime",
+      "fieldname": "workflow_state",
+      "label": "Workflow State",
+      "fieldtype": "Data",
       "read_only": 1,
-      "hidden": 1
-    },
-    {
-      "fieldname": "manager_escalated_on",
-      "label": "Manager Escalated On",
-      "fieldtype": "Datetime",
-      "read_only": 1,
-      "hidden": 1
-    },
-    {
-      "fieldname": "final_escalated_on",
-      "label": "Final Escalated On",
-      "fieldtype": "Datetime",
-      "read_only": 1,
-      "hidden": 1
+      "in_list_view": 1
     }
   ],
-  "permissions": []
+  "track_changes": 1
 }

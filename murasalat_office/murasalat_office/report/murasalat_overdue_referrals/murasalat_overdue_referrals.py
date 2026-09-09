@@ -1,18 +1,16 @@
-"""Operational overdue referral report, always constrained by correspondence visibility."""
-from __future__ import annotations
 import frappe
-from murasalat_office.security.permissions import get_permission_query_conditions
+from murasalat_office.reporting import permission_condition
 
-OPEN = ("Pending", "Sent", "Received", "In Progress", "Overdue")
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
-    user = filters.get("user") or frappe.session.user
-    where = ["r.status IN %(open)s", "r.due_date IS NOT NULL", "r.due_date < CURDATE()"]
-    values = {"open": OPEN}
-    condition = get_permission_query_conditions(user)
-    if condition:
-        where.append(condition.replace("`tabMurasalat Correspondence`", "c"))
+    where = ["r.due_date IS NOT NULL", "r.due_date < CURDATE()"]
+    values = {}
+    parent_condition, native_values = permission_condition('c', 'Murasalat Correspondence')
+    referral_condition, referral_values = permission_condition('r', 'Murasalat Referral')
+    where.extend([parent_condition, referral_condition])
+    values.update(native_values)
+    values.update(referral_values)
     if filters.get("organization"):
         where.append("r.recipient_organization=%(organization)s")
         values["organization"] = filters.organization
@@ -23,22 +21,22 @@ def execute(filters=None):
         where.append("r.due_date >= %(from_date)s")
         values["from_date"] = filters.from_date
     data = frappe.db.sql(f"""
-        SELECT c.name, c.subject, c.correspondence_type, c.confidentiality,
-               r.name AS referral_id, r.referral_number, r.recipient_type,
-               r.recipient_organization, r.recipient_user, r.direction,
-               r.status AS referral_status, r.due_date, r.importance,
-               DATEDIFF(CURDATE(), r.due_date) AS overdue_days, r.instructions
+        SELECT c.name,c.subject,c.correspondence_type,c.confidentiality,
+               r.name AS referral_id,r.referral_number,r.recipient_type,
+               r.recipient_organization,r.recipient_user,r.direction,
+               r.workflow_state AS referral_workflow_state,r.due_date,r.importance,
+               DATEDIFF(CURDATE(),r.due_date) AS overdue_days,r.instructions
         FROM `tabMurasalat Correspondence` c
-        INNER JOIN `tabMurasalat Referral` r ON r.parent=c.name
-          AND r.parenttype='Murasalat Correspondence'
+        INNER JOIN `tabMurasalat Referral` r ON r.correspondence=c.name
         WHERE {' AND '.join(where)}
-        ORDER BY overdue_days DESC, r.due_date ASC, c.modified DESC
+        ORDER BY overdue_days DESC,r.due_date ASC,c.modified DESC
     """, values, as_dict=True)
-    columns = [
+    columns=[
         {"label":"Overdue Days","fieldname":"overdue_days","fieldtype":"Int","width":110},
         {"label":"Correspondence","fieldname":"name","fieldtype":"Link","options":"Murasalat Correspondence","width":180},
         {"label":"Subject","fieldname":"subject","fieldtype":"Data","width":260},
         {"label":"Referral","fieldname":"referral_number","fieldtype":"Data","width":120},
+        {"label":"Workflow State","fieldname":"referral_workflow_state","fieldtype":"Data","width":160},
         {"label":"Recipient Organization","fieldname":"recipient_organization","fieldtype":"Link","options":"Murasalat Organization Entity","width":180},
         {"label":"Recipient User","fieldname":"recipient_user","fieldtype":"Link","options":"User","width":180},
         {"label":"Direction","fieldname":"direction","fieldtype":"Link","options":"Murasalat Referral Direction","width":160},
@@ -46,8 +44,8 @@ def execute(filters=None):
         {"label":"Due Date","fieldname":"due_date","fieldtype":"Date","width":110},
         {"label":"Instructions","fieldname":"instructions","fieldtype":"Small Text","width":260},
     ]
-    summary = [
-        {"value": len(data), "label":"Overdue Referrals", "datatype":"Int", "indicator":"Red"},
-        {"value": max([d.overdue_days or 0 for d in data], default=0), "label":"Maximum Days Late", "datatype":"Int", "indicator":"Orange"},
+    summary=[
+        {"value":len(data),"label":"Overdue by Due Date","datatype":"Int","indicator":"Red"},
+        {"value":max([d.overdue_days or 0 for d in data],default=0),"label":"Maximum Days Late","datatype":"Int","indicator":"Orange"}
     ]
-    return columns, data, None, summary
+    return columns,data,None,summary

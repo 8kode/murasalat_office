@@ -5,7 +5,6 @@ CHILD_TABLES = (
     "Murasalat Attachment",
     "Murasalat Correspondence Activity",
     "Murasalat Correspondence Link",
-    "Murasalat Referral",
 )
 
 

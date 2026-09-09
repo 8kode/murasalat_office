@@ -33,6 +33,5 @@
       "fieldtype": "Int",
       "default": "1"
     }
-  ],
-  "permissions": []
+  ]
 }

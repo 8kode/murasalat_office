@@ -18,24 +18,74 @@
     "approved_on"
   ],
   "fields": [
-    {"fieldname":"correspondence","label":"Correspondence","fieldtype":"Link","options":"Murasalat Correspondence","reqd":1,"in_list_view":1},
-    {"fieldname":"subject","label":"Subject","fieldtype":"Data","fetch_from":"correspondence.subject","read_only":1,"in_list_view":1},
-    {"fieldname":"requested_by","label":"Requested By","fieldtype":"Link","options":"User","read_only":1,"in_list_view":1},
-    {"fieldname":"requested_on","label":"Requested On","fieldtype":"Datetime","read_only":1,"in_list_view":1},
-    {"fieldname":"approval_section","label":"Approval","fieldtype":"Section Break"},
-    {"fieldname":"workflow_state","label":"Workflow State","fieldtype":"Data","read_only":1,"default":"Draft","in_list_view":1},
-    {"fieldname":"approval_level","label":"Approval Level","fieldtype":"Int","default":"1","reqd":1},
-    {"fieldname":"decision_note","label":"Decision / Review Note","fieldtype":"Small Text"},
-    {"fieldname":"approved_by","label":"Approved By","fieldtype":"Link","options":"User","read_only":1},
-    {"fieldname":"approved_on","label":"Approved On","fieldtype":"Datetime","read_only":1}
-  ],
-  "permissions": [
-    {"role":"Murasalat User","read":1,"write":1,"create":1},
-    {"role":"Murasalat Coordinator","read":1,"write":1,"create":1},
-    {"role":"Murasalat Manager","read":1,"write":1,"create":1},
-    {"role":"Murasalat Approver","read":1,"write":1,"create":1},
-    {"role":"Murasalat Auditor","read":1},
-    {"role":"Murasalat Administrator","read":1,"write":1,"create":1,"delete":1}
+    {
+      "fieldname": "correspondence",
+      "label": "Correspondence",
+      "fieldtype": "Link",
+      "options": "Murasalat Correspondence",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "subject",
+      "label": "Subject",
+      "fieldtype": "Data",
+      "fetch_from": "correspondence.subject",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "requested_by",
+      "label": "Requested By",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "requested_on",
+      "label": "Requested On",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "approval_section",
+      "label": "Approval",
+      "fieldtype": "Section Break"
+    },
+    {
+      "fieldname": "workflow_state",
+      "label": "Workflow State",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "approval_level",
+      "label": "Approval Level",
+      "fieldtype": "Int",
+      "default": "1",
+      "reqd": 1
+    },
+    {
+      "fieldname": "decision_note",
+      "label": "Decision / Review Note",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "approved_by",
+      "label": "Approved By",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "approved_on",
+      "label": "Approved On",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
   ],
   "track_changes": 1,
   "track_seen": 1,

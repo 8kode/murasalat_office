@@ -9,10 +9,9 @@ frappe.query_reports["Murasalat Inbox"] = {
       reqd: 1,
     },
     {
-      fieldname: "status",
-      label: __("Referral Status"),
-      fieldtype: "Select",
-      options: ["", "Pending", "Sent", "Received", "In Progress", "Overdue"],
+      fieldname: "workflow_state",
+      label: __("Workflow State"),
+      fieldtype: "Data",
     },
     {
       fieldname: "due_only",

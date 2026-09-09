@@ -45,6 +45,5 @@
       "fieldtype": "Data",
       "read_only": 1
     }
-  ],
-  "permissions": []
+  ]
 }

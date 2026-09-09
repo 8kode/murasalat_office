@@ -1,0 +1,4 @@
+# Legacy migration patches are retained for upgrade compatibility; governance is native Desk configuration.
+
+execute:murasalat_office.patches.v0_21_migrate_referrals.execute
+execute:murasalat_office.patches.v0_22_preserve_referral_history.execute
