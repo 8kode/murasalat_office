@@ -2,7 +2,7 @@
 
 This release is a corrective follow-up to v0.18.7 after a file-by-file review of the application.
 
-## Security fixes
+## Security fixess
 - Permission-query visibility is now clearance-constrained for users both with and without organization memberships.
 - Users without organizations can still see records they own, currently hold, or are explicitly referred to, subject to confidentiality clearance.
 - Custom operational permission types (`close`, `withdraw`, `reopen`, and referral actions) now fail closed outside the document business scope while still delegating role permission decisions to Frappe.
