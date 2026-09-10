@@ -69,7 +69,6 @@
  "name": "Murasalat User Organization Membership",
  "naming_rule": "Random",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

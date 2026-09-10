@@ -48,7 +48,7 @@ These checks do not decide which Role may perform an action or which Workflow tr
 
 ## Desk governance
 
-See `docs/NATIVE_ONLY_GOVERNANCE_v0.22.1.md` for the operational governance model and `docs/DESK_GOVERNANCE_v16.34.md` for the Frappe/ERPNext Desk configuration checklist.
+See `docs/NATIVE_ONLY_GOVERNANCE_v0.22.0.md` for the operational governance model and `docs/DESK_GOVERNANCE_v16.34.md` for the Frappe/ERPNext Desk configuration checklist.
 
 ## Verification
 
