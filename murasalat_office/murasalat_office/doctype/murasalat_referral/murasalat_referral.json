@@ -1,12 +1,10 @@
 {
+ "actions": [],
+ "autoname": "MR-.#####",
+ "creation": "2026-09-10 20:59:09.682373",
+ "description": "Standalone referral with native Frappe permissions and Desk-managed Workflow.",
  "doctype": "DocType",
- "name": "Murasalat Referral",
- "module": "Murasalat Office",
- "custom": 0,
- "istable": 0,
- "editable_grid": 0,
  "engine": "InnoDB",
- "autoname": "format:MR-.#####",
  "field_order": [
   "correspondence",
   "referral_number",
@@ -32,145 +30,158 @@
  "fields": [
   {
    "fieldname": "correspondence",
-   "label": "Correspondence",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Correspondence",
    "options": "Murasalat Correspondence",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "referral_number",
-   "label": "Referral Number",
    "fieldtype": "Data",
-   "read_only": 1,
    "in_list_view": 1,
+   "label": "Referral Number",
+   "read_only": 1,
    "unique": 1
   },
   {
    "fieldname": "recipient_type",
-   "label": "Recipient Type",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Recipient Type",
    "options": "Organization\nUser",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
-   "fieldname": "recipient_organization",
-   "label": "To Organization",
-   "fieldtype": "Link",
-   "options": "Murasalat Organization Entity",
    "depends_on": "eval:doc.recipient_type==\"Organization\"",
+   "fieldname": "recipient_organization",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "To Organization",
    "mandatory_depends_on": "eval:doc.recipient_type==\"Organization\"",
-   "in_list_view": 1
+   "options": "Murasalat Organization Entity"
   },
   {
-   "fieldname": "recipient_user",
-   "label": "To User",
-   "fieldtype": "Link",
-   "options": "User",
    "depends_on": "eval:doc.recipient_type==\"User\"",
+   "fieldname": "recipient_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "To User",
    "mandatory_depends_on": "eval:doc.recipient_type==\"User\"",
-   "in_list_view": 1
+   "options": "User"
   },
   {
    "fieldname": "direction",
-   "label": "Direction",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Direction",
    "options": "Murasalat Referral Direction",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "importance",
-   "label": "Importance",
    "fieldtype": "Link",
+   "label": "Importance",
    "options": "Murasalat Importance Level",
    "reqd": 1
   },
   {
    "fieldname": "due_date",
-   "label": "Due Date",
    "fieldtype": "Date",
-   "reqd": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Due Date",
+   "reqd": 1
   },
   {
    "fieldname": "instructions",
-   "label": "Instructions to Recipient",
-   "fieldtype": "Small Text"
+   "fieldtype": "Small Text",
+   "label": "Instructions to Recipient"
   },
   {
+   "default": "0",
    "fieldname": "private_referral",
-   "label": "Private",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "label": "Private"
   },
   {
+   "default": "0",
    "fieldname": "paper_copy",
-   "label": "Paper Correspondence",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "label": "Paper Correspondence"
   },
   {
+   "default": "0",
    "fieldname": "cc_copy",
-   "label": "Copy",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "label": "Copy"
   },
   {
+   "default": "0",
    "fieldname": "follow_up",
-   "label": "For Follow-up",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "label": "For Follow-up"
   },
   {
    "fieldname": "sent_on",
-   "label": "Sent On",
    "fieldtype": "Datetime",
+   "label": "Sent On",
    "read_only": 1
   },
   {
    "fieldname": "received_by",
-   "label": "Received By",
    "fieldtype": "Link",
+   "label": "Received By",
    "options": "User",
    "read_only": 1
   },
   {
    "fieldname": "received_on",
-   "label": "Received On",
    "fieldtype": "Datetime",
+   "label": "Received On",
    "read_only": 1
   },
   {
    "fieldname": "completed_by",
-   "label": "Completed By",
    "fieldtype": "Link",
+   "label": "Completed By",
    "options": "User",
    "read_only": 1
   },
   {
    "fieldname": "completed_on",
-   "label": "Completed On",
    "fieldtype": "Datetime",
+   "label": "Completed On",
    "read_only": 1
   },
   {
    "fieldname": "legacy_history",
-   "label": "Legacy History",
    "fieldtype": "Long Text",
-   "read_only": 1,
-   "hidden": 1
+   "hidden": 1,
+   "label": "Legacy History",
+   "read_only": 1
   },
   {
    "fieldname": "workflow_state",
-   "label": "Workflow State",
    "fieldtype": "Data",
-   "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Workflow State",
+   "read_only": 1
   }
  ],
- "track_changes": 1,
+ "links": [],
+ "modified": "2026-09-11 01:13:03.960223",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Referral",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "search_fields": "referral_number,correspondence,recipient_user,recipient_organization",
  "show_title_field_in_link": 1,
- "title_field": "referral_number",
  "sort_field": "due_date",
  "sort_order": "ASC",
- "search_fields": "referral_number,correspondence,recipient_user,recipient_organization,name",
- "description": "Standalone referral with native Frappe permissions and Desk-managed Workflow."
+ "states": [],
+ "title_field": "referral_number",
+ "track_changes": 1
 }

@@ -1,9 +1,9 @@
 {
+ "actions": [],
+ "autoname": "MAR-.#####",
+ "creation": "2026-09-10 20:59:09.785599",
+ "description": "Approval request governed by native Frappe Workflow and permissions configured from Desk.",
  "doctype": "DocType",
- "name": "Murasalat Approval Request",
- "module": "Murasalat Office",
- "custom": 0,
- "istable": 0,
  "engine": "InnoDB",
  "field_order": [
   "correspondence",
@@ -20,78 +20,86 @@
  "fields": [
   {
    "fieldname": "correspondence",
-   "label": "Correspondence",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Correspondence",
    "options": "Murasalat Correspondence",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
-   "fieldname": "subject",
-   "label": "Subject",
-   "fieldtype": "Data",
    "fetch_from": "correspondence.subject",
-   "read_only": 1,
-   "in_list_view": 1
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject",
+   "read_only": 1
   },
   {
    "fieldname": "requested_by",
-   "label": "Requested By",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Requested By",
    "options": "User",
-   "read_only": 1,
-   "in_list_view": 1
+   "read_only": 1
   },
   {
    "fieldname": "requested_on",
-   "label": "Requested On",
    "fieldtype": "Datetime",
-   "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Requested On",
+   "read_only": 1
   },
   {
    "fieldname": "approval_section",
-   "label": "Approval",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Approval"
   },
   {
    "fieldname": "workflow_state",
-   "label": "Workflow State",
    "fieldtype": "Data",
-   "read_only": 1,
-   "in_list_view": 1
+   "in_list_view": 1,
+   "label": "Workflow State",
+   "read_only": 1
   },
   {
-   "fieldname": "approval_level",
-   "label": "Approval Level",
-   "fieldtype": "Int",
    "default": "1",
+   "fieldname": "approval_level",
+   "fieldtype": "Int",
+   "label": "Approval Level",
    "reqd": 1
   },
   {
    "fieldname": "decision_note",
-   "label": "Decision / Review Note",
-   "fieldtype": "Small Text"
+   "fieldtype": "Small Text",
+   "label": "Decision / Review Note"
   },
   {
    "fieldname": "approved_by",
-   "label": "Approved By",
    "fieldtype": "Link",
+   "label": "Approved By",
    "options": "User",
    "read_only": 1
   },
   {
    "fieldname": "approved_on",
-   "label": "Approved On",
    "fieldtype": "Datetime",
+   "label": "Approved On",
    "read_only": 1
   }
  ],
- "track_changes": 1,
- "track_seen": 1,
+ "links": [],
+ "modified": "2026-09-11 01:11:48.446052",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Approval Request",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "search_fields": "correspondence,subject,requested_by",
  "sort_field": "modified",
  "sort_order": "DESC",
- "search_fields": "correspondence,subject,requested_by,name",
- "description": "Approval request governed by native Frappe Workflow and permissions configured from Desk.",
- "autoname": "format:MAR-.#####"
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1
 }

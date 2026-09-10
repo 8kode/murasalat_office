@@ -1,39 +1,49 @@
 {
-  "doctype": "DocType",
-  "name": "Murasalat Confidentiality Level",
-  "module": "Murasalat Office",
-  "custom": 0,
-  "istable": 0,
-  "editable_grid": 0,
-  "engine": "InnoDB",
-  "field_order": [
-    "title",
-    "clearance_rank",
-    "enabled"
-  ],
-  "fields": [
-    {
-      "fieldname": "title",
-      "label": "Murasalat Confidentiality Level",
-      "fieldtype": "Data",
-      "reqd": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "clearance_rank",
-      "label": "Clearance Rank",
-      "fieldtype": "Int",
-      "default": "0",
-      "reqd": 1,
-      "description": "Higher rank means more restricted correspondence."
-    },
-    {
-      "fieldname": "enabled",
-      "label": "Enabled",
-      "fieldtype": "Check",
-      "default": "1"
-    }
-  ],
-  "title_field": "title",
-  "autoname": "field:title"
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:title",
+ "creation": "2026-09-10 20:59:09.820315",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "clearance_rank",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Murasalat Confidentiality Level",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "description": "Higher rank means more restricted correspondence.",
+   "fieldname": "clearance_rank",
+   "fieldtype": "Int",
+   "label": "Clearance Rank",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-11 00:57:02.095288",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Confidentiality Level",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
 }

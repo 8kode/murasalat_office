@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format:MOM-.#####",
+ "autoname": "MOM-.#####",
  "creation": "2026-09-10 00:42:59.083974",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -46,11 +46,13 @@
   }
  ],
  "links": [],
- "modified": "2026-09-10 01:36:37.864251",
+ "modified": "2026-09-11 01:06:34.288125",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat User Organization Membership",
+ "naming_rule": "Expression",
  "owner": "Administrator",
+ "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
