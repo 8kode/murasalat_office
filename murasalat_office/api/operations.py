@@ -1,8 +1,18 @@
 import frappe
+from frappe import _
+
+
+@frappe.whitelist()
+def get_governance_health():
+    """Expose the read-only governance audit to authorized Desk users."""
+    frappe.only_for("System Manager")
+    from murasalat_office.services.governance import governance_health
+    return governance_health()
 
 
 @frappe.whitelist()
 def verify_record_integrity(correspondence):
+    """Explicitly perform the full, attachment-aware integrity verification."""
     from murasalat_office.services.records import verify_integrity
     doc = frappe.get_doc("Murasalat Correspondence", correspondence)
     doc.check_permission("read")
@@ -11,19 +21,23 @@ def verify_record_integrity(correspondence):
 
 @frappe.whitelist()
 def operational_summary(correspondence):
-    """Read-only projection with no application-defined workflow states."""
+    """Read-only projection using native permission-aware Query Builder access."""
     from murasalat_office.services.records import verify_integrity
     doc = frappe.get_doc("Murasalat Correspondence", correspondence)
     doc.check_permission("read")
-    referrals = frappe.get_list(
+    referrals = frappe.qb.get_query(
         "Murasalat Referral",
-        filters={"correspondence": doc.name},
         fields=["name", "due_date", "workflow_state"],
+        filters={"correspondence": doc.name},
         ignore_permissions=False,
-        limit_page_length=0,
-    )
-    overdue_rows = [r for r in referrals if r.due_date and str(r.due_date) < frappe.utils.today()]
-    due_dates = [r.due_date for r in referrals if r.due_date]
+        order_by="due_date asc",
+    ).run(as_dict=True)
+    today_date = frappe.utils.getdate(frappe.utils.today())
+    overdue_rows = [
+        r for r in referrals
+        if r.due_date and frappe.utils.getdate(r.due_date) < today_date
+    ]
+    due_dates = [frappe.utils.getdate(r.due_date) for r in referrals if r.due_date]
     return {
         "name": doc.name,
         "workflow_state": doc.workflow_state,

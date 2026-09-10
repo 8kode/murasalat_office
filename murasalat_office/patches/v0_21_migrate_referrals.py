@@ -18,20 +18,33 @@ def execute():
 
     table = "tabMurasalat Referral"
     try:
-        columns = {r[0] for r in frappe.db.sql(f"SHOW COLUMNS FROM `{table}`")}
+        columns = set(frappe.db.get_table_columns("Murasalat Referral"))
     except Exception:
         return
 
     if "parent" not in columns or "parenttype" not in columns:
         return
 
-    rows = frappe.db.sql(
-        f"SELECT * FROM `{table}` WHERE parenttype=%s",
+    rows = frappe.db.multisql(
+        {
+            "mariadb": f"SELECT * FROM `{table}` WHERE parenttype=%s",
+            "postgres": f'SELECT * FROM "{table}" WHERE parenttype=%s',
+        },
         ("Murasalat Correspondence",),
         as_dict=True,
     )
+    parents = sorted({row.get("parent") for row in rows if row.get("parent")})
+    existing_parents = set(
+        frappe.get_all(
+            "Murasalat Correspondence",
+            filters={"name": ["in", parents]},
+            pluck="name",
+            limit_page_length=0,
+        )
+    ) if parents else set()
+
     for row in rows:
-        if not row.get("parent") or not frappe.db.exists("Murasalat Correspondence", row.parent):
+        if not row.get("parent") or row.parent not in existing_parents:
             continue
 
         values = {field: row.get(field) for field in FIELDS if field in columns}

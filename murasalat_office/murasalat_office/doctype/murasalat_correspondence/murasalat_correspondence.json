@@ -30,8 +30,6 @@
     "links",
     "attachments_section",
     "attachments",
-    "referrals_section",
-    "referral_count",
     "security_section",
     "current_holder",
     "registered_on",
@@ -92,7 +90,8 @@
       "label": "Confidentiality",
       "fieldtype": "Link",
       "options": "Murasalat Confidentiality Level",
-      "reqd": 1
+      "reqd": 1,
+      "in_list_view": 1
     },
     {
       "fieldname": "importance",
@@ -119,7 +118,8 @@
     {
       "fieldname": "due_date",
       "label": "General Due Date",
-      "fieldtype": "Date"
+      "fieldtype": "Date",
+      "in_list_view": 1
     },
     {
       "fieldname": "page_count",
@@ -156,7 +156,7 @@
     {
       "fieldname": "notes",
       "label": "Notes",
-      "fieldtype": "Small Text"
+      "fieldtype": "Text"
     },
     {
       "fieldname": "links_section",
@@ -179,18 +179,6 @@
       "label": "Attachments",
       "fieldtype": "Table",
       "options": "Murasalat Attachment"
-    },
-    {
-      "fieldname": "referrals_section",
-      "label": "Referrals",
-      "fieldtype": "Section Break"
-    },
-    {
-      "fieldname": "referral_count",
-      "label": "Referral Count",
-      "fieldtype": "Int",
-      "read_only": 1,
-      "description": "Standalone Murasalat Referral documents are linked to this correspondence and governed by native Frappe permissions/workflows."
     },
     {
       "fieldname": "security_section",
@@ -259,7 +247,7 @@
     {
       "fieldname": "seal_reason",
       "label": "Seal Reason",
-      "fieldtype": "Data",
+      "fieldtype": "Text",
       "read_only": 1
     },
     {
@@ -267,7 +255,7 @@
       "label": "Integrity Hash",
       "fieldtype": "Data",
       "read_only": 1,
-      "hidden": 1
+      "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification."
     },
     {
       "fieldname": "reopened_on",
@@ -284,7 +272,12 @@
     }
   ],
   "title_field": "subject",
-  "autoname": "format:MO-.{correspondence_type}.-.#####",
+  "autoname": "format:MO-.#####",
   "track_changes": 1,
-  "allow_rename": 0
+  "allow_rename": 0,
+  "show_title_field_in_link": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "search_fields": "subject,external_letter_number,name",
+  "description": "Native Frappe correspondence record. Permissions and lifecycle governance are administered from Desk."
 }

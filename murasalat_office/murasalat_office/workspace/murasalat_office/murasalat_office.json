@@ -1,7 +1,7 @@
 {
  "app": "murasalat_office",
  "charts": [],
- "content": "[{\"id\":\"murasalat_new_correspondence\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Correspondence\",\"col\":4}},{\"id\":\"murasalat_my_inbox\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Inbox\",\"col\":4}},{\"id\":\"murasalat_my_work\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Work\",\"col\":4}},{\"id\":\"murasalat_due_today\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Due Today\",\"col\":4}},{\"id\":\"murasalat_overdue\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overdue\",\"col\":4}},{\"id\":\"murasalat_follow_up\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Follow Up\",\"col\":4}},{\"id\":\"murasalat_new_card\",\"type\":\"card\",\"data\":{\"card_name\":\"NEW\",\"col\":12}},{\"id\":\"murasalat_my_work_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MY WORK\",\"col\":12}},{\"id\":\"murasalat_correspondence_card\",\"type\":\"card\",\"data\":{\"card_name\":\"CORRESPONDENCE\",\"col\":12}},{\"id\":\"murasalat_governance_card\",\"type\":\"card\",\"data\":{\"card_name\":\"GOVERNANCE\",\"col\":12}},{\"id\":\"murasalat_management_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MANAGEMENT\",\"col\":12}}]",
+ "content": "[{\"id\":\"mo_num_due_today_referrals\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Due Today Referrals\",\"col\":3}},{\"id\":\"mo_num_follow_up_referrals\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Follow-up Referrals\",\"col\":3}},{\"id\":\"mo_num_total_murasalat_referrals\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Referrals\",\"col\":3}},{\"id\":\"mo_num_total_murasalat_correspondence\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Correspondence\",\"col\":3}},{\"id\":\"murasalat_new_correspondence\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Correspondence\",\"col\":3}},{\"id\":\"murasalat_new_referral\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Referral\",\"col\":3}},{\"id\":\"murasalat_my_inbox\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Inbox\",\"col\":3}},{\"id\":\"murasalat_my_work\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"My Work\",\"col\":3}},{\"id\":\"murasalat_due_today\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Due Today\",\"col\":3}},{\"id\":\"murasalat_referral_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Calendar\",\"col\":3}},{\"id\":\"murasalat_overdue\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overdue\",\"col\":3}},{\"id\":\"murasalat_follow_up\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Follow Up\",\"col\":3}},{\"id\":\"murasalat_new_card\",\"type\":\"card\",\"data\":{\"card_name\":\"NEW\",\"col\":12}},{\"id\":\"murasalat_my_work_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MY WORK\",\"col\":12}},{\"id\":\"murasalat_operations_card\",\"type\":\"card\",\"data\":{\"card_name\":\"OPERATIONS\",\"col\":12}},{\"id\":\"murasalat_correspondence_card\",\"type\":\"card\",\"data\":{\"card_name\":\"CORRESPONDENCE\",\"col\":12}},{\"id\":\"murasalat_governance_card\",\"type\":\"card\",\"data\":{\"card_name\":\"GOVERNANCE\",\"col\":12}},{\"id\":\"murasalat_management_card\",\"type\":\"card\",\"data\":{\"card_name\":\"MANAGEMENT\",\"col\":12}},{\"id\":\"mo_recent_correspondence\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Correspondence\",\"col\":6}},{\"id\":\"mo_recent_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Referrals\",\"col\":6}},{\"id\":\"mo_follow-up_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Follow-up Referrals\",\"col\":6}}]",
  "creation": "2026-09-10 00:43:11.048554",
  "custom_blocks": [],
  "docstatus": 0,
@@ -24,9 +24,49 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Approval Requests",
+   "link_count": 0,
+   "link_to": "Murasalat Approval Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Referrals",
+   "link_count": 0,
+   "link_to": "Murasalat Referral",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "New Correspondence",
    "link_count": 0,
    "link_to": "Murasalat Correspondence",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "New Referral",
+   "link_count": 0,
+   "link_to": "Murasalat Referral",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Referral Calendar",
+   "link_count": 0,
+   "link_to": "Murasalat Referral",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -87,6 +127,57 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Follow Up",
+   "link_count": 0,
+   "link_to": "Murasalat Follow Up Queue",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "OPERATIONS",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Referrals",
+   "link_count": 0,
+   "link_to": "Murasalat Referral",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Due Today",
+   "link_count": 0,
+   "link_to": "Murasalat Due Today",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Overdue Referrals",
+   "link_count": 0,
+   "link_to": "Murasalat Overdue Referrals",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Follow Up Queue",
    "link_count": 0,
    "link_to": "Murasalat Follow Up Queue",
    "link_type": "Report",
@@ -223,14 +314,30 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-10 01:17:44.436719",
+ "modified": "2026-09-10 04:30:00.000000",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
  "number_cards": [],
  "owner": "Administrator",
  "public": 1,
- "quick_lists": [],
+ "quick_lists": [
+  {
+   "document_type": "Murasalat Correspondence",
+   "label": "Recent Correspondence",
+   "quick_list_filter": "{}"
+  },
+  {
+   "document_type": "Murasalat Referral",
+   "label": "Recent Referrals",
+   "quick_list_filter": "{}"
+  },
+  {
+   "document_type": "Murasalat Referral",
+   "label": "Follow-up Referrals",
+   "quick_list_filter": "{\"follow_up\":1}"
+  }
+ ],
  "roles": [],
  "sequence_id": 1.0,
  "shortcuts": [
@@ -259,9 +366,21 @@
    "type": "Report"
   },
   {
+   "label": "Referral Calendar",
+   "link_to": "Murasalat Referral",
+   "type": "DocType",
+   "doc_view": "Calendar"
+  },
+  {
+   "label": "Referral Gantt",
+   "link_to": "Murasalat Referral",
+   "type": "DocType",
+   "doc_view": "Gantt"
+  },
+  {
    "label": "Overdue",
    "link_to": "Murasalat Overdue Referrals",
-   "report_ref_doctype": "Murasalat Correspondence",
+   "report_ref_doctype": "Murasalat Referral",
    "type": "Report"
   },
   {
@@ -269,6 +388,22 @@
    "link_to": "Murasalat Follow Up Queue",
    "report_ref_doctype": "Murasalat Referral",
    "type": "Report"
+  },
+  {
+   "label": "Referrals",
+   "link_to": "Murasalat Referral",
+   "type": "DocType"
+  },
+  {
+   "label": "Approval Requests",
+   "link_to": "Murasalat Approval Request",
+   "type": "DocType"
+  },
+  {
+   "label": "New Referral",
+   "link_to": "Murasalat Referral",
+   "type": "DocType",
+   "doc_view": "New"
   }
  ],
  "title": "Murasalat Office",

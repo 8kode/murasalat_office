@@ -1,94 +1,97 @@
 {
-  "doctype": "DocType",
-  "name": "Murasalat Approval Request",
-  "module": "Murasalat Office",
-  "custom": 0,
-  "istable": 0,
-  "engine": "InnoDB",
-  "field_order": [
-    "correspondence",
-    "subject",
-    "requested_by",
-    "requested_on",
-    "approval_section",
-    "workflow_state",
-    "approval_level",
-    "decision_note",
-    "approved_by",
-    "approved_on"
-  ],
-  "fields": [
-    {
-      "fieldname": "correspondence",
-      "label": "Correspondence",
-      "fieldtype": "Link",
-      "options": "Murasalat Correspondence",
-      "reqd": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "subject",
-      "label": "Subject",
-      "fieldtype": "Data",
-      "fetch_from": "correspondence.subject",
-      "read_only": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "requested_by",
-      "label": "Requested By",
-      "fieldtype": "Link",
-      "options": "User",
-      "read_only": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "requested_on",
-      "label": "Requested On",
-      "fieldtype": "Datetime",
-      "read_only": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "approval_section",
-      "label": "Approval",
-      "fieldtype": "Section Break"
-    },
-    {
-      "fieldname": "workflow_state",
-      "label": "Workflow State",
-      "fieldtype": "Data",
-      "read_only": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "approval_level",
-      "label": "Approval Level",
-      "fieldtype": "Int",
-      "default": "1",
-      "reqd": 1
-    },
-    {
-      "fieldname": "decision_note",
-      "label": "Decision / Review Note",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "approved_by",
-      "label": "Approved By",
-      "fieldtype": "Link",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "approved_on",
-      "label": "Approved On",
-      "fieldtype": "Datetime",
-      "read_only": 1
-    }
-  ],
-  "track_changes": 1,
-  "track_seen": 1,
-  "sort_field": "modified",
-  "sort_order": "DESC"
+ "doctype": "DocType",
+ "name": "Murasalat Approval Request",
+ "module": "Murasalat Office",
+ "custom": 0,
+ "istable": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "correspondence",
+  "subject",
+  "requested_by",
+  "requested_on",
+  "approval_section",
+  "workflow_state",
+  "approval_level",
+  "decision_note",
+  "approved_by",
+  "approved_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "correspondence",
+   "label": "Correspondence",
+   "fieldtype": "Link",
+   "options": "Murasalat Correspondence",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subject",
+   "label": "Subject",
+   "fieldtype": "Data",
+   "fetch_from": "correspondence.subject",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "label": "Requested By",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requested_on",
+   "label": "Requested On",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "approval_section",
+   "label": "Approval",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "workflow_state",
+   "label": "Workflow State",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "approval_level",
+   "label": "Approval Level",
+   "fieldtype": "Int",
+   "default": "1",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_note",
+   "label": "Decision / Review Note",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "approved_by",
+   "label": "Approved By",
+   "fieldtype": "Link",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "label": "Approved On",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  }
+ ],
+ "track_changes": 1,
+ "track_seen": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "search_fields": "correspondence,subject,requested_by,name",
+ "description": "Approval request governed by native Frappe Workflow and permissions configured from Desk.",
+ "autoname": "format:MAR-.#####"
 }

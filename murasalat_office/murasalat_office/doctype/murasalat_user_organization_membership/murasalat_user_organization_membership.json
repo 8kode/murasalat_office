@@ -1,14 +1,12 @@
 {
  "actions": [],
- "autoname": "hash",
+ "autoname": "format:MOM-.#####",
  "creation": "2026-09-10 00:42:59.083974",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "user",
   "organization",
-  "access_level",
-  "max_clearance_rank",
   "enabled",
   "valid_from",
   "valid_to"
@@ -28,21 +26,6 @@
    "in_list_view": 1,
    "label": "Organization",
    "options": "Murasalat Organization Entity",
-   "reqd": 1
-  },
-  {
-   "default": "Member",
-   "fieldname": "access_level",
-   "fieldtype": "Select",
-   "label": "Access Level",
-   "options": "Member\nCoordinator\nManager",
-   "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "max_clearance_rank",
-   "fieldtype": "Int",
-   "label": "Maximum Clearance Rank",
    "reqd": 1
   },
   {
@@ -67,12 +50,11 @@
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat User Organization Membership",
- "naming_rule": "Random",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "organization"
+ "title_field": "organization",
+ "track_changes": 1
 }

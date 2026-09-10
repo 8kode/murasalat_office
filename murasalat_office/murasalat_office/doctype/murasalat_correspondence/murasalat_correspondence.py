@@ -20,12 +20,12 @@ class MurasalatCorrespondence(Document):
     def validate(self):
         validate_immutable_fields(self)
         validate_sealed_attachments(self)
-        if not self.originating_organization:
-            self.originating_organization = self.source_entity or self.target_entity
+        self._sync_originating_organization()
         self._validate_links()
-        self._sync_referral_count()
         if self.record_sealed_on and not self.integrity_hash:
             self.integrity_hash = compute_integrity_hash(self)
+        if self.integrity_hash and not self.is_new() and not verify_integrity(self, verify_files=False):
+            frappe.throw("Integrity verification failed. Sealed record content differs from its snapshot.")
 
     def _validate_links(self):
         seen = set()
@@ -37,18 +37,46 @@ class MurasalatCorrespondence(Document):
                 frappe.throw("Duplicate correspondence link detected.")
             seen.add(key)
 
-    def _sync_referral_count(self):
-        if self.is_new():
-            self.referral_count = 0
+    def _sync_originating_organization(self):
+        # Semantics: originating_organization identifies the organization/entity
+        # recorded in source_entity; target_entity is only a fallback when source
+        # is unavailable. This is descriptive metadata, not an authorization rule.
+        # Keep it aligned while the record is mutable; once sealed, the snapshot
+        # is preserved by the native document lifecycle and validation rules.
+        if self.record_sealed_on:
             return
-        self.referral_count = frappe.db.count("Murasalat Referral", {"correspondence": self.name})
+        derived = self.source_entity or self.target_entity
+        if derived and self.originating_organization != derived:
+            self.originating_organization = derived
 
     def before_insert(self):
         self._append_activity("Created", details="Correspondence created.")
 
-    def on_update(self):
-        if self.integrity_hash and not verify_integrity(self):
-            frappe.throw("Integrity verification failed. Sealed record content differs from its snapshot.")
+    def before_save(self):
+        """Record lifecycle events that are observable on the correspondence itself.
+
+        Referral and approval transitions remain native child/standalone document
+        history; this child table intentionally records only events this controller
+        can observe without bypassing permissions or inventing workflow states.
+        """
+        if self.is_new():
+            return
+
+        old = self.get_doc_before_save()
+        if not old:
+            return
+
+        if old.workflow_state != self.workflow_state:
+            self._append_activity(
+                "Status Changed",
+                details=f"Workflow state changed from {old.workflow_state or 'unset'} to {self.workflow_state or 'unset'}."
+            )
+
+        if not old.record_sealed_on and self.record_sealed_on:
+            self._append_activity("Sealed", details="Correspondence integrity snapshot sealed.")
+
+        if not old.reopened_on and self.reopened_on:
+            self._append_activity("Reopened", details="Correspondence was reopened.")
 
     def _append_activity(self, activity_type, referral=None, details=None):
         self.append("activities", {

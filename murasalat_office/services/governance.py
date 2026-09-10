@@ -9,6 +9,8 @@ GOVERNED_DOCTYPES = (
     "Murasalat Correspondence",
     "Murasalat Approval Request",
     "Murasalat Referral",
+    "Murasalat Delegation",
+    "Murasalat User Organization Membership",
 )
 
 
@@ -76,5 +78,5 @@ def governance_health():
         "status": "FAIL" if any(c["status"] == "FAIL" for c in checks) else "WARN" if any(c["status"] == "WARN" for c in checks) else "PASS",
         "checks": checks,
         "governed_doctypes": list(GOVERNED_DOCTYPES),
-        "governance_mode": "native_frappe_erpnext_desk",
+        "governance_mode": "native_frappe_desk",
     }

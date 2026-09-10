@@ -9,8 +9,6 @@ app_license = "MIT"
 # All governance is administered from the Frappe/ERPNext Desk UI.
 
 
-required_apps = ["erpnext"]
-
 
 
 
@@ -18,4 +16,5 @@ required_apps = ["erpnext"]
 
 after_migrate = [
     "murasalat_office.patches.schema_repair.ensure_child_table_schema",
+    "murasalat_office.patches.schema_repair.ensure_membership_unique_index",
 ]

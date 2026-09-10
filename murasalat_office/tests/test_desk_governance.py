@@ -61,3 +61,19 @@ def test_referral_is_standalone_and_workflow_governed():
     assert fields["correspondence"]["fieldtype"] == "Link"
     assert fields["workflow_state"]["fieldtype"] == "Data"
     assert "status" not in fields
+
+
+def test_workspace_exposes_native_referral_views():
+    path = APP / "murasalat_office/workspace/murasalat_office/murasalat_office.json"
+    data = json.loads(path.read_text())
+    shortcuts = {(item.get("label"), item.get("link_to"), item.get("doc_view")) for item in data.get("shortcuts", [])}
+    assert ("Referral Calendar", "Murasalat Referral", "Calendar") in shortcuts
+    assert ("Referral Gantt", "Murasalat Referral", "Gantt") in shortcuts
+
+
+def test_referral_calendar_is_native_calendar_gantt_configuration():
+    source = (APP / "murasalat_office/doctype/murasalat_referral/murasalat_referral_calendar.js").read_text()
+    assert 'frappe.views.calendar["Murasalat Referral"]' in source
+    assert 'start: "due_date"' in source
+    assert 'end: "due_date"' in source
+    assert 'get_events_method: "frappe.desk.calendar.get_events"' in source

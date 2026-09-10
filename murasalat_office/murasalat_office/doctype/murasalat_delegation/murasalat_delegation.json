@@ -5,7 +5,7 @@
   "custom": 0,
   "istable": 0,
   "engine": "InnoDB",
-  "autoname": "format:MD-{####}",
+  "autoname": "format:MD-.#####",
   "field_order": [
     "delegator",
     "delegate",
@@ -68,5 +68,6 @@
       "label": "Notes",
       "fieldtype": "Small Text"
     }
-  ]
+  ],
+  "track_changes": 1
 }

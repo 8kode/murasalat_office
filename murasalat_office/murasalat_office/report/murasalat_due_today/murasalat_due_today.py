@@ -1,23 +1,23 @@
 import frappe
-from murasalat_office.reporting import permission_condition
+
+from murasalat_office.services.reporting import enrich_with_correspondence
 
 
 def execute(filters=None):
     columns = [
-        {'label':'Correspondence','fieldname':'correspondence','fieldtype':'Link','options':'Murasalat Correspondence','width':180},
-        {'label':'Subject','fieldname':'subject','fieldtype':'Data','width':280},
-        {'label':'Recipient','fieldname':'recipient_user','fieldtype':'Link','options':'User','width':180},
-        {'label':'Direction','fieldname':'direction','fieldtype':'Link','options':'Murasalat Referral Direction','width':150},
-        {'label':'Workflow State','fieldname':'workflow_state','fieldtype':'Data','width':160},
+        {"label": "Correspondence", "fieldname": "correspondence", "fieldtype": "Link", "options": "Murasalat Correspondence", "width": 180},
+        {"label": "Subject", "fieldname": "subject", "fieldtype": "Data", "width": 280},
+        {"label": "Recipient", "fieldname": "recipient_user", "fieldtype": "Link", "options": "User", "width": 180},
+        {"label": "Direction", "fieldname": "direction", "fieldtype": "Link", "options": "Murasalat Referral Direction", "width": 150},
+        {"label": "Workflow State", "fieldname": "workflow_state", "fieldtype": "Data", "width": 160},
+        {"label": "Due Date", "fieldname": "due_date", "fieldtype": "Date", "width": 110},
     ]
-    parent_condition, values = permission_condition('c', 'Murasalat Correspondence')
-    referral_condition, referral_values = permission_condition('r', 'Murasalat Referral')
-    values.update(referral_values)
-    where = ["r.due_date=CURDATE()", parent_condition, referral_condition]
-    data = frappe.db.sql(
-        "SELECT r.correspondence,c.subject,r.recipient_user,r.direction,r.due_date,r.workflow_state "
-        "FROM `tabMurasalat Referral` r JOIN `tabMurasalat Correspondence` c ON c.name=r.correspondence "
-        "WHERE " + " AND ".join(where) + " ORDER BY r.due_date ASC,r.modified DESC",
-        values, as_dict=True
+    query = frappe.qb.get_query(
+        "Murasalat Referral",
+        fields=["name as referral_id", "correspondence", "recipient_user", "direction", "workflow_state", "due_date"],
+        filters={"due_date": ["=", frappe.utils.today()]},
+        ignore_permissions=False,
+        order_by="due_date asc, modified desc",
     )
-    return columns, data
+    data = query.run(as_dict=True)
+    return columns, enrich_with_correspondence(data, ["subject"])

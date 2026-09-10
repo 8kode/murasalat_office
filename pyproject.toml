@@ -1,6 +1,6 @@
 [project]
 name = "murasalat_office"
-version = "0.22.1"
+version = "0.27.3"
 description = "Metadata-first correspondence management for Frappe"
 requires-python = ">=3.10"
 dependencies = []

@@ -1,22 +1,19 @@
-import hashlib
 import frappe
+from frappe import _
 from frappe.model.document import Document
+
+from murasalat_office.services.records import hash_file_url
+
 
 class MurasalatAttachment(Document):
     def validate(self):
-        if self.file and not self.file_hash:
-            self.file_hash = self._hash_file_url(self.file)
+        if not self.file:
+            return
 
-    @staticmethod
-    def _hash_file_url(file_url):
-        name = frappe.db.get_value("File", {"file_url": file_url}, "name")
-        if not name:
-            return None
-        file_doc = frappe.get_doc("File", name)
-        try:
-            content = file_doc.get_content()
-        except Exception:
-            return None
-        if isinstance(content, str):
-            content = content.encode()
-        return hashlib.sha256(content).hexdigest()
+        old = self.get_doc_before_save()
+        file_changed = not old or old.file != self.file
+        if file_changed or not self.file_hash:
+            file_hash = hash_file_url(self.file)
+            if not file_hash:
+                frappe.throw(_("Unable to calculate the attachment integrity hash. Please verify that the uploaded File is available."))
+            self.file_hash = file_hash

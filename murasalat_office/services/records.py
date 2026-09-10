@@ -5,7 +5,9 @@ import frappe
 from frappe import _
 
 
-IMMUTABLE_AFTER_REGISTRATION = {
+# Fields that become immutable once the correspondence is sealed. Registration
+# and sealing are distinct lifecycle events; immutability starts at sealing.
+IMMUTABLE_AFTER_SEALING = {
     "correspondence_type",
     "transaction_type",
     "confidentiality",
@@ -52,7 +54,6 @@ def compute_integrity_hash(doc):
     return hashlib.sha256(canonical_payload(doc).encode()).hexdigest()
 
 
-
 def _attachment_snapshot(doc):
     return [
         (
@@ -75,6 +76,7 @@ def validate_sealed_attachments(doc):
     if old and _attachment_snapshot(old) != _attachment_snapshot(doc):
         frappe.throw(_("Attachments cannot be added, removed, or changed after the correspondence is sealed."))
 
+
 def validate_immutable_fields(doc):
     if doc.is_new() or not doc.record_sealed_on:
         return
@@ -83,16 +85,17 @@ def validate_immutable_fields(doc):
     if not old:
         return
 
-    changed = [field for field in IMMUTABLE_AFTER_REGISTRATION if old.get(field) != doc.get(field)]
+    changed = [field for field in IMMUTABLE_AFTER_SEALING if old.get(field) != doc.get(field)]
     if changed:
         frappe.throw(
             _(
-                "Registered correspondence identity/classification fields cannot be changed: {0}"
+                "Sealed correspondence identity/classification fields cannot be changed: {0}"
             ).format(", ".join(sorted(changed)))
         )
 
 
-def _current_file_hash(file_url):
+def hash_file_url(file_url: str | None) -> str | None:
+    """Return the SHA-256 of a Frappe File's content by file URL."""
     if not file_url:
         return None
 
@@ -106,12 +109,27 @@ def _current_file_hash(file_url):
     return hashlib.sha256(content).hexdigest()
 
 
-def verify_integrity(doc):
+def verify_integrity(doc, verify_files: bool = True) -> bool:
+    """Verify the stored integrity snapshot.
+
+    ``verify_files=True`` performs the expensive content-hash check for each
+    attachment and is intended for explicit integrity verification. Normal
+    document saves can use ``verify_files=False`` because sealed attachment
+    metadata and immutable fields are already validated before persistence.
+    """
     if not doc.integrity_hash:
         return True
 
-    for row in doc.attachments or []:
-        if row.file and row.file_hash and _current_file_hash(row.file) != row.file_hash:
-            return False
+    if verify_files:
+        for row in doc.attachments or []:
+            if not row.file:
+                continue
+            # A sealed attachment without a stored hash cannot be verified.
+            # Fail closed rather than treating missing evidence as valid.
+            if not row.file_hash:
+                return False
+            current_hash = hash_file_url(row.file)
+            if not current_hash or current_hash != row.file_hash:
+                return False
 
     return compute_integrity_hash(doc) == doc.integrity_hash
