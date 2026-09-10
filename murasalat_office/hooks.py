@@ -4,6 +4,7 @@ app_publisher = "Murasalat Office"
 app_description = "Metadata-first correspondence management"
 app_email = "admin@example.com"
 app_license = "MIT"
+app_version = "0.22.1"
 
 # Roles, permissions and workflows are intentionally not shipped as fixtures.
 # All governance is administered from the Frappe/ERPNext Desk UI.
