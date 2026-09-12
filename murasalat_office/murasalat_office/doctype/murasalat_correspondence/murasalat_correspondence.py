@@ -9,20 +9,7 @@ from murasalat_office.services.records import (
     verify_integrity,
 )
 
-CORRESPONDENCE_PARTY_RULES = {
-    "Internal": {
-        "source": "Internal",
-        "target": "Internal",
-    },
-    "Incoming": {
-        "source": "External",
-        "target": "Internal",
-    },
-    "Outgoing": {
-        "source": "Internal",
-        "target": "External",
-    },
-}
+
 
 
 class MurasalatCorrespondence(Document):
@@ -49,47 +36,6 @@ class MurasalatCorrespondence(Document):
             )
             
             
-    def _validate_party_entities(self):
-        rule = CORRESPONDENCE_PARTY_RULES.get(self.correspondence_type)
-
-        if not rule:
-            frappe.throw(
-                frappe._("Invalid Correspondence Type: {0}").format(
-                    self.correspondence_type
-                )
-            )
-
-        if not self.source_entity:
-            frappe.throw(frappe._("Source Entity is required."))
-
-        if not self.target_entity:
-            frappe.throw(frappe._("Target Entity is required."))
-
-        source_type = frappe.db.get_value(
-            "Murasalat Organization Entity",
-            self.source_entity,
-            "entity_type",
-        )
-
-        target_type = frappe.db.get_value(
-            "Murasalat Organization Entity",
-            self.target_entity,
-            "entity_type",
-        )
-
-        if source_type != rule["source"]:
-            frappe.throw(
-                frappe._(
-                    "Source Entity must be {0} for {1} correspondence."
-                ).format(rule["source"], self.correspondence_type)
-            )
-
-        if target_type != rule["target"]:
-            frappe.throw(
-                frappe._(
-                    "Target Entity must be {0} for {1} correspondence."
-                ).format(rule["target"], self.correspondence_type)
-            )
 
     def _validate_links(self):
         seen = set()

@@ -139,14 +139,14 @@
    "fieldname": "source_entity",
    "fieldtype": "Link",
    "label": "Incoming From",
-   "options": "Murasalat Organization Entity",
+   "options": "Murasalat External Party",
    "reqd": 1
   },
   {
    "fieldname": "target_entity",
    "fieldtype": "Link",
    "label": "Target Entity",
-   "options": "Murasalat Organization Entity",
+   "options": "Department",
    "reqd": 1
   },
   {
@@ -278,7 +278,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-12 03:16:23.819631",
+ "modified": "2026-09-12 04:38:40.990555",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
