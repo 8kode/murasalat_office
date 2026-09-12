@@ -19,10 +19,16 @@
   "external_letter_date",
   "due_date",
   "page_count",
-  "parties_section",
-  "source_entity",
-  "target_entity",
+  "internal_parties_section",
+  "internal_source_entity",
+  "internal_target_entry",
   "concerned_person",
+  "incoming_parties_section",
+  "incoming_source_entity",
+  "incoming_target_entry",
+  "outgoing_parties_section",
+  "outgoing_source_entity",
+  "outgoing_target_entry",
   "content_section",
   "notes",
   "links_section",
@@ -129,25 +135,6 @@
    "fieldname": "page_count",
    "fieldtype": "Int",
    "label": "Page Count"
-  },
-  {
-   "fieldname": "parties_section",
-   "fieldtype": "Section Break",
-   "label": "Parties"
-  },
-  {
-   "fieldname": "source_entity",
-   "fieldtype": "Link",
-   "label": "Incoming From",
-   "options": "Murasalat External Party",
-   "reqd": 1
-  },
-  {
-   "fieldname": "target_entity",
-   "fieldtype": "Link",
-   "label": "Target Entity",
-   "options": "Department",
-   "reqd": 1
   },
   {
    "fieldname": "concerned_person",
@@ -275,10 +262,77 @@
    "label": "Reopened By",
    "options": "User",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.correspondence_type==\"Incoming\"",
+   "fieldname": "incoming_parties_section",
+   "fieldtype": "Section Break",
+   "label": "Incoming Parties",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\""
+  },
+  {
+   "fieldname": "incoming_source_entity",
+   "fieldtype": "Link",
+   "label": "Incoming From",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
+   "options": "Murasalat External Party",
+   "reqd": 1
+  },
+  {
+   "fieldname": "incoming_target_entry",
+   "fieldtype": "Link",
+   "label": "Target Entry",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
+   "fieldname": "outgoing_parties_section",
+   "fieldtype": "Section Break",
+   "label": "Outgoing Parties"
+  },
+  {
+   "fieldname": "outgoing_source_entity",
+   "fieldtype": "Link",
+   "label": "Incoming From",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outgoing_target_entry",
+   "fieldtype": "Link",
+   "label": "Target Entry",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
+   "options": "Murasalat External Party",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.correspondence_type==\"Internal\"",
+   "fieldname": "internal_parties_section",
+   "fieldtype": "Section Break",
+   "label": "Internal Parties"
+  },
+  {
+   "fieldname": "internal_source_entity",
+   "fieldtype": "Link",
+   "label": "Incoming From",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "internal_target_entry",
+   "fieldtype": "Link",
+   "label": "Target Entity",
+   "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
+   "options": "Department",
+   "reqd": 1
   }
  ],
  "links": [],
- "modified": "2026-09-12 04:38:40.990555",
+ "modified": "2026-09-12 05:42:29.909003",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
