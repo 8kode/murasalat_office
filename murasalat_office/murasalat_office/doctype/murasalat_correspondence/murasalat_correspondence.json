@@ -51,11 +51,12 @@
    "label": "Identity"
   },
   {
+   "default": "Internal",
    "fieldname": "correspondence_type",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Correspondence Type",
-   "options": "Internal\nIncoming\nOutgoing",
+   "options": "Murasalat Correspondence Type",
    "reqd": 1,
    "set_only_once": 1
   },
@@ -277,7 +278,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-11 01:23:36.247015",
+ "modified": "2026-09-12 03:16:23.819631",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
