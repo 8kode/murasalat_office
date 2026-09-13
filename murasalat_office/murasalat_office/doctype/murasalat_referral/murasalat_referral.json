@@ -59,7 +59,7 @@
    "in_list_view": 1,
    "label": "To Organization",
    "mandatory_depends_on": "eval:doc.recipient_type==\"Organization\"",
-   "options": "Murasalat Organization Entity"
+   "options": "Department"
   },
   {
    "depends_on": "eval:doc.recipient_type==\"User\"",
@@ -169,7 +169,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-11 02:20:55.974792",
+ "modified": "2026-09-13 21:40:45.214365",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",

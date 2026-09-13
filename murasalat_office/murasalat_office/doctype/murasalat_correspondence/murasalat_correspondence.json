@@ -182,7 +182,7 @@
    "fieldname": "current_holder",
    "fieldtype": "Link",
    "label": "Current Holder",
-   "options": "Murasalat Organization Entity",
+   "options": "Department",
    "read_only": 1
   },
   {
@@ -221,7 +221,7 @@
    "fieldname": "originating_organization",
    "fieldtype": "Link",
    "label": "Originating Organization",
-   "options": "Murasalat Organization Entity",
+   "options": "Department",
    "read_only": 1
   },
   {
@@ -267,8 +267,7 @@
    "depends_on": "eval:doc.correspondence_type==\"Incoming\"",
    "fieldname": "incoming_parties_section",
    "fieldtype": "Section Break",
-   "label": "Incoming Parties",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\""
+   "label": "Incoming Parties"
   },
   {
    "fieldname": "incoming_source_entity",
@@ -326,7 +325,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-13 21:26:34.563775",
+ "modified": "2026-09-13 21:38:13.252860",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
