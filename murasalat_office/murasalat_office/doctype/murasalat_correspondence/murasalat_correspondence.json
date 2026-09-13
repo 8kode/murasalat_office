@@ -275,16 +275,14 @@
    "fieldtype": "Link",
    "label": "Incoming From",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
-   "options": "Murasalat External Party",
-   "reqd": 1
+   "options": "Murasalat External Party"
   },
   {
    "fieldname": "incoming_target_entry",
    "fieldtype": "Link",
    "label": "Target Entry",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
-   "options": "Department",
-   "reqd": 1
+   "options": "Department"
   },
   {
    "depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
@@ -297,16 +295,14 @@
    "fieldtype": "Link",
    "label": "Incoming From",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
-   "options": "Department",
-   "reqd": 1
+   "options": "Department"
   },
   {
    "fieldname": "outgoing_target_entry",
    "fieldtype": "Link",
    "label": "Target Entry",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
-   "options": "Murasalat External Party",
-   "reqd": 1
+   "options": "Murasalat External Party"
   },
   {
    "depends_on": "eval:doc.correspondence_type==\"Internal\"",
@@ -319,20 +315,18 @@
    "fieldtype": "Link",
    "label": "Incoming From",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
-   "options": "Department",
-   "reqd": 1
+   "options": "Department"
   },
   {
    "fieldname": "internal_target_entry",
    "fieldtype": "Link",
    "label": "Target Entity",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
-   "options": "Department",
-   "reqd": 1
+   "options": "Department"
   }
  ],
  "links": [],
- "modified": "2026-09-12 05:42:29.909003",
+ "modified": "2026-09-13 21:26:34.563775",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

@@ -22,7 +22,7 @@ class MurasalatCorrespondence(Document):
     def validate(self):
         validate_immutable_fields(self)
         validate_sealed_attachments(self)
-        self._sync_originating_organization()
+        # self._sync_originating_organization()
         self._validate_links()
         if self.record_sealed_on and not self.integrity_hash:
             self.integrity_hash = compute_integrity_hash(self)
@@ -47,17 +47,17 @@ class MurasalatCorrespondence(Document):
                 frappe.throw("Duplicate correspondence link detected.")
             seen.add(key)
 
-    def _sync_originating_organization(self):
-        # Semantics: originating_organization identifies the organization/entity
-        # recorded in source_entity; target_entity is only a fallback when source
-        # is unavailable. This is descriptive metadata, not an authorization rule.
-        # Keep it aligned while the record is mutable; once sealed, the snapshot
-        # is preserved by the native document lifecycle and validation rules.
-        if self.record_sealed_on:
-            return
-        derived = self.source_entity or self.target_entity
-        if derived and self.originating_organization != derived:
-            self.originating_organization = derived
+    # def _sync_originating_organization(self):
+    #     # Semantics: originating_organization identifies the organization/entity
+    #     # recorded in source_entity; target_entity is only a fallback when source
+    #     # is unavailable. This is descriptive metadata, not an authorization rule.
+    #     # Keep it aligned while the record is mutable; once sealed, the snapshot
+    #     # is preserved by the native document lifecycle and validation rules.
+    #     if self.record_sealed_on:
+    #         return
+    #     derived = self.source_entity or self.target_entity
+    #     if derived and self.originating_organization != derived:
+    #         self.originating_organization = derived
 
     def before_insert(self):
         self._append_activity("Created", details="Correspondence created.")
