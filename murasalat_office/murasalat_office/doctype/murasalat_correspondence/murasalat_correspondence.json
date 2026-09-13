@@ -182,19 +182,23 @@
    "fieldname": "current_holder",
    "fieldtype": "Link",
    "label": "Current Holder",
-   "options": "Department"
+   "options": "Department",
+   "read_only": 1
   },
   {
    "fieldname": "registered_on",
    "fieldtype": "Datetime",
-   "label": "Registered On"
+   "label": "Registered On",
+   "read_only": 1
   },
   {
    "fieldname": "closed_on",
    "fieldtype": "Datetime",
-   "label": "Closed On"
+   "label": "Closed On",
+   "read_only": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "activity_section",
    "fieldtype": "Section Break",
    "label": "Operational Activity"
@@ -210,24 +214,28 @@
    "fieldname": "current_holder_user",
    "fieldtype": "Link",
    "label": "Current Holder User",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "originating_organization",
    "fieldtype": "Link",
    "label": "Originating Organization",
-   "options": "Department"
+   "options": "Department",
+   "read_only": 1
   },
   {
    "fieldname": "record_sealed_on",
    "fieldtype": "Datetime",
-   "label": "Record Sealed On"
+   "label": "Record Sealed On",
+   "read_only": 1
   },
   {
    "fieldname": "record_sealed_by",
    "fieldtype": "Link",
    "label": "Record Sealed By",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "fieldname": "seal_reason",
@@ -238,18 +246,21 @@
    "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",
    "fieldname": "integrity_hash",
    "fieldtype": "Data",
-   "label": "Integrity Hash"
+   "label": "Integrity Hash",
+   "read_only": 1
   },
   {
    "fieldname": "reopened_on",
    "fieldtype": "Datetime",
-   "label": "Reopened On"
+   "label": "Reopened On",
+   "read_only": 1
   },
   {
    "fieldname": "reopened_by",
    "fieldtype": "Link",
    "label": "Reopened By",
-   "options": "User"
+   "options": "User",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.correspondence_type==\"Incoming\"",
@@ -313,7 +324,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-13 22:42:38.672574",
+ "modified": "2026-09-14 01:01:05.566144",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
