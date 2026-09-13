@@ -182,23 +182,19 @@
    "fieldname": "current_holder",
    "fieldtype": "Link",
    "label": "Current Holder",
-   "options": "Department",
-   "read_only": 1
+   "options": "Department"
   },
   {
    "fieldname": "registered_on",
    "fieldtype": "Datetime",
-   "label": "Registered On",
-   "read_only": 1
+   "label": "Registered On"
   },
   {
    "fieldname": "closed_on",
    "fieldtype": "Datetime",
-   "label": "Closed On",
-   "read_only": 1
+   "label": "Closed On"
   },
   {
-   "collapsible": 1,
    "fieldname": "activity_section",
    "fieldtype": "Section Break",
    "label": "Operational Activity"
@@ -214,54 +210,46 @@
    "fieldname": "current_holder_user",
    "fieldtype": "Link",
    "label": "Current Holder User",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   },
   {
    "fieldname": "originating_organization",
    "fieldtype": "Link",
    "label": "Originating Organization",
-   "options": "Department",
-   "read_only": 1
+   "options": "Department"
   },
   {
    "fieldname": "record_sealed_on",
    "fieldtype": "Datetime",
-   "label": "Record Sealed On",
-   "read_only": 1
+   "label": "Record Sealed On"
   },
   {
    "fieldname": "record_sealed_by",
    "fieldtype": "Link",
    "label": "Record Sealed By",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   },
   {
    "fieldname": "seal_reason",
    "fieldtype": "Text",
-   "label": "Seal Reason",
-   "read_only": 1
+   "label": "Seal Reason"
   },
   {
    "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",
    "fieldname": "integrity_hash",
    "fieldtype": "Data",
-   "label": "Integrity Hash",
-   "read_only": 1
+   "label": "Integrity Hash"
   },
   {
    "fieldname": "reopened_on",
    "fieldtype": "Datetime",
-   "label": "Reopened On",
-   "read_only": 1
+   "label": "Reopened On"
   },
   {
    "fieldname": "reopened_by",
    "fieldtype": "Link",
    "label": "Reopened By",
-   "options": "User",
-   "read_only": 1
+   "options": "User"
   },
   {
    "depends_on": "eval:doc.correspondence_type==\"Incoming\"",
@@ -325,7 +313,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-13 21:38:13.252860",
+ "modified": "2026-09-13 22:42:38.672574",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
