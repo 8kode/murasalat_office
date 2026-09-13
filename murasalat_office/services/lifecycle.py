@@ -47,7 +47,7 @@ def close_correspondence(doc):
             _("Close Correspondence can only run on Murasalat Correspondence.")
         )
 
-    # Represents the latest official closure.
+    # Represents the latest official closure..
     doc.closed_on = now_datetime()
 
     _append_activity(
