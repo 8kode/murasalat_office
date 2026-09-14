@@ -21,7 +21,6 @@
  "ref_doctype": "Murasalat Referral",
  "report_name": "Murasalat Inbox",
  "report_type": "Script Report",
- "roles": [],
  "snapshot_report": 0,
  "timeout": 0
 }

@@ -14,13 +14,13 @@
   "details"
  ],
  "fields": [
- {
-  "fieldname": "activity_type",
-  "fieldtype": "Select",
-  "in_list_view": 1,
-  "label": "Activity Type",
-  "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened",
-  "reqd": 1
+  {
+   "fieldname": "activity_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Activity Type",
+   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened",
+   "reqd": 1
   },
   {
    "fieldname": "activity_on",
@@ -77,7 +77,6 @@
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence Activity",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

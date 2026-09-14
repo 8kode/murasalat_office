@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "REF-.#####",
+ "autoname": "MR-.#####",
  "creation": "2026-09-10 20:59:09.682373",
  "description": "Standalone referral with native Frappe permissions and Desk-managed Workflow.",
  "doctype": "DocType",
@@ -169,19 +169,18 @@
   }
  ],
  "links": [],
- "modified": "2026-09-13 21:40:45.214365",
+ "modified": "2026-09-14 20:52:04.553655",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
  "naming_rule": "Expression",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "search_fields": "referral_number,correspondence,recipient_user,recipient_organization",
  "show_title_field_in_link": 1,
  "sort_field": "due_date",
  "sort_order": "ASC",
  "states": [],
- "title_field": "correspondence",
+ "title_field": "referral_number",
  "track_changes": 1
 }

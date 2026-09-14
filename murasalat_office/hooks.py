@@ -27,9 +27,18 @@ workflow_methods = [
         "name": "Reopen Correspondence",
         "method": "murasalat_office.services.lifecycle.reopen_correspondence",
     },
+    
+    {
+        "name": "Send Referral",
+        "method": "murasalat_office.services.lifecycle.send_referral",
+    },
     {
         "name": "Receive Referral",
         "method": "murasalat_office.services.lifecycle.receive_referral",
+    },
+    {
+        "name": "Complete Referral",
+        "method": "murasalat_office.services.lifecycle.complete_referral",
     },
 ]
 
@@ -40,17 +49,12 @@ workflow_methods = [
 doc_events = {
     "ToDo": {
         "after_insert": (
-            "murasalat_office.services.lifecycle."
-            "sync_current_holder_user"
+            "murasalat_office.services.lifecycle." "sync_current_holder_user"
         ),
         "on_update": (
-            "murasalat_office.services.lifecycle."
-            "sync_current_holder_user"
+            "murasalat_office.services.lifecycle." "sync_current_holder_user"
         ),
-        "on_trash": (
-            "murasalat_office.services.lifecycle."
-            "sync_current_holder_user"
-        ),
+        "on_trash": ("murasalat_office.services.lifecycle." "sync_current_holder_user"),
     },
 }
 

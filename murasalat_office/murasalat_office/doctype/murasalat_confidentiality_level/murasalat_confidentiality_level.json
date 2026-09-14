@@ -40,7 +40,6 @@
  "module": "Murasalat Office",
  "name": "Murasalat Confidentiality Level",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

@@ -207,3 +207,49 @@ def sync_current_holder_user(doc, method=None):
         current_user,
         update_modified=True,
     )
+    
+    
+def send_referral(doc):
+    if doc.doctype != "Murasalat Referral":
+        frappe.throw(_("Send Referral can only run on Murasalat Referral."))
+
+    if not doc.correspondence:
+        frappe.throw(
+            _("A referral must be linked to a Correspondence before it can be sent.")
+        )
+
+    if not doc.recipient_type:
+        frappe.throw(
+            _("Recipient Type is required before sending the referral.")
+        )
+
+    if doc.recipient_type == "Organization":
+        if not doc.recipient_organization:
+            frappe.throw(
+                _("Recipient Department is required before sending the referral.")
+            )
+
+    if doc.recipient_type == "User":
+        if not doc.recipient_user:
+            frappe.throw(
+                _("Recipient User is required before sending the referral.")
+            )
+
+    if not doc.sent_on:
+        doc.sent_on = now_datetime()
+        
+        
+def complete_referral(doc):
+    if doc.doctype != "Murasalat Referral":
+        frappe.throw(
+            _("Complete Referral can only run on Murasalat Referral.")
+        )
+
+    if not doc.received_on:
+        frappe.throw(
+            _("A referral must be received before it can be completed.")
+        )
+
+    if not doc.completed_on:
+        doc.completed_on = now_datetime()
+        doc.completed_by = frappe.session.user        

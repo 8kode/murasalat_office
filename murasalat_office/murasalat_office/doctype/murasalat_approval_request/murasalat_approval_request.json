@@ -94,7 +94,6 @@
  "name": "Murasalat Approval Request",
  "naming_rule": "Expression",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "search_fields": "correspondence,subject,requested_by",
  "sort_field": "modified",

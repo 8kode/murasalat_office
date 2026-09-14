@@ -74,7 +74,6 @@
  "name": "Murasalat Delegation",
  "naming_rule": "Expression",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "MC-.{correspondence_type}.-.#####",
+ "autoname": "MO-.#####",
  "creation": "2026-09-10 20:59:09.997166",
  "description": "Native Frappe correspondence record. Permissions and lifecycle governance are administered from Desk.",
  "doctype": "DocType",
@@ -86,7 +86,7 @@
    "label": "Classification"
   },
   {
-   "default": "\u0645\u0630\u0643\u0631\u0629",
+   "default": "مذكرة",
    "fieldname": "transaction_type",
    "fieldtype": "Link",
    "label": "Transaction Type",
@@ -94,7 +94,7 @@
    "reqd": 1
   },
   {
-   "default": "\u0639\u0627\u0645",
+   "default": "عام",
    "fieldname": "confidentiality",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -103,7 +103,7 @@
    "reqd": 1
   },
   {
-   "default": "\u0639\u0627\u062f\u064a",
+   "default": "عادي",
    "fieldname": "importance",
    "fieldtype": "Link",
    "label": "Importance",
@@ -324,13 +324,12 @@
   }
  ],
  "links": [],
- "modified": "2026-09-14 01:01:05.566144",
+ "modified": "2026-09-14 20:50:42.958176",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
  "naming_rule": "Expression",
  "owner": "Administrator",
- "permissions": [],
  "row_format": "Dynamic",
  "search_fields": "subject,external_letter_number",
  "show_title_field_in_link": 1,
