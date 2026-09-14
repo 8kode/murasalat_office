@@ -1,1 +1,7 @@
-frappe.query_reports['Murasalat My Work']={filters:[{fieldname:'user',label:__('User'),fieldtype:'Link',options:'User',default:frappe.session.user,hidden:1}]};
+frappe.query_reports["Murasalat My Work"] = {
+    onload(report) {
+        report.page.add_inner_button(__("New Referral"), () => {
+            frappe.new_doc("Murasalat Referral");
+        });
+    },
+};

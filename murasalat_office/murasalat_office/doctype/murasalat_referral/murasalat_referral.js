@@ -6,3 +6,17 @@
 
 // 	},
 // });
+
+frappe.ui.form.on("Murasalat Referral", {
+    refresh(frm) {
+        if (!frm.is_new() && frm.doc.correspondence) {
+            frm.add_custom_button(__("Open Correspondence"), () => {
+                frappe.set_route(
+                    "Form",
+                    "Murasalat Correspondence",
+                    frm.doc.correspondence,
+                );
+            }, __("Related"));
+        }
+    },
+});
