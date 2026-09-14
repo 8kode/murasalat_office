@@ -58,8 +58,8 @@
   {
    "fieldname": "organization",
    "fieldtype": "Link",
-   "label": "Organization Scope",
-   "options": "Murasalat Organization Entity"
+   "label": "Department Scope",
+   "options": "Department"
   },
   {
    "fieldname": "notes",
@@ -68,7 +68,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-11 01:10:05.198485",
+ "modified": "2026-09-14 18:54:53.641150",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Delegation",

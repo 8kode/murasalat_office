@@ -1,3 +1,4 @@
+
 import frappe
 from frappe import _
 from frappe.utils import now_datetime
@@ -28,11 +29,27 @@ def _append_activity(doc, activity_type, details=None, referral=None):
 def register_correspondence(doc):
     if doc.doctype != "Murasalat Correspondence":
         frappe.throw(
-            _("Register Correspondence can only run on Murasalat Correspondence.")
+            _(
+                "Register Correspondence can only run on "
+                "Murasalat Correspondence."
+            )
         )
 
     if not doc.registered_on:
         doc.registered_on = now_datetime()
+
+        # Establish the initial organizational holder from the
+        # correspondence direction. A later received referral may
+        # legitimately move the holder to another Department.
+        if not doc.current_holder:
+            if doc.correspondence_type == "Incoming":
+                doc.current_holder = doc.incoming_target_entry
+
+            elif doc.correspondence_type == "Outgoing":
+                doc.current_holder = doc.outgoing_source_entity
+
+            elif doc.correspondence_type == "Internal":
+                doc.current_holder = doc.internal_target_entry
 
         _append_activity(
             doc,
@@ -44,10 +61,13 @@ def register_correspondence(doc):
 def close_correspondence(doc):
     if doc.doctype != "Murasalat Correspondence":
         frappe.throw(
-            _("Close Correspondence can only run on Murasalat Correspondence.")
+            _(
+                "Close Correspondence can only run on "
+                "Murasalat Correspondence."
+            )
         )
 
-    # Represents the latest official closure..
+    # Represents the latest official closure.
     doc.closed_on = now_datetime()
 
     _append_activity(
@@ -60,7 +80,10 @@ def close_correspondence(doc):
 def seal_correspondence(doc):
     if doc.doctype != "Murasalat Correspondence":
         frappe.throw(
-            _("Seal Correspondence can only run on Murasalat Correspondence.")
+            _(
+                "Seal Correspondence can only run on "
+                "Murasalat Correspondence."
+            )
         )
 
     if not doc.record_sealed_on:
@@ -77,7 +100,10 @@ def seal_correspondence(doc):
 def reopen_correspondence(doc):
     if doc.doctype != "Murasalat Correspondence":
         frappe.throw(
-            _("Reopen Correspondence can only run on Murasalat Correspondence.")
+            _(
+                "Reopen Correspondence can only run on "
+                "Murasalat Correspondence."
+            )
         )
 
     doc.reopened_on = now_datetime()
@@ -103,8 +129,8 @@ def receive_referral(doc):
     if not doc.correspondence:
         return
 
-    # Only a Department-targeted referral changes the correspondence's
-    # department holder.
+    # Only a Department-targeted referral changes the
+    # correspondence's organizational holder.
     if (
         doc.recipient_type != "Organization"
         or not doc.recipient_organization
@@ -116,9 +142,8 @@ def receive_referral(doc):
         doc.correspondence,
     )
 
-    # The user executing Receive must also have native write permission
-    # on the parent correspondence because this transition changes its
-    # operational holder.
+    # Native permission boundary: receiving a referral that changes
+    # the parent holder requires write permission on that parent.
     correspondence.check_permission("write")
 
     frappe.db.set_value(
@@ -138,6 +163,21 @@ def sync_current_holder_user(doc, method=None):
         or not doc.reference_name
     ):
         return
+
+    # A ToDo must never become an indirect authorization bypass.
+    # The corresponding user must already have native write access
+    # to the parent correspondence.
+    if not frappe.db.exists(
+        "Murasalat Correspondence",
+        doc.reference_name,
+    ):
+        return
+
+    correspondence = frappe.get_doc(
+        "Murasalat Correspondence",
+        doc.reference_name,
+    )
+    correspondence.check_permission("write")
 
     assignments = frappe.get_all(
         "ToDo",
@@ -159,12 +199,6 @@ def sync_current_holder_user(doc, method=None):
         if assignments
         else None
     )
-
-    if not frappe.db.exists(
-        "Murasalat Correspondence",
-        doc.reference_name,
-    ):
-        return
 
     frappe.db.set_value(
         "Murasalat Correspondence",

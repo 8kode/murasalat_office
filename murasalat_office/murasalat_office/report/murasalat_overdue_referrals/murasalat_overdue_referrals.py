@@ -47,7 +47,7 @@ def execute(filters=None):
         {"label": "Subject", "fieldname": "subject", "fieldtype": "Data", "width": 260},
         {"label": "Referral", "fieldname": "referral_number", "fieldtype": "Data", "width": 120},
         {"label": "Workflow State", "fieldname": "referral_workflow_state", "fieldtype": "Data", "width": 160},
-        {"label": "Recipient Organization", "fieldname": "recipient_organization", "fieldtype": "Link", "options": "Murasalat Organization Entity", "width": 180},
+        {"label": "Recipient Department", "fieldname": "recipient_organization", "fieldtype": "Link", "options": "Department", "width": 180},
         {"label": "Recipient User", "fieldname": "recipient_user", "fieldtype": "Link", "options": "User", "width": 180},
         {"label": "Direction", "fieldname": "direction", "fieldtype": "Link", "options": "Murasalat Referral Direction", "width": 160},
         {"label": "Importance", "fieldname": "importance", "fieldtype": "Link", "options": "Murasalat Importance Level", "width": 130},

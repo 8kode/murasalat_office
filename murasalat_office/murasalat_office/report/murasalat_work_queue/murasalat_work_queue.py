@@ -20,7 +20,7 @@ def execute(filters=None):
         {"label": "Subject", "fieldname": "subject", "fieldtype": "Data", "width": 260},
         {"label": "Type", "fieldname": "correspondence_type", "fieldtype": "Data", "width": 100},
         {"label": "Workflow State", "fieldname": "workflow_state", "fieldtype": "Data", "width": 140},
-        {"label": "Organization Queue", "fieldname": "current_holder", "fieldtype": "Link", "options": "Murasalat Organization Entity", "width": 180},
+        {"label": "Department Queue", "fieldname": "current_holder", "fieldtype": "Link", "options": "Department", "width": 180},
         {"label": "User Queue", "fieldname": "current_holder_user", "fieldtype": "Link", "options": "User", "width": 180},
         {"label": "Due Date", "fieldname": "due_date", "fieldtype": "Date", "width": 100},
     ]

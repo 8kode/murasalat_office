@@ -5,8 +5,10 @@ app_description = "Metadata-first correspondence management"
 app_email = "admin@example.com"
 app_license = "MIT"
 
-# Roles, permissions and workflows are intentionally not shipped as fixtures.
-# All governance is administered from the Frappe/ERPNext Desk UI.
+
+# Roles, permissions and workflows are intentionally not shipped
+# as fixtures. All governance is administered from the Frappe/ERPNext
+# Desk UI.
 
 workflow_methods = [
     {
@@ -31,14 +33,27 @@ workflow_methods = [
     },
 ]
 
-# Native Frappe Assignment works through ToDo records. These events synchronize
-# the explicit current_holder_user projection on Murasalat Correspondence.
+
+# Native Frappe Assignment works through ToDo records.
+# These events synchronize the explicit current_holder_user
+# projection on Murasalat Correspondence.
 doc_events = {
     "ToDo": {
-        "after_insert": "murasalat_office.services.lifecycle.sync_current_holder_user",
-        "on_update": "murasalat_office.services.lifecycle.sync_current_holder_user",
+        "after_insert": (
+            "murasalat_office.services.lifecycle."
+            "sync_current_holder_user"
+        ),
+        "on_update": (
+            "murasalat_office.services.lifecycle."
+            "sync_current_holder_user"
+        ),
+        "on_trash": (
+            "murasalat_office.services.lifecycle."
+            "sync_current_holder_user"
+        ),
     },
 }
+
 
 after_migrate = [
     "murasalat_office.patches.schema_repair.ensure_child_table_schema",

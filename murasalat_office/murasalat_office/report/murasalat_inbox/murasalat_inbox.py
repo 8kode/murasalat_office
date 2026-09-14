@@ -222,7 +222,7 @@ def _columns():
         {"label": "Direction", "fieldname": "direction", "fieldtype": "Link", "options": "Murasalat Referral Direction", "width": 150},
         {"label": "Workflow State", "fieldname": "referral_workflow_state", "fieldtype": "Data", "width": 160},
         {"label": "Due Date", "fieldname": "due_date", "fieldtype": "Date", "width": 110},
-        {"label": "Current Organization", "fieldname": "current_holder", "fieldtype": "Link", "options": "Murasalat Organization Entity", "width": 180},
+        {"label": "Current Department", "fieldname": "current_holder", "fieldtype": "Link", "options": "Department", "width": 180},
         {"label": "Current User", "fieldname": "current_holder_user", "fieldtype": "Link", "options": "User", "width": 180},
         {"label": "Instructions", "fieldname": "instructions", "fieldtype": "Small Text", "width": 260},
     ]

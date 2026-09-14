@@ -24,8 +24,8 @@
    "fieldname": "organization",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Organization",
-   "options": "Murasalat Organization Entity",
+   "label": "Department",
+   "options": "Department",
    "reqd": 1
   },
   {
@@ -46,7 +46,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-11 01:06:34.288125",
+ "modified": "2026-09-14 18:53:07.980675",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat User Organization Membership",
