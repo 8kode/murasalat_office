@@ -87,7 +87,7 @@
    "link_to": "Murasalat Inbox",
    "link_type": "Report",
    "onboard": 0,
-   "report_ref_doctype": "Murasalat Correspondence",
+   "report_ref_doctype": "Murasalat Referral",
    "type": "Link"
   },
   {
@@ -120,7 +120,7 @@
    "link_to": "Murasalat Overdue Referrals",
    "link_type": "Report",
    "onboard": 0,
-   "report_ref_doctype": "Murasalat Correspondence",
+   "report_ref_doctype": "Murasalat Referral",
    "type": "Link"
   },
   {
@@ -280,7 +280,7 @@
    "link_to": "Murasalat Employee Productivity",
    "link_type": "Report",
    "onboard": 0,
-   "report_ref_doctype": "Murasalat Correspondence",
+   "report_ref_doctype": "Murasalat Referral",
    "type": "Link"
   },
   {
@@ -304,7 +304,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-10 04:30:00.000000",
+ "modified": "2026-09-15 00:08:09.117669",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
@@ -340,7 +340,7 @@
   {
    "label": "My Inbox",
    "link_to": "Murasalat Inbox",
-   "report_ref_doctype": "Murasalat Correspondence",
+   "report_ref_doctype": "Murasalat Referral",
    "type": "Report"
   },
   {
@@ -356,16 +356,16 @@
    "type": "Report"
   },
   {
+   "doc_view": "Calendar",
    "label": "Referral Calendar",
    "link_to": "Murasalat Referral",
-   "type": "DocType",
-   "doc_view": "Calendar"
+   "type": "DocType"
   },
   {
+   "doc_view": "Report Builder",
    "label": "Referral Gantt",
    "link_to": "Murasalat Referral",
-   "type": "DocType",
-   "doc_view": "Gantt"
+   "type": "DocType"
   },
   {
    "label": "Overdue",
@@ -390,10 +390,10 @@
    "type": "DocType"
   },
   {
+   "doc_view": "New",
    "label": "New Referral",
    "link_to": "Murasalat Referral",
-   "type": "DocType",
-   "doc_view": "New"
+   "type": "DocType"
   }
  ],
  "title": "Murasalat Office",
