@@ -14,7 +14,6 @@
   "transaction_type",
   "confidentiality",
   "importance",
-  "parties_section",
   "incoming_parties_section",
   "incoming_source_entity",
   "incoming_target_entry",
@@ -59,30 +58,31 @@
   },
   {
    "default": "Internal",
+   "description": "Choose the direction of the correspondence. The appropriate From/To fields will appear automatically.",
    "fieldname": "correspondence_type",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Correspondence Type",
    "options": "Murasalat Correspondence Type",
    "reqd": 1,
-   "set_only_once": 1,
-   "description": "Choose the direction of the correspondence. The appropriate From/To fields will appear automatically."
+   "set_only_once": 1
   },
   {
+   "description": "Use a short, searchable subject that clearly identifies the transaction.",
    "fieldname": "subject",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Subject",
-   "reqd": 1,
-   "description": "Use a short, searchable subject that clearly identifies the transaction."
+   "reqd": 1
   },
   {
+   "description": "Managed by the active Desk Workflow.",
    "fieldname": "workflow_state",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Status",
-   "read_only": 1,
-   "description": "Managed by the active Desk Workflow."
+   "read_only": 1
   },
   {
    "fieldname": "classification_section",
@@ -90,15 +90,17 @@
    "label": "Classification"
   },
   {
-   "default": "مذكرة",
+   "default": "\u0645\u0630\u0643\u0631\u0629",
    "fieldname": "transaction_type",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Transaction Type",
    "options": "Murasalat Transaction Type",
    "reqd": 1
   },
   {
-   "default": "عام",
+   "default": "\u0639\u0627\u0645",
    "fieldname": "confidentiality",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -107,7 +109,7 @@
    "reqd": 1
   },
   {
-   "default": "عادي",
+   "default": "\u0639\u0627\u062f\u064a",
    "fieldname": "importance",
    "fieldtype": "Link",
    "label": "Importance",
@@ -115,75 +117,71 @@
    "reqd": 1
   },
   {
-   "fieldname": "parties_section",
-   "fieldtype": "Section Break",
-   "label": "Parties — From / To"
-  },
-  {
    "depends_on": "eval:doc.correspondence_type==\"Incoming\"",
    "fieldname": "incoming_parties_section",
    "fieldtype": "Section Break",
-   "label": "Incoming — From / To"
+   "label": "Incoming \u2014 From / To"
   },
   {
+   "description": "External party that sent the correspondence.",
    "fieldname": "incoming_source_entity",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Sender",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
-   "options": "Murasalat External Party",
-   "description": "External party that sent the correspondence."
+   "options": "Murasalat External Party"
   },
   {
+   "description": "Internal department receiving the correspondence.",
    "fieldname": "incoming_target_entry",
    "fieldtype": "Link",
    "label": "Receiving Department",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
-   "options": "Department",
-   "description": "Internal department receiving the correspondence."
+   "options": "Department"
   },
   {
    "depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
    "fieldname": "outgoing_parties_section",
    "fieldtype": "Section Break",
-   "label": "Outgoing — From / To"
+   "label": "Outgoing \u2014 From / To"
   },
   {
+   "description": "Internal department sending the correspondence.",
    "fieldname": "outgoing_source_entity",
    "fieldtype": "Link",
    "label": "Sending Department",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
-   "options": "Department",
-   "description": "Internal department sending the correspondence."
+   "options": "Department"
   },
   {
+   "description": "External party receiving the correspondence.",
    "fieldname": "outgoing_target_entry",
    "fieldtype": "Link",
    "label": "External Recipient",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
-   "options": "Murasalat External Party",
-   "description": "External party receiving the correspondence."
+   "options": "Murasalat External Party"
   },
   {
    "depends_on": "eval:doc.correspondence_type==\"Internal\"",
    "fieldname": "internal_parties_section",
    "fieldtype": "Section Break",
-   "label": "Internal — From / To"
+   "label": "Internal \u2014 From / To"
   },
   {
+   "description": "Internal department sending the correspondence.",
    "fieldname": "internal_source_entity",
    "fieldtype": "Link",
    "label": "From Department",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
-   "options": "Department",
-   "description": "Internal department sending the correspondence."
+   "options": "Department"
   },
   {
+   "description": "Internal department receiving the correspondence.",
    "fieldname": "internal_target_entry",
    "fieldtype": "Link",
    "label": "To Department",
    "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
-   "options": "Department",
-   "description": "Internal department receiving the correspondence."
+   "options": "Department"
   },
   {
    "fieldname": "dates_section",
@@ -249,10 +247,10 @@
    "options": "Murasalat Attachment"
   },
   {
+   "collapsible": 1,
    "fieldname": "security_section",
    "fieldtype": "Section Break",
-   "label": "Audit & Security",
-   "collapsible": 1
+   "label": "Audit & Security"
   },
   {
    "fieldname": "current_holder",
@@ -340,12 +338,13 @@
   }
  ],
  "links": [],
- "modified": "2026-09-14 20:50:42.958176",
+ "modified": "2026-09-17 01:52:27.790110",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
  "naming_rule": "Expression",
  "owner": "Administrator",
+ "permissions": [],
  "row_format": "Dynamic",
  "search_fields": "subject,external_letter_number",
  "show_title_field_in_link": 1,

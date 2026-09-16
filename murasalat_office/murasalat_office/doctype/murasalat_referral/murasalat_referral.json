@@ -32,6 +32,7 @@
    "fieldname": "correspondence",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Correspondence",
    "options": "Murasalat Correspondence",
    "reqd": 1
@@ -48,6 +49,7 @@
    "fieldname": "recipient_type",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Recipient Type",
    "options": "Organization\nUser",
    "reqd": 1
@@ -57,6 +59,7 @@
    "fieldname": "recipient_organization",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "To Organization",
    "mandatory_depends_on": "eval:doc.recipient_type==\"Organization\"",
    "options": "Department"
@@ -66,6 +69,7 @@
    "fieldname": "recipient_user",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "To User",
    "mandatory_depends_on": "eval:doc.recipient_type==\"User\"",
    "options": "User"
@@ -119,6 +123,7 @@
    "default": "0",
    "fieldname": "follow_up",
    "fieldtype": "Check",
+   "in_standard_filter": 1,
    "label": "For Follow-up"
   },
   {
@@ -169,18 +174,19 @@
   }
  ],
  "links": [],
- "modified": "2026-09-14 20:52:04.553655",
+ "modified": "2026-09-17 01:46:57.292365",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
  "naming_rule": "Expression",
  "owner": "Administrator",
+ "permissions": [],
  "row_format": "Dynamic",
  "search_fields": "referral_number,correspondence,recipient_user,recipient_organization",
  "show_title_field_in_link": 1,
  "sort_field": "due_date",
  "sort_order": "ASC",
  "states": [],
- "title_field": "referral_number",
+ "title_field": "correspondence",
  "track_changes": 1
 }
