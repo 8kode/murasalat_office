@@ -23,7 +23,7 @@ REFERRAL_FIELDS = [
 ]
 CORRESPONDENCE_FIELDS = [
     "subject",
-    "correspondence_type",
+    "correspondence_direction",
     "workflow_state as correspondence_status",
     "confidentiality",
     "importance",

@@ -1,7 +1,7 @@
 frappe.listview_settings["Murasalat Correspondence"] = {
     add_fields: [
         "subject",
-        "correspondence_type",
+        "correspondence_direction",
         "workflow_state",
         "confidentiality",
         "importance",

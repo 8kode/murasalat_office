@@ -37,7 +37,7 @@ def execute(filters=None):
         order_by="due_date asc, modified desc",
     )
     data = query.run(as_dict=True)
-    data = enrich_with_correspondence(data, ["subject", "correspondence_type", "confidentiality"])
+    data = enrich_with_correspondence(data, ["subject", "correspondence_direction", "confidentiality"])
     for row in data:
         row["overdue_days"] = (getdate(today()) - getdate(row.due_date)).days
     data.sort(key=lambda row: (-row["overdue_days"], getdate(row.due_date)))

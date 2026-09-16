@@ -7,7 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_section",
-  "correspondence_type",
+  "correspondence_direction",
   "subject",
   "workflow_state",
   "classification_section",
@@ -55,18 +55,6 @@
    "fieldname": "naming_section",
    "fieldtype": "Section Break",
    "label": "Basic Information"
-  },
-  {
-   "default": "Internal",
-   "description": "Choose the direction of the correspondence. The appropriate From/To fields will appear automatically.",
-   "fieldname": "correspondence_type",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Correspondence Type",
-   "options": "Murasalat Correspondence Type",
-   "reqd": 1,
-   "set_only_once": 1
   },
   {
    "description": "Use a short, searchable subject that clearly identifies the transaction.",
@@ -117,7 +105,7 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval:doc.correspondence_type==\"Incoming\"",
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
    "fieldname": "incoming_parties_section",
    "fieldtype": "Section Break",
    "label": "Incoming \u2014 From / To"
@@ -128,7 +116,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Sender",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
    "options": "Murasalat External Party"
   },
   {
@@ -136,11 +124,11 @@
    "fieldname": "incoming_target_entry",
    "fieldtype": "Link",
    "label": "Receiving Department",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Incoming\"",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
    "options": "Department"
   },
   {
-   "depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
+   "depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
    "fieldname": "outgoing_parties_section",
    "fieldtype": "Section Break",
    "label": "Outgoing \u2014 From / To"
@@ -150,7 +138,7 @@
    "fieldname": "outgoing_source_entity",
    "fieldtype": "Link",
    "label": "Sending Department",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
    "options": "Department"
   },
   {
@@ -158,11 +146,11 @@
    "fieldname": "outgoing_target_entry",
    "fieldtype": "Link",
    "label": "External Recipient",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Outgoing\"",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
    "options": "Murasalat External Party"
   },
   {
-   "depends_on": "eval:doc.correspondence_type==\"Internal\"",
+   "depends_on": "eval:doc.correspondence_direction==\"Internal\"",
    "fieldname": "internal_parties_section",
    "fieldtype": "Section Break",
    "label": "Internal \u2014 From / To"
@@ -172,7 +160,7 @@
    "fieldname": "internal_source_entity",
    "fieldtype": "Link",
    "label": "From Department",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
    "options": "Department"
   },
   {
@@ -180,7 +168,7 @@
    "fieldname": "internal_target_entry",
    "fieldtype": "Link",
    "label": "To Department",
-   "mandatory_depends_on": "eval:doc.correspondence_type==\"Internal\"",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
    "options": "Department"
   },
   {
@@ -335,10 +323,22 @@
    "label": "Reopened By",
    "options": "User",
    "read_only": 1
+  },
+  {
+   "default": "Internal",
+   "description": "Choose the direction of the correspondence. The appropriate From/To fields will appear automatically.",
+   "fieldname": "correspondence_direction",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Correspondence Direction",
+   "options": "Murasalat Correspondence Type",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "links": [],
- "modified": "2026-09-17 01:52:27.790110",
+ "modified": "2026-09-17 01:59:37.148149",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

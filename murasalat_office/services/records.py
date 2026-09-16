@@ -7,7 +7,7 @@ from frappe import _
 
 # Fields that become immutable once the correspondence is sealed.
 IMMUTABLE_AFTER_SEALING = {
-    "correspondence_type",
+    "correspondence_direction",
     "transaction_type",
     "confidentiality",
     "importance",
@@ -29,7 +29,7 @@ IMMUTABLE_AFTER_SEALING = {
 def canonical_payload(doc):
     data = {
         "name": doc.name,
-        "correspondence_type": doc.correspondence_type,
+        "correspondence_direction": doc.correspondence_direction,
         "transaction_type": doc.transaction_type,
         "confidentiality": doc.confidentiality,
         "importance": doc.importance,

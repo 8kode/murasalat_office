@@ -39,7 +39,7 @@ def execute(filters=None):
     data = query.run(as_dict=True)
     data = enrich_with_correspondence(
         data,
-        ["subject", "correspondence_type", "current_holder"],
+        ["subject", "correspondence_direction", "current_holder"],
     )
 
     today_date = getdate(today())

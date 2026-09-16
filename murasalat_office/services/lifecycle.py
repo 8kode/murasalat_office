@@ -42,13 +42,13 @@ def register_correspondence(doc):
         # correspondence direction. A later received referral may
         # legitimately move the holder to another Department.
         if not doc.current_holder:
-            if doc.correspondence_type == "Incoming":
+            if doc.correspondence_direction == "Incoming":
                 doc.current_holder = doc.incoming_target_entry
 
-            elif doc.correspondence_type == "Outgoing":
+            elif doc.correspondence_direction == "Outgoing":
                 doc.current_holder = doc.outgoing_source_entity
 
-            elif doc.correspondence_type == "Internal":
+            elif doc.correspondence_direction == "Internal":
                 doc.current_holder = doc.internal_target_entry
 
         _append_activity(
