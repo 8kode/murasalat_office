@@ -1,24 +1,16 @@
 {
  "actions": [],
  "allow_bulk_edit": 1,
- "autoname": "field:type",
+ "autoname": "field:correspondence_direction",
  "creation": "2026-09-12 03:07:25.255311",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "type",
+  "correspondence_direction",
   "arabic_label",
   "enabled"
  ],
  "fields": [
-  {
-   "fieldname": "type",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Murasalat Correspondence Direction",
-   "reqd": 1,
-   "unique": 1
-  },
   {
    "default": "1",
    "fieldname": "enabled",
@@ -29,12 +21,20 @@
    "fieldname": "arabic_label",
    "fieldtype": "Data",
    "label": "Arabic Label"
+  },
+  {
+   "fieldname": "correspondence_direction",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Murasalat Correspondence Direction",
+   "reqd": 1,
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-17 03:42:59.620663",
+ "modified": "2026-09-17 03:55:24.418527",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence Direction",

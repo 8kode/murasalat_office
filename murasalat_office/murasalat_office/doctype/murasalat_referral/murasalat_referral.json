@@ -15,17 +15,20 @@
   "importance",
   "due_date",
   "instructions",
+  "workflow_state",
+  "section_break_gegz",
   "private_referral",
-  "paper_copy",
   "cc_copy",
+  "column_break_dxlv",
+  "paper_copy",
   "follow_up",
+  "security_section",
   "sent_on",
   "received_by",
   "received_on",
   "completed_by",
   "completed_on",
-  "legacy_history",
-  "workflow_state"
+  "legacy_history"
  ],
  "fields": [
   {
@@ -171,10 +174,24 @@
    "in_list_view": 1,
    "label": "Workflow State",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gegz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dxlv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Audit & Security"
   }
  ],
  "links": [],
- "modified": "2026-09-17 01:46:57.292365",
+ "modified": "2026-09-17 04:49:19.191844",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
