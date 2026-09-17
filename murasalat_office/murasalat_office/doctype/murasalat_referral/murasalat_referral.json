@@ -1,0 +1,209 @@
+{
+ "actions": [],
+ "autoname": "MR-.#####",
+ "creation": "2026-09-10 20:59:09.682373",
+ "description": "Standalone referral with native Frappe permissions and Desk-managed Workflow.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "correspondence",
+  "referral_number",
+  "recipient_type",
+  "recipient_organization",
+  "recipient_user",
+  "direction",
+  "importance",
+  "due_date",
+  "instructions",
+  "workflow_state",
+  "section_break_gegz",
+  "private_referral",
+  "cc_copy",
+  "column_break_dxlv",
+  "paper_copy",
+  "follow_up",
+  "security_section",
+  "sent_on",
+  "received_by",
+  "received_on",
+  "completed_by",
+  "completed_on",
+  "legacy_history"
+ ],
+ "fields": [
+  {
+   "fieldname": "correspondence",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Correspondence",
+   "options": "Murasalat Correspondence",
+   "reqd": 1
+  },
+  {
+   "fieldname": "referral_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Referral Number",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "recipient_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Recipient Type",
+   "options": "Organization\nUser",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.recipient_type==\"Organization\"",
+   "fieldname": "recipient_organization",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To Organization",
+   "mandatory_depends_on": "eval:doc.recipient_type==\"Organization\"",
+   "options": "Department"
+  },
+  {
+   "depends_on": "eval:doc.recipient_type==\"User\"",
+   "fieldname": "recipient_user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To User",
+   "mandatory_depends_on": "eval:doc.recipient_type==\"User\"",
+   "options": "User"
+  },
+  {
+   "fieldname": "direction",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Direction",
+   "options": "Murasalat Referral Direction",
+   "reqd": 1
+  },
+  {
+   "fieldname": "importance",
+   "fieldtype": "Link",
+   "label": "Importance",
+   "options": "Murasalat Importance Level",
+   "reqd": 1
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "instructions",
+   "fieldtype": "Small Text",
+   "label": "Instructions to Recipient"
+  },
+  {
+   "default": "0",
+   "fieldname": "private_referral",
+   "fieldtype": "Check",
+   "label": "Private"
+  },
+  {
+   "default": "0",
+   "fieldname": "paper_copy",
+   "fieldtype": "Check",
+   "label": "Paper Correspondence"
+  },
+  {
+   "default": "0",
+   "fieldname": "cc_copy",
+   "fieldtype": "Check",
+   "label": "Copy"
+  },
+  {
+   "default": "0",
+   "fieldname": "follow_up",
+   "fieldtype": "Check",
+   "in_standard_filter": 1,
+   "label": "For Follow-up"
+  },
+  {
+   "fieldname": "sent_on",
+   "fieldtype": "Datetime",
+   "label": "Sent On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_by",
+   "fieldtype": "Link",
+   "label": "Received By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_on",
+   "fieldtype": "Datetime",
+   "label": "Received On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_by",
+   "fieldtype": "Link",
+   "label": "Completed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legacy_history",
+   "fieldtype": "Long Text",
+   "hidden": 1,
+   "label": "Legacy History",
+   "read_only": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Workflow State",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gegz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dxlv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Audit & Security"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-17 04:49:19.191844",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Referral",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "search_fields": "referral_number,correspondence,recipient_user,recipient_organization",
+ "show_title_field_in_link": 1,
+ "sort_field": "due_date",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "correspondence",
+ "track_changes": 1
+}

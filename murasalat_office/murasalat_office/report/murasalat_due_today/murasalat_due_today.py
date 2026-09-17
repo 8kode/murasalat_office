@@ -1,0 +1,84 @@
+
+import frappe
+from frappe import _
+
+from murasalat_office.services.reporting import enrich_with_correspondence
+
+
+def execute(filters=None):
+
+    columns = [
+
+        {
+            "label": _("Correspondence"),
+            "fieldname": "correspondence",
+            "fieldtype": "Link",
+            "options": "Murasalat Correspondence",
+            "width": 180,
+        },
+
+        {
+            "label": _("Subject"),
+            "fieldname": "subject",
+            "fieldtype": "Data",
+            "width": 280,
+        },
+
+        {
+            "label": _("Recipient"),
+            "fieldname": "recipient_user",
+            "fieldtype": "Link",
+            "options": "User",
+            "width": 180,
+        },
+
+        {
+            "label": _("Direction"),
+            "fieldname": "direction",
+            "fieldtype": "Link",
+            "options": "Murasalat Referral Direction",
+            "width": 150,
+        },
+
+        {
+            "label": _("Workflow State"),
+            "fieldname": "workflow_state",
+            "fieldtype": "Data",
+            "width": 160,
+        },
+
+        {
+            "label": _("Due Date"),
+            "fieldname": "due_date",
+            "fieldtype": "Date",
+            "width": 110,
+        },
+
+    ]
+
+    query = frappe.qb.get_query(
+
+        "Murasalat Referral",
+
+        fields=[
+            "name as referral_id",
+            "correspondence",
+            "recipient_user",
+            "direction",
+            "workflow_state",
+            "due_date",
+        ],
+
+        filters={
+            "due_date": ["=", frappe.utils.today()]
+        },
+
+        ignore_permissions=False,
+
+        order_by="due_date asc, modified desc",
+
+    )
+
+    data = query.run(as_dict=True)
+
+    return columns, enrich_with_correspondence(data, ["subject"])

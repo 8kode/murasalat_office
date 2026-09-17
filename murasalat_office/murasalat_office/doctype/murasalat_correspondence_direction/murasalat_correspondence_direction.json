@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "autoname": "field:correspondence_direction",
+ "creation": "2026-09-12 03:07:25.255311",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "correspondence_direction",
+  "arabic_label",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "arabic_label",
+   "fieldtype": "Data",
+   "label": "Arabic Label"
+  },
+  {
+   "fieldname": "correspondence_direction",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Murasalat Correspondence Direction",
+   "reqd": 1,
+   "unique": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-17 03:55:24.418527",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Correspondence Direction",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "arabic_label"
+}

@@ -1,0 +1,30 @@
+{
+  "doctype": "DocType",
+  "name": "Murasalat Transaction Type",
+  "module": "Murasalat Office",
+  "custom": 0,
+  "istable": 0,
+  "editable_grid": 0,
+  "engine": "InnoDB",
+  "field_order": [
+    "title",
+    "enabled"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "Murasalat Transaction Type",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "enabled",
+      "label": "Enabled",
+      "fieldtype": "Check",
+      "default": "1"
+    }
+  ],
+  "title_field": "title",
+  "autoname": "field:title"
+}

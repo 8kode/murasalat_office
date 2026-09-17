@@ -1,0 +1,368 @@
+{
+ "actions": [],
+ "autoname": "MO-.#####",
+ "creation": "2026-09-10 20:59:09.997166",
+ "description": "Native Frappe correspondence record. Permissions and lifecycle governance are administered from Desk.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_section",
+  "correspondence_direction",
+  "subject",
+  "column_break_xifq",
+  "workflow_state",
+  "classification_section",
+  "transaction_type",
+  "confidentiality",
+  "column_break_tymi",
+  "importance",
+  "incoming_parties_section",
+  "incoming_source_entity",
+  "incoming_target_entry",
+  "outgoing_parties_section",
+  "outgoing_source_entity",
+  "outgoing_target_entry",
+  "internal_parties_section",
+  "internal_source_entity",
+  "internal_target_entry",
+  "dates_section",
+  "external_letter_number",
+  "due_date",
+  "concerned_person",
+  "column_break_qncl",
+  "external_letter_date",
+  "page_count",
+  "content_section",
+  "notes",
+  "links_section",
+  "links",
+  "attachments_section",
+  "attachments",
+  "security_section",
+  "current_holder",
+  "current_holder_user",
+  "originating_organization",
+  "registered_on",
+  "closed_on",
+  "activity_section",
+  "activities",
+  "record_sealed_on",
+  "record_sealed_by",
+  "seal_reason",
+  "integrity_hash",
+  "reopened_on",
+  "reopened_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject",
+   "reqd": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "classification_section",
+   "fieldtype": "Section Break",
+   "label": "Classification"
+  },
+  {
+   "default": "\u0645\u0630\u0643\u0631\u0629",
+   "fieldname": "transaction_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Transaction Type",
+   "options": "Murasalat Transaction Type",
+   "reqd": 1
+  },
+  {
+   "default": "\u0639\u0627\u0645",
+   "fieldname": "confidentiality",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Confidentiality Level",
+   "options": "Murasalat Confidentiality Level",
+   "reqd": 1
+  },
+  {
+   "default": "\u0639\u0627\u062f\u064a",
+   "fieldname": "importance",
+   "fieldtype": "Link",
+   "label": "Importance",
+   "options": "Murasalat Importance Level",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
+   "fieldname": "incoming_parties_section",
+   "fieldtype": "Section Break",
+   "label": "Incoming \u2014 From / To"
+  },
+  {
+   "description": "External party that sent the correspondence.",
+   "fieldname": "incoming_source_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sender",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
+   "options": "Murasalat External Party"
+  },
+  {
+   "description": "Internal department receiving the correspondence.",
+   "fieldname": "incoming_target_entry",
+   "fieldtype": "Link",
+   "label": "Receiving Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
+   "options": "Department"
+  },
+  {
+   "depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
+   "fieldname": "outgoing_parties_section",
+   "fieldtype": "Section Break",
+   "label": "Outgoing \u2014 From / To"
+  },
+  {
+   "description": "Internal department sending the correspondence.",
+   "fieldname": "outgoing_source_entity",
+   "fieldtype": "Link",
+   "label": "Sending Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
+   "options": "Department"
+  },
+  {
+   "description": "External party receiving the correspondence.",
+   "fieldname": "outgoing_target_entry",
+   "fieldtype": "Link",
+   "label": "External Recipient",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
+   "options": "Murasalat External Party"
+  },
+  {
+   "depends_on": "eval:doc.correspondence_direction==\"Internal\"",
+   "fieldname": "internal_parties_section",
+   "fieldtype": "Section Break",
+   "label": "Internal \u2014 From / To"
+  },
+  {
+   "description": "Internal department sending the correspondence.",
+   "fieldname": "internal_source_entity",
+   "fieldtype": "Link",
+   "label": "From Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
+   "options": "Department"
+  },
+  {
+   "description": "Internal department receiving the correspondence.",
+   "fieldname": "internal_target_entry",
+   "fieldtype": "Link",
+   "label": "To Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
+   "options": "Department"
+  },
+  {
+   "fieldname": "dates_section",
+   "fieldtype": "Section Break",
+   "label": "Dates"
+  },
+  {
+   "fieldname": "external_letter_number",
+   "fieldtype": "Data",
+   "label": "External Letter Number"
+  },
+  {
+   "fieldname": "external_letter_date",
+   "fieldtype": "Date",
+   "label": "External Letter Date"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Pages"
+  },
+  {
+   "fieldname": "concerned_person",
+   "fieldtype": "Data",
+   "label": "Concerned Person"
+  },
+  {
+   "fieldname": "content_section",
+   "fieldtype": "Section Break",
+   "label": "Content & Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "links_section",
+   "fieldtype": "Section Break",
+   "label": "Related Correspondence"
+  },
+  {
+   "fieldname": "links",
+   "fieldtype": "Table",
+   "label": "Related Records",
+   "options": "Murasalat Correspondence Link"
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Murasalat Attachment"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "Audit & Security"
+  },
+  {
+   "fieldname": "current_holder",
+   "fieldtype": "Link",
+   "label": "Current Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_holder_user",
+   "fieldtype": "Link",
+   "label": "Current User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "originating_organization",
+   "fieldtype": "Link",
+   "label": "Originating Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "registered_on",
+   "fieldtype": "Datetime",
+   "label": "Registered On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_on",
+   "fieldtype": "Datetime",
+   "label": "Closed On",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "activity_section",
+   "fieldtype": "Section Break",
+   "label": "Activity History"
+  },
+  {
+   "fieldname": "activities",
+   "fieldtype": "Table",
+   "label": "Activities",
+   "options": "Murasalat Correspondence Activity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_sealed_on",
+   "fieldtype": "Datetime",
+   "label": "Sealed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_sealed_by",
+   "fieldtype": "Link",
+   "label": "Sealed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "seal_reason",
+   "fieldtype": "Small Text",
+   "label": "Seal Reason"
+  },
+  {
+   "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",
+   "fieldname": "integrity_hash",
+   "fieldtype": "Data",
+   "label": "Integrity Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_on",
+   "fieldtype": "Datetime",
+   "label": "Reopened On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_by",
+   "fieldtype": "Link",
+   "label": "Reopened By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "default": "Internal",
+   "fieldname": "correspondence_direction",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Correspondence Direction",
+   "options": "Murasalat Correspondence Direction",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_tymi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qncl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_xifq",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-17 03:29:32.957655",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Correspondence",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "search_fields": "subject,external_letter_number",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "subject",
+ "track_changes": 1
+}

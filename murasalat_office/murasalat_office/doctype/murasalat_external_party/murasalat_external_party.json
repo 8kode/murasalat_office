@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "autoname": "field:party_name",
+ "creation": "2026-09-12 04:27:30.645918",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "party_name",
+  "entity_type",
+  "code",
+  "phone",
+  "active"
+ ],
+ "fields": [
+  {
+   "fieldname": "entity_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Entity Type",
+   "options": "Murasalat External Party Type",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Party Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "code",
+   "fieldtype": "Data",
+   "label": "Code"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-12 04:54:28.449644",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat External Party",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "party_name"
+}

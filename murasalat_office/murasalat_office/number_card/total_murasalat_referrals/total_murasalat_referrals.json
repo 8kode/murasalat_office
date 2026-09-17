@@ -1,0 +1,13 @@
+{
+ "doctype": "Number Card",
+ "name": "Total Murasalat Referrals",
+ "label": "Total Murasalat Referrals",
+ "type": "Document Type",
+ "document_type": "Murasalat Referral",
+ "function": "Count",
+ "filters_json": "[]",
+ "is_public": 1,
+ "is_standard": 1,
+ "module": "Murasalat Office",
+ "show_percentage_stats": 0
+}

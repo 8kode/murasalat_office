@@ -1,0 +1,82 @@
+{
+ "actions": [],
+ "autoname": "MD-.#####",
+ "creation": "2026-09-10 20:59:10.109740",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "delegator",
+  "delegate",
+  "from_date",
+  "to_date",
+  "enabled",
+  "scope_section",
+  "organization",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "delegator",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Delegator",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "delegate",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Delegate",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "scope_section",
+   "fieldtype": "Section Break",
+   "label": "Scope"
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "label": "Department Scope",
+   "options": "Department"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-14 18:54:53.641150",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Delegation",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

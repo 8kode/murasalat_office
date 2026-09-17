@@ -1,0 +1,13 @@
+{
+ "doctype": "Number Card",
+ "name": "Follow-up Referrals",
+ "label": "Follow-up Referrals",
+ "type": "Document Type",
+ "document_type": "Murasalat Referral",
+ "function": "Count",
+ "filters_json": "[[\"Murasalat Referral\",\"follow_up\",\"=\",1]]",
+ "is_public": 1,
+ "is_standard": 1,
+ "module": "Murasalat Office",
+ "show_percentage_stats": 0
+}

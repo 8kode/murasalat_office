@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "autoname": "MAR-.#####",
+ "creation": "2026-09-10 20:59:09.785599",
+ "description": "Approval request governed by native Frappe Workflow and permissions configured from Desk.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "correspondence",
+  "subject",
+  "requested_by",
+  "requested_on",
+  "approval_section",
+  "workflow_state",
+  "approval_level",
+  "decision_note",
+  "approved_by",
+  "approved_on"
+ ],
+ "fields": [
+  {
+   "fieldname": "correspondence",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Correspondence",
+   "options": "Murasalat Correspondence",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "correspondence.subject",
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Requested By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Requested On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approval_section",
+   "fieldtype": "Section Break",
+   "label": "Approval"
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Workflow State",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "approval_level",
+   "fieldtype": "Int",
+   "label": "Approval Level",
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Decision / Review Note"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_on",
+   "fieldtype": "Datetime",
+   "label": "Approved On",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-11 01:11:48.446052",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Approval Request",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "search_fields": "correspondence,subject,requested_by",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "track_seen": 1
+}

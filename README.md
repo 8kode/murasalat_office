@@ -1,33 +1,53 @@
-### Murasalat Office
+## v0.27.3
 
-Administrative Correspondence Management System
+- Remediated the expert review findings while preserving Native-First governance.
+- Added readable Approval Request (`MAR-.#####`) and Membership (`MOM-.#####`) naming for new records.
+- Added Delegation change tracking and a composite membership uniqueness guard.
+- Exposed governance health through a System Manager-only API.
+- Extended delegated Inbox handling to explicit organization-targeted referrals.
+- Added real Correspondence lifecycle activity events and removed dead activity types.
+- Unified attachment hashing and made the integrity hash visible/read-only for audit.
+- Corrected productivity overdue and date-boundary calculations.
+- Added Work Queue summaries and safer restricted-subject report UX.
+- Batched legacy migration parent checks and hardened legacy index naming.
+- Added framework-light regression coverage for the new contracts.
 
-### Installation
+# Murasalat Office
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+Murasalat Office is a metadata-first correspondence management application for the Frappe Framework, designed to integrate cleanly with ERPNext when it is installed.
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch version-16
-bench install-app murasalat_office
-```
+## Design principle
 
-### Contributing
+The application deliberately uses native Frappe/ERPNext governance:
 
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
+- Role Permissions Manager owns access control.
+- User Permissions and sharing remain native Frappe mechanisms.
+- Workflows and Workflow States are created and maintained from Desk.
+- Assignment Rules, ToDos, Notifications and Workflow Actions remain configurable in Desk.
+- No business roles, workflow definitions, permission rows or custom permission types are shipped.
+- `Murasalat Referral` is a standalone DocType so every referral can have its own native Workflow.
+- Correspondence-to-Referral navigation uses native Connections.
 
-```bash
-cd apps/murasalat_office
-pre-commit install
-```
+## Native UX
 
-Pre-commit is configured to use the following tools for checking and formatting your code:
+The app exposes standard Frappe views and navigation:
 
-- ruff
-- eslint
-- prettier
-- pyupgrade
+- Form + Timeline
+- List
+- Connections / Linked With
+- Calendar
+- Gantt
+- Kanban (when configured by administrators)
+- Report Builder / Script Reports
+- Workspace Shortcuts and Quick Lists
+- Native Number Cards
+- Assignments / ToDos
+- Workflow Actions
+- Notifications
+- Awesomebar / Search
 
-### License
+## Version
 
-mit
+v0.27.3 — Expert-review remediation release, preserving Native-First governance.
+
+Target baseline: Frappe 16.33.x. ERPNext 16.34.x is supported when present, but is not a runtime dependency.
