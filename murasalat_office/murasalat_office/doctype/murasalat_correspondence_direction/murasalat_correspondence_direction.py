@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class MurasalatCorrespondenceType(Document):
+class MurasalatCorrespondenceDirection(Document):
 	pass

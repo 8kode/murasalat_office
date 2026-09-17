@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Murasalat Office and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("Murasalat Correspondence Type", {
+// frappe.ui.form.on("Murasalat Correspondence Direction", {
 // 	refresh(frm) {
 
 // 	},
