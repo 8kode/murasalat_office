@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "type",
+  "arabic_label",
   "enabled"
  ],
  "fields": [
@@ -23,12 +24,17 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
+  },
+  {
+   "fieldname": "arabic_label",
+   "fieldtype": "Data",
+   "label": "Arabic Label"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-17 03:30:04.332914",
+ "modified": "2026-09-17 03:42:59.620663",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence Direction",
@@ -40,5 +46,5 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "type"
+ "title_field": "arabic_label"
 }
