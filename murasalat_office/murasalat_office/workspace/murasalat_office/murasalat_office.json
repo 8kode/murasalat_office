@@ -1,7 +1,7 @@
 {
  "app": "murasalat_office",
  "charts": [],
- "content": "[{\"id\":\"murasalat_referral_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Calendar\",\"col\":3}},{\"id\":\"mo_recent_correspondence\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Correspondence\",\"col\":6}},{\"id\":\"mo_recent_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Referrals\",\"col\":6}},{\"id\":\"mo_follow-up_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Follow-up Referrals\",\"col\":6}}]",
+ "content": "[{\"id\":\"murasalat_referral_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Calendar\",\"col\":3}},{\"id\":\"QlZVakhAOa\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Correspondence\",\"col\":4}},{\"id\":\"casFpPWO80\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Referrals\",\"col\":4}},{\"id\":\"mo_recent_correspondence\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Correspondence\",\"col\":6}},{\"id\":\"mo_recent_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Referrals\",\"col\":6}},{\"id\":\"mo_follow-up_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Follow-up Referrals\",\"col\":6}}]",
  "creation": "2026-09-10 00:43:11.048554",
  "custom_blocks": [],
  "docstatus": 0,
@@ -54,11 +54,20 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-18 01:59:39.560740",
+ "modified": "2026-09-18 02:04:06.153181",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
- "number_cards": [],
+ "number_cards": [
+  {
+   "label": "Total Murasalat Correspondence",
+   "number_card_name": "Total Murasalat Correspondence"
+  },
+  {
+   "label": "Total Murasalat Referrals",
+   "number_card_name": "Total Murasalat Referrals"
+  }
+ ],
  "owner": "Administrator",
  "public": 1,
  "quick_lists": [

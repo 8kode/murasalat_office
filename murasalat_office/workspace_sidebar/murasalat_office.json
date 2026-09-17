@@ -212,6 +212,18 @@
    "type": "Link"
   },
   {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "tower-control",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "User Permission",
+   "link_to": "User Permission",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
    "child": 0,
    "collapsible": 1,
    "icon": "settings",
@@ -388,7 +400,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-18 01:40:29.625891",
+ "modified": "2026-09-18 02:05:03.778797",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
