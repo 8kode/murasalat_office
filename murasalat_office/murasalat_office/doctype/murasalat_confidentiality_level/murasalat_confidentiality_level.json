@@ -8,6 +8,7 @@
  "field_order": [
   "title",
   "clearance_rank",
+  "color",
   "enabled"
  ],
  "fields": [
@@ -32,14 +33,22 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "in_list_view": 1,
+   "label": "Color"
   }
  ],
  "links": [],
- "modified": "2026-09-11 00:57:02.095288",
+ "modified": "2026-09-18 23:43:24.835370",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Confidentiality Level",
+ "naming_rule": "By fieldname",
  "owner": "Administrator",
+ "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

@@ -98,7 +98,7 @@
    "reqd": 1
   },
   {
-   "default": "\u0639\u0627\u062f\u064a",
+   "default": "\u0645\u062a\u0648\u0633\u0637",
    "fieldname": "importance",
    "fieldtype": "Link",
    "label": "Importance",
@@ -350,7 +350,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-17 03:29:32.957655",
+ "modified": "2026-09-18 23:56:56.703335",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

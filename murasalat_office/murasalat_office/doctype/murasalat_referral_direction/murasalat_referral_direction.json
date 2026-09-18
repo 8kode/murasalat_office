@@ -1,30 +1,40 @@
 {
-  "doctype": "DocType",
-  "name": "Murasalat Referral Direction",
-  "module": "Murasalat Office",
-  "custom": 0,
-  "istable": 0,
-  "editable_grid": 0,
-  "engine": "InnoDB",
-  "field_order": [
-    "title",
-    "enabled"
-  ],
-  "fields": [
-    {
-      "fieldname": "title",
-      "label": "Murasalat Referral Direction",
-      "fieldtype": "Data",
-      "reqd": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "enabled",
-      "label": "Enabled",
-      "fieldtype": "Check",
-      "default": "1"
-    }
-  ],
-  "title_field": "title",
-  "autoname": "field:title"
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:title",
+ "creation": "2026-09-10 20:59:09.847035",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Murasalat Referral Direction",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 23:52:46.662289",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Referral Direction",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
 }

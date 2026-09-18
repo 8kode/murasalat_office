@@ -1,30 +1,48 @@
 {
-  "doctype": "DocType",
-  "name": "Murasalat Importance Level",
-  "module": "Murasalat Office",
-  "custom": 0,
-  "istable": 0,
-  "editable_grid": 0,
-  "engine": "InnoDB",
-  "field_order": [
-    "title",
-    "enabled"
-  ],
-  "fields": [
-    {
-      "fieldname": "title",
-      "label": "Murasalat Importance Level",
-      "fieldtype": "Data",
-      "reqd": 1,
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "enabled",
-      "label": "Enabled",
-      "fieldtype": "Check",
-      "default": "1"
-    }
-  ],
-  "title_field": "title",
-  "autoname": "field:title"
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:title",
+ "creation": "2026-09-10 20:59:09.936391",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "title",
+  "color",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Murasalat Importance Level",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "in_list_view": 1,
+   "label": "Color"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-18 23:46:28.867224",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Importance Level",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
 }
