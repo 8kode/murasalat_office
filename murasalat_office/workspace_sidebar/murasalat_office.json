@@ -43,6 +43,20 @@
   {
    "child": 1,
    "collapsible": 1,
+   "filters": "[[\"Murasalat Correspondence\",\"correspondence_direction\",\"=\",\"Outgoing\"]]",
+   "icon": "arrow-up-to-line",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "\u0635\u0646\u062f\u0648\u0642 \u0627\u0644\u0635\u0627\u062f\u0631",
+   "link_to": "Murasalat Correspondence",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "filters": "[[\"Murasalat Correspondence\",\"correspondence_direction\",\"=\",\"Incoming\"]]",
    "icon": "arrow-down-from-line",
    "indent": 0,
    "keep_closed": 0,
@@ -55,10 +69,11 @@
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "arrow-up-to-line",
+   "filters": "[[\"Murasalat Correspondence\",\"correspondence_direction\",\"=\",\"Internal\"]]",
+   "icon": "arrow-down-from-line",
    "indent": 0,
    "keep_closed": 0,
-   "label": "\u0635\u0646\u062f\u0648\u0642 \u0627\u0644\u0635\u0627\u062f\u0631",
+   "label": "\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u062f\u0627\u062e\u0644\u064a\u0629",
    "link_to": "Murasalat Correspondence",
    "link_type": "DocType",
    "show_arrow": 0,
@@ -400,7 +415,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-18 02:05:03.778797",
+ "modified": "2026-09-18 02:35:10.204234",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Office",
