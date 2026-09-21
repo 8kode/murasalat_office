@@ -376,7 +376,7 @@ Native Assignment Rule can use a user Link field as the assignment source.
 
 ### Scenario B — Department referral
 
-Referral has `recipient_organization`.
+Referral has `recipient_department`.
 
 This is more complex because a Department is not itself a User.
 

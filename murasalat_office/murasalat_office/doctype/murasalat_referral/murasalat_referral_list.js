@@ -3,7 +3,7 @@ frappe.listview_settings["Murasalat Referral"] = {
         "referral_number",
         "correspondence",
         "recipient_type",
-        "recipient_organization",
+        "recipient_department",
         "recipient_user",
         "due_date",
         "workflow_state",

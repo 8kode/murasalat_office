@@ -206,5 +206,5 @@ def test_explicit_integrity_api_keeps_full_file_verification():
 def test_delegated_scope_batches_organization_resolution():
     source = (APP / "murasalat_office/report/murasalat_inbox/murasalat_inbox.py").read_text()
     assert '"originating_organization": ["in", restricted_orgs]' in source
-    assert '["recipient_organization", "in", restricted_orgs]' in source
+    assert '["recipient_department", "in", restricted_orgs]' in source
     assert '"correspondence", "in", scoped_names' in source

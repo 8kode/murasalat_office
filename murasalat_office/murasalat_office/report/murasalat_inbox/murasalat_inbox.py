@@ -12,7 +12,7 @@ REFERRAL_FIELDS = [
     "name as referral_id",
     "referral_number",
     "recipient_type",
-    "recipient_organization",
+    "recipient_department",
     "recipient_user",
     "direction",
     "workflow_state as referral_workflow_state",
@@ -87,8 +87,8 @@ def execute(filters=None):
             return _empty_result()
 
         referral_filters = base_filters + [
-            ["recipient_type", "=", "Organization"],
-            ["recipient_organization", "in", memberships],
+            ["recipient_type", "=", "Department"],
+            ["recipient_department", "in", memberships],
         ]
 
         data = _query_referrals(referral_filters)
@@ -218,8 +218,8 @@ def _query_delegated_referrals(delegations, base_filters):
         organization_rows = _query_referrals(
             base_filters
             + [
-                ["recipient_type", "=", "Organization"],
-                ["recipient_organization", "in", restricted_orgs],
+                ["recipient_type", "=", "Department"],
+                ["recipient_department", "in", restricted_orgs],
             ]
         )
 

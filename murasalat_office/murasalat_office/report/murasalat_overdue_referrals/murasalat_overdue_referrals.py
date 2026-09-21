@@ -14,9 +14,9 @@ def execute(filters=None):
         ["due_date", "<", today()],
     ]
 
-    if filters.get("organization"):
+    if filters.get("Department"):
         report_filters.append(
-            ["recipient_organization", "=", filters.organization]
+            ["recipient_department", "=", filters.Department]
         )
 
     if filters.get("user_filter"):
@@ -36,7 +36,7 @@ def execute(filters=None):
             "name as referral_id",
             "referral_number",
             "recipient_type",
-            "recipient_organization",
+            "recipient_department",
             "recipient_user",
             "direction",
             "workflow_state as referral_workflow_state",
@@ -102,7 +102,7 @@ def execute(filters=None):
         },
         {
             "label": _("Recipient Department"),
-            "fieldname": "recipient_organization",
+            "fieldname": "recipient_department",
             "fieldtype": "Link",
             "options": "Department",
             "width": 180,

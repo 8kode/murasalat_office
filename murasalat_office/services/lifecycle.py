@@ -12,8 +12,8 @@ def _append_activity(doc, activity_type, details=None, referral=None):
             "activity_on": now_datetime(),
             "actor": frappe.session.user,
             "organization": (
-                referral.get("recipient_organization")
-                if referral and referral.get("recipient_organization")
+                referral.get("recipient_department")
+                if referral and referral.get("recipient_department")
                 else doc.get("current_holder")
             ),
             "referral_number": (
@@ -132,8 +132,8 @@ def receive_referral(doc):
     # Only a Department-targeted referral changes the
     # correspondence's organizational holder.
     if (
-        doc.recipient_type != "Organization"
-        or not doc.recipient_organization
+        doc.recipient_type != "Department"
+        or not doc.recipient_department
     ):
         return
 
@@ -150,7 +150,7 @@ def receive_referral(doc):
         "Murasalat Correspondence",
         correspondence.name,
         {
-            "current_holder": doc.recipient_organization,
+            "current_holder": doc.recipient_department,
             "current_holder_user": None,
         },
         update_modified=True,
@@ -223,8 +223,8 @@ def send_referral(doc):
             _("Recipient Type is required before sending the referral.")
         )
 
-    if doc.recipient_type == "Organization":
-        if not doc.recipient_organization:
+    if doc.recipient_type == "Department":
+        if not doc.recipient_department:
             frappe.throw(
                 _("Recipient Department is required before sending the referral.")
             )

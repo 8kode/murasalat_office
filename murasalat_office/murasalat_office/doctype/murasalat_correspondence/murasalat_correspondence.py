@@ -104,7 +104,7 @@ class MurasalatCorrespondence(Document):
                 "organization": (
                     getattr(
                         referral,
-                        "recipient_organization",
+                        "recipient_department",
                         None,
                     )
                     if referral

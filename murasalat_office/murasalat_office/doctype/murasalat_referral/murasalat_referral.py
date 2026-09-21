@@ -13,10 +13,10 @@ class MurasalatReferral(Document):
 
     def validate(self):
         if self.recipient_type == "User":
-            if not self.recipient_user or self.recipient_organization:
+            if not self.recipient_user or self.recipient_department:
                 frappe.throw("User referrals require a user recipient and no organization recipient.")
-        elif self.recipient_type == "Organization":
-            if not self.recipient_organization or self.recipient_user:
-                frappe.throw("Organization referrals require an organization recipient and no user recipient.")
+        elif self.recipient_type == "Department":
+            if not self.recipient_department or self.recipient_user:
+                frappe.throw("Department referrals require an Department recipient and no user recipient.")
         else:
-            frappe.throw("Recipient Type must be User or Organization.")
+            frappe.throw("Recipient Type must be User or Department.")

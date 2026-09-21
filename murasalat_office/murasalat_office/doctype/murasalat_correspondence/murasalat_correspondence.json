@@ -43,6 +43,8 @@
   "links_section",
   "links",
   "attachments_tab",
+  "attachments_gallery_section",
+  "attachments_gallery",
   "attachments_section",
   "attachments",
   "audit_security_tab",
@@ -228,8 +230,10 @@
    "options": "Murasalat Correspondence Link"
   },
   {
+   "collapsible": 1,
    "fieldname": "attachments_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Attachments"
   },
   {
    "fieldname": "attachments",
@@ -393,10 +397,19 @@
   {
    "fieldname": "column_break_tmju",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attachments_gallery",
+   "fieldtype": "Attachment Gallery",
+   "label": "Attachments Gallery"
+  },
+  {
+   "fieldname": "attachments_gallery_section",
+   "fieldtype": "Section Break"
   }
  ],
  "links": [],
- "modified": "2026-09-21 22:35:17.981971",
+ "modified": "2026-09-21 22:46:39.649013",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

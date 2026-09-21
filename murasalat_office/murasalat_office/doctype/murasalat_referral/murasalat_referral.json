@@ -9,8 +9,8 @@
   "correspondence",
   "referral_number",
   "recipient_type",
-  "recipient_organization",
   "recipient_user",
+  "recipient_department",
   "direction",
   "importance",
   "due_date",
@@ -54,17 +54,18 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Recipient Type",
-   "options": "Organization\nUser",
-   "reqd": 1
+   "options": "User\nDepartment",
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
-   "depends_on": "eval:doc.recipient_type==\"Organization\"",
-   "fieldname": "recipient_organization",
+   "depends_on": "eval:doc.recipient_type==\"Department\"",
+   "fieldname": "recipient_department",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "To Organization",
-   "mandatory_depends_on": "eval:doc.recipient_type==\"Organization\"",
+   "label": "To Department",
+   "mandatory_depends_on": "eval:doc.recipient_type==\"Department\"",
    "options": "Department"
   },
   {
@@ -191,7 +192,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-17 04:49:19.191844",
+ "modified": "2026-09-21 23:38:47.336791",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
@@ -199,7 +200,7 @@
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
- "search_fields": "referral_number,correspondence,recipient_user,recipient_organization",
+ "search_fields": "referral_number,correspondence,recipient_user,recipient_department",
  "show_title_field_in_link": 1,
  "sort_field": "due_date",
  "sort_order": "ASC",

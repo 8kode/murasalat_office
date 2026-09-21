@@ -4,7 +4,7 @@ import frappe
 
 
 FIELDS = (
-    "referral_number", "recipient_type", "recipient_organization", "recipient_user",
+    "referral_number", "recipient_type", "recipient_department", "recipient_user",
     "direction", "importance", "due_date", "instructions", "private_referral",
     "paper_copy", "cc_copy", "follow_up", "sent_on", "received_by", "received_on",
     "completed_by", "completed_on",

@@ -73,13 +73,13 @@ def test_referral_recipient_validation():
     good = object.__new__(mod.MurasalatReferral)
     good.recipient_type = "User"
     good.recipient_user = "user@example.com"
-    good.recipient_organization = None
+    good.recipient_department = None
     mod.MurasalatReferral.validate(good)
 
     bad = object.__new__(mod.MurasalatReferral)
     bad.recipient_type = "User"
     bad.recipient_user = None
-    bad.recipient_organization = None
+    bad.recipient_department = None
     try:
         mod.MurasalatReferral.validate(bad)
     except ValidationError:
@@ -234,7 +234,7 @@ def test_delegated_inbox_scope_batches_restricted_organizations():
     assert len(correspondence_calls) == 1
     assert len(referral_calls) == 2
     assert correspondence_calls[0][1]["filters"]["originating_organization"] == ["in", ["ORG-A", "ORG-B"]]
-    assert any(["recipient_organization", "in", ["ORG-A", "ORG-B"]] in call[1] for call in referral_calls)
+    assert any(["recipient_department", "in", ["ORG-A", "ORG-B"]] in call[1] for call in referral_calls)
     assert any(["correspondence", "in", ["CORR-A", "CORR-B"]] in call[1] for call in referral_calls)
 
 
