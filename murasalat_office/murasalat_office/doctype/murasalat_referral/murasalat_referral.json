@@ -7,21 +7,27 @@
  "engine": "InnoDB",
  "field_order": [
   "correspondence",
-  "referral_number",
   "recipient_type",
+  "direction",
+  "column_break_swdn",
+  "importance",
   "recipient_user",
   "recipient_department",
-  "direction",
-  "importance",
   "due_date",
+  "section_break_xpho",
   "instructions",
-  "workflow_state",
   "section_break_gegz",
   "private_referral",
   "cc_copy",
   "column_break_dxlv",
   "paper_copy",
   "follow_up",
+  "attachments_tab",
+  "attachments_gallery",
+  "audit_security_tab",
+  "section_break_kpmq",
+  "workflow_state",
+  "referral_number",
   "security_section",
   "sent_on",
   "received_by",
@@ -189,10 +195,37 @@
    "fieldname": "security_section",
    "fieldtype": "Section Break",
    "label": "Audit & Security"
+  },
+  {
+   "fieldname": "column_break_swdn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_kpmq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "audit_security_tab",
+   "fieldtype": "Tab Break",
+   "label": "Audit Security"
+  },
+  {
+   "fieldname": "section_break_xpho",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "attachments_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments_gallery",
+   "fieldtype": "Attachment Gallery",
+   "label": "Attachments Gallery"
   }
  ],
  "links": [],
- "modified": "2026-09-21 23:38:47.336791",
+ "modified": "2026-09-22 00:05:28.076913",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
