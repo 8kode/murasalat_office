@@ -7,37 +7,45 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_section",
-  "correspondence_direction",
   "subject",
-  "column_break_xifq",
-  "workflow_state",
+  "column_break_fxzw",
+  "correspondence_direction",
+  "tobic_section",
+  "notes",
   "classification_section",
   "transaction_type",
-  "confidentiality",
   "column_break_tymi",
   "importance",
+  "column_break_fgrn",
+  "confidentiality",
   "incoming_parties_section",
   "incoming_source_entity",
+  "column_break_qvcj",
   "incoming_target_entry",
   "outgoing_parties_section",
   "outgoing_source_entity",
+  "column_break_gfmp",
   "outgoing_target_entry",
   "internal_parties_section",
   "internal_source_entity",
+  "column_break_vfwa",
   "internal_target_entry",
-  "dates_section",
-  "external_letter_number",
+  "section_break_yxsi",
   "due_date",
-  "concerned_person",
-  "column_break_qncl",
+  "column_break_jnxu",
+  "external_letter_number",
+  "dates_section",
   "external_letter_date",
+  "column_break_qncl",
   "page_count",
-  "content_section",
-  "notes",
+  "column_break_tmju",
+  "concerned_person",
   "links_section",
   "links",
+  "attachments_tab",
   "attachments_section",
   "attachments",
+  "audit_security_tab",
   "security_section",
   "current_holder",
   "current_holder_user",
@@ -51,7 +59,9 @@
   "seal_reason",
   "integrity_hash",
   "reopened_on",
-  "reopened_by"
+  "reopened_by",
+  "section_break_qtbc",
+  "workflow_state"
  ],
  "fields": [
   {
@@ -174,8 +184,7 @@
   },
   {
    "fieldname": "dates_section",
-   "fieldtype": "Section Break",
-   "label": "Dates"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "external_letter_number",
@@ -204,19 +213,13 @@
    "label": "Concerned Person"
   },
   {
-   "fieldname": "content_section",
-   "fieldtype": "Section Break",
-   "label": "Content & Notes"
-  },
-  {
    "fieldname": "notes",
    "fieldtype": "Small Text",
-   "label": "Notes"
+   "label": "\u0627\u0644\u0645\u0648\u0636\u0648\u0639"
   },
   {
    "fieldname": "links_section",
-   "fieldtype": "Section Break",
-   "label": "Related Correspondence"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "links",
@@ -226,8 +229,7 @@
   },
   {
    "fieldname": "attachments_section",
-   "fieldtype": "Section Break",
-   "label": "Attachments"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "attachments",
@@ -236,7 +238,6 @@
    "options": "Murasalat Attachment"
   },
   {
-   "collapsible": 1,
    "fieldname": "security_section",
    "fieldtype": "Section Break",
    "label": "Audit & Security"
@@ -275,7 +276,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "activity_section",
    "fieldtype": "Section Break",
    "label": "Activity History"
@@ -345,12 +345,58 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_xifq",
+   "fieldname": "section_break_qtbc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tobic_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_fxzw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qvcj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_gfmp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vfwa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fgrn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_yxsi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_jnxu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attachments_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "audit_security_tab",
+   "fieldtype": "Tab Break",
+   "label": "Audit Security"
+  },
+  {
+   "fieldname": "column_break_tmju",
    "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "modified": "2026-09-18 23:56:56.703335",
+ "modified": "2026-09-21 22:35:17.981971",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",
