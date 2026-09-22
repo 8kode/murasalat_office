@@ -102,7 +102,8 @@ is why the application hooks no `doc_events` for ToDo.
 - Walk the acceptance path on a non-Administrator account: create a correspondence →
   Register → create a referral → Send → Receive → Complete → Close → Seal →
   try to edit the sealed record (must be refused) → print.
-- Print formats are not part of this repository yet; see the launch report's P0‑5.
+- Print at least one correspondence and one referral notification: two standard print
+  formats ship with the application — see [PRINT_FORMATS.md](PRINT_FORMATS.md).
 
 ## Verification summary
 
@@ -111,4 +112,5 @@ is why the application hooks no `doc_events` for ToDo.
 | Master data present | `master_data.seed` → `missing_required` | `[]` |
 | Permissions present | `governance_plan.describe` then Role Permission Manager | a row per role and DocType |
 | Lifecycle wired | `governance.workflow_task_readiness` | no FAIL, no asynchronous WARN |
+| Print formats available | Print menu on a record | both formats listed and print in Arabic |
 | Regression suite | `python -m pytest murasalat_office/tests -q` | green |
