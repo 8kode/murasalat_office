@@ -1,11 +1,13 @@
 {
-  "doctype": "Report",
-  "name": "Murasalat Security Health",
-  "module": "Murasalat Office",
-  "ref_doctype": "Murasalat Correspondence",
-  "report_type": "Script Report",
-  "is_standard": "Yes",
-  "prepared_report": "No",
-  "add_total_row": 0,
-  "filters": []
+ "doctype": "Report",
+ "name": "Murasalat Security Health",
+ "module": "Murasalat Office",
+ "ref_doctype": "Murasalat Correspondence",
+ "report_type": "Script Report",
+ "is_standard": "Yes",
+ "prepared_report": "No",
+ "add_total_row": 0,
+ "filters": [],
+ "report_name": "Murasalat Security Health",
+ "disabled": 0
 }
