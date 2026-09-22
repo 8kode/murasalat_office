@@ -168,4 +168,4 @@ def execute(filters=None):
         },
     ]
 
-    return columns, data, None, summary
+    return columns, data, None, None, summary

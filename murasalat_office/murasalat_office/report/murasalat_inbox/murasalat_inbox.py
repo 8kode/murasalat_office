@@ -423,7 +423,9 @@ def _summary(data):
 
 
 def _result(data):
-    return _columns(), data, None, _summary(data)
+    summary = _summary(data)
+
+    return _columns(), data, None, None, summary
 
 
 def _empty_result():

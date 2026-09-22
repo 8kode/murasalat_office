@@ -1,7 +1,7 @@
 {
  "app": "murasalat_office",
  "charts": [],
- "content": "[{\"id\":\"mo_new_correspondence\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Correspondence\",\"col\":3}},{\"id\":\"mo_new_referral\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Referral\",\"col\":3}},{\"id\":\"mo_referral_gantt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Gantt\",\"col\":3}},{\"id\":\"murasalat_referral_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Calendar\",\"col\":3}},{\"id\":\"QlZVakhAOa\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Correspondence\",\"col\":4}},{\"id\":\"casFpPWO80\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Referrals\",\"col\":4}},{\"id\":\"Sj-5oEa5p0\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Due Today Referrals\",\"col\":4}},{\"id\":\"geMoxVg16d\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Follow-up Referrals\",\"col\":4}},{\"id\":\"X54eVNEfIe\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0648\u0627\u0631\u062f \u062e\u0627\u0631\u062c\u064a\",\"col\":4}},{\"id\":\"rVdVe02RQE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0635\u0627\u062f\u0631 \u062e\u0627\u0631\u062c\u064a\",\"col\":4}},{\"id\":\"TYVYx0CpZE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"\u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0627\u0644\u062f\u0627\u062e\u0644\u064a\u0629\",\"col\":4}},{\"id\":\"mo_recent_correspondence\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Correspondence\",\"col\":6}},{\"id\":\"mo_recent_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Referrals\",\"col\":6}},{\"id\":\"mo_follow-up_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Follow-up Referrals\",\"col\":6}}]",
+ "content": "[{\"id\":\"mo_new_correspondence\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Correspondence\",\"col\":3}},{\"id\":\"mo_new_referral\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Referral\",\"col\":3}},{\"id\":\"mo_referral_gantt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Gantt\",\"col\":3}},{\"id\":\"murasalat_referral_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Referral Calendar\",\"col\":3}},{\"id\":\"QlZVakhAOa\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Correspondence\",\"col\":4}},{\"id\":\"casFpPWO80\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Murasalat Referrals\",\"col\":4}},{\"id\":\"Sj-5oEa5p0\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Due Today Referrals\",\"col\":4}},{\"id\":\"geMoxVg16d\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Follow-up Referrals\",\"col\":4}},{\"id\":\"X54eVNEfIe\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"معاملات وارد خارجي\",\"col\":4}},{\"id\":\"rVdVe02RQE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"معاملات صادر خارجي\",\"col\":4}},{\"id\":\"TYVYx0CpZE\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"المعاملات الداخلية\",\"col\":4}},{\"id\":\"mo_recent_correspondence\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Correspondence\",\"col\":6}},{\"id\":\"mo_recent_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Referrals\",\"col\":6}},{\"id\":\"mo_follow-up_referrals\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Follow-up Referrals\",\"col\":6}}]",
  "creation": "2026-09-10 00:43:11.048554",
  "custom_blocks": [],
  "docstatus": 0,
@@ -92,6 +92,28 @@
   },
   {
    "hidden": 0,
+   "is_query_report": 1,
+   "label": "Correspondence Register",
+   "link_count": 0,
+   "link_to": "Murasalat Correspondence Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Referral Aging",
+   "link_count": 0,
+   "link_to": "Murasalat Referral Aging",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "Murasalat Referral",
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
    "is_query_report": 0,
    "label": "Referrals",
    "link_count": 0,
@@ -141,7 +163,7 @@
    "number_card_name": "Due Today Referrals"
   },
   {
-   "label": "\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0648\u0627\u0631\u062f \u062e\u0627\u0631\u062c\u064a",
+   "label": "معاملات وارد خارجي",
    "number_card_name": "Incoming Murasalat Correspondence"
   },
   {
@@ -153,7 +175,7 @@
    "number_card_name": "Follow-up Referrals"
   },
   {
-   "label": "\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0635\u0627\u062f\u0631 \u062e\u0627\u0631\u062c\u064a",
+   "label": "معاملات صادر خارجي",
    "number_card_name": "Outgoing Murasalat Correspondence"
   },
   {
@@ -161,7 +183,7 @@
    "number_card_name": "Total Murasalat Referrals"
   },
   {
-   "label": "\u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0627\u0644\u062f\u0627\u062e\u0644\u064a\u0629",
+   "label": "المعاملات الداخلية",
    "number_card_name": "Internal Murasalat Correspondence"
   }
  ],
