@@ -23,6 +23,9 @@ IMMUTABLE_AFTER_SEALING = {
     "subject",
     "page_count",
     "seal_reason",
+    "notes",
+    "due_date",
+    "concerned_person",
 }
 
 
@@ -47,6 +50,9 @@ def canonical_payload(doc):
         "originating_organization": doc.originating_organization,
         "seal_reason": doc.seal_reason,
         "page_count": doc.page_count,
+        "notes": doc.notes,
+        "due_date": str(doc.due_date or ""),
+        "concerned_person": doc.concerned_person,
         "attachments": [
             {
                 "file": row.file,
@@ -159,8 +165,10 @@ def verify_integrity(
 ) -> bool:
     """Verify the stored integrity snapshot."""
 
+    # A record that declares itself sealed but carries no snapshot cannot be
+    # verified; returning True there would report a broken seal as intact.
     if not doc.integrity_hash:
-        return True
+        return not doc.record_sealed_on
 
     if verify_files:
         for row in doc.attachments or []:

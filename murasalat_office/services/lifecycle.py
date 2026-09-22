@@ -185,6 +185,14 @@ def seal_correspondence(doc):
 
 
 def reopen_correspondence(doc):
+    """Reopen a correspondence and lift any seal on it.
+
+    There is no silent way to amend a sealed record. Amending one means
+    reopening it: the previous snapshot is written to the activity trail, the
+    seal is lifted, and the record must be sealed again afterwards, which
+    produces a new snapshot. A reason is mandatory so the amendment is
+    attributable.
+    """
     if doc.doctype != "Murasalat Correspondence":
         frappe.throw(
             _(
@@ -192,6 +200,26 @@ def reopen_correspondence(doc):
                 "Murasalat Correspondence."
             )
         )
+
+    was_sealed = bool(doc.get("record_sealed_on") or doc.get("integrity_hash"))
+
+    # Idempotent: reopening an open, unsealed record changes nothing.
+    if not doc.get("closed_on") and not was_sealed:
+        return
+
+    reason = (doc.get("reopen_reason") or "").strip()
+
+    if not reason:
+        frappe.throw(
+            _(
+                "A reason is required to reopen a correspondence, because "
+                "reopening lifts the integrity seal."
+            )
+        )
+
+    previous_snapshot = doc.get("integrity_hash")
+    previous_sealed_on = doc.get("record_sealed_on")
+    previous_sealed_by = doc.get("record_sealed_by")
 
     doc.reopened_on = now_datetime()
     doc.reopened_by = frappe.session.user
@@ -203,8 +231,28 @@ def reopen_correspondence(doc):
     _append_activity(
         doc,
         "Reopened",
-        _("Correspondence was reopened."),
+        _("Correspondence was reopened. Reason: {0}").format(reason),
     )
+
+    if was_sealed:
+        # The old snapshot survives in the activity trail, so the record can
+        # still be proven to have existed in that exact form.
+        _append_activity(
+            doc,
+            "Unsealed",
+            _(
+                "Integrity seal lifted to allow a documented amendment. "
+                "Previous snapshot: {0} (sealed on {1} by {2})."
+            ).format(
+                previous_snapshot or _("none"),
+                previous_sealed_on or _("unknown"),
+                previous_sealed_by or _("unknown"),
+            ),
+        )
+
+        doc.record_sealed_on = None
+        doc.record_sealed_by = None
+        doc.integrity_hash = None
 
 
 def _get_referral_correspondence(doc):

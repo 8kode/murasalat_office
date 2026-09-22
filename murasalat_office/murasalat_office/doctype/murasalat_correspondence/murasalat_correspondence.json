@@ -60,6 +60,7 @@
   "record_sealed_on",
   "record_sealed_by",
   "seal_reason",
+  "reopen_reason",
   "integrity_hash",
   "reopened_on",
   "reopened_by",
@@ -319,6 +320,12 @@
    "fieldname": "seal_reason",
    "fieldtype": "Small Text",
    "label": "Seal Reason"
+  },
+  {
+   "description": "Required when reopening: reopening lifts the integrity seal and the reason is recorded in the activity trail.",
+   "fieldname": "reopen_reason",
+   "fieldtype": "Small Text",
+   "label": "Reopen Reason"
   },
   {
    "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",

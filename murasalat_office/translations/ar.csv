@@ -407,3 +407,5 @@ A referral must be linked to a Correspondence.,يجب ربط الإحالة بم
 A new referral cannot be created because the Correspondence is closed.,لا يمكن إنشاء إحالة جديدة لأن المعاملة مغلقة.,
 Body,المضمون,
 Draft — Not Sent,مسوّدة — لم تُرسل,
+Reopen Reason,سبب إعادة الفتح,
+Unsealed,رُفع الختم,

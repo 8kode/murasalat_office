@@ -357,8 +357,7 @@ ACTIVITY_CATALOG = [
     "Reopened",
     "Referral Sent",
     "Referral Received",
-    "Referral Completed",
-]
+    "Referral Completed", "Unsealed",]
 
 
 def test_activity_catalog_matches_events_emitted_by_controller():
@@ -417,7 +416,9 @@ def test_sealing_and_reopening_record_their_own_activity():
     reopened = _FakeDoc(
         doctype="Murasalat Correspondence",
         closed_on="2026-09-09 12:00:00",
+        record_sealed_on=None,
         current_holder="ORG-1",
+        reopen_reason="تصحيح إداري",
     )
     mod.reopen_correspondence(reopened)
     assert reopened.closed_on is None

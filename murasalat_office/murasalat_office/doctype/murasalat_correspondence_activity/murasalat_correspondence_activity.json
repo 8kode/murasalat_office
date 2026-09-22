@@ -1,84 +1,84 @@
 {
-  "actions": [],
-  "creation": "2026-09-10 20:59:09.874922",
-  "doctype": "DocType",
-  "engine": "InnoDB",
-  "field_order": [
-    "activity_type",
-    "activity_on",
-    "actor",
-    "acting_for",
-    "delegation",
-    "organization",
-    "referral_number",
-    "details"
-  ],
-  "fields": [
-    {
-      "fieldname": "activity_type",
-      "fieldtype": "Select",
-      "in_list_view": 1,
-      "label": "Activity Type",
-      "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed",
-      "reqd": 1
-    },
-    {
-      "fieldname": "activity_on",
-      "fieldtype": "Datetime",
-      "in_list_view": 1,
-      "label": "Activity On",
-      "read_only": 1
-    },
-    {
-      "fieldname": "actor",
-      "fieldtype": "Link",
-      "label": "Actor",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "acting_for",
-      "fieldtype": "Link",
-      "label": "Acting For",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "delegation",
-      "fieldtype": "Link",
-      "label": "Delegation",
-      "options": "Murasalat Delegation",
-      "read_only": 1
-    },
-    {
-      "fieldname": "organization",
-      "fieldtype": "Link",
-      "label": "Organization Context",
-      "options": "Department",
-      "read_only": 1
-    },
-    {
-      "fieldname": "referral_number",
-      "fieldtype": "Data",
-      "label": "Referral Number",
-      "read_only": 1
-    },
-    {
-      "fieldname": "details",
-      "fieldtype": "Small Text",
-      "label": "Details",
-      "read_only": 1
-    }
-  ],
-  "istable": 1,
-  "links": [],
-  "modified": "2026-09-13 22:39:03.961197",
-  "modified_by": "Administrator",
-  "module": "Murasalat Office",
-  "name": "Murasalat Correspondence Activity",
-  "owner": "Administrator",
-  "row_format": "Dynamic",
-  "sort_field": "creation",
-  "sort_order": "DESC",
-  "states": []
+ "actions": [],
+ "creation": "2026-09-10 20:59:09.874922",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "activity_type",
+  "activity_on",
+  "actor",
+  "acting_for",
+  "delegation",
+  "organization",
+  "referral_number",
+  "details"
+ ],
+ "fields": [
+  {
+   "fieldname": "activity_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Activity Type",
+   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed\nUnsealed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "activity_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Activity On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actor",
+   "fieldtype": "Link",
+   "label": "Actor",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "acting_for",
+   "fieldtype": "Link",
+   "label": "Acting For",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delegation",
+   "fieldtype": "Link",
+   "label": "Delegation",
+   "options": "Murasalat Delegation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "organization",
+   "fieldtype": "Link",
+   "label": "Organization Context",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "referral_number",
+   "fieldtype": "Data",
+   "label": "Referral Number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Small Text",
+   "label": "Details",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-13 22:39:03.961197",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Correspondence Activity",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
 }
