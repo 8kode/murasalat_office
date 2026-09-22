@@ -1,27 +1,31 @@
-
 import frappe
 from frappe import _
 from frappe.utils import getdate, today
 
 from murasalat_office.services.reporting import enrich_with_correspondence
+from murasalat_office.services.lifecycle import OPEN_REFERRAL_FILTERS
 
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
 
     report_filters = [
+        *OPEN_REFERRAL_FILTERS,
         ["due_date", "is", "set"],
         ["due_date", "<", today()],
     ]
 
-    if filters.get("Department"):
+    department = filters.get("organization") or filters.get("department") or filters.get("Department")
+    user = filters.get("user_filter") or filters.get("user")
+
+    if department:
         report_filters.append(
-            ["recipient_department", "=", filters.Department]
+            ["recipient_department", "=", department]
         )
 
-    if filters.get("user_filter"):
+    if user:
         report_filters.append(
-            ["recipient_user", "=", filters.user_filter]
+            ["recipient_user", "=", user]
         )
 
     if filters.get("from_date"):
@@ -53,7 +57,11 @@ def execute(filters=None):
 
     data = enrich_with_correspondence(
         data,
-        ["subject", "correspondence_direction", "confidentiality"],
+        [
+            "subject",
+            "correspondence_direction",
+            "confidentiality",
+        ],
     )
 
     for row in data:
@@ -95,10 +103,10 @@ def execute(filters=None):
             "width": 120,
         },
         {
-            "label": _("Workflow State"),
-            "fieldname": "referral_workflow_state",
+            "label": _("Recipient Type"),
+            "fieldname": "recipient_type",
             "fieldtype": "Data",
-            "width": 160,
+            "width": 130,
         },
         {
             "label": _("Recipient Department"),
@@ -145,7 +153,7 @@ def execute(filters=None):
     summary = [
         {
             "value": len(data),
-            "label": _("Overdue by Due Date"),
+            "label": _("Open Overdue Referrals"),
             "datatype": "Int",
             "indicator": "Red",
         },

@@ -7,9 +7,13 @@ app_license = "MIT"
 
 
 # Roles, permissions and workflows are intentionally not shipped
-# as fixtures. All governance is administered from the Frappe/ERPNext
-# Desk UI.
-
+# as fixtures. Governance remains administered from the
+# Frappe/ERPNext Desk UI.
+#
+# IMPORTANT:
+# Native ToDo/Assignment is deliberately NOT hooked here.
+# A ToDo assigned from a Murasalat Referral should reference
+# the Referral itself. The Referral is the work/routing unit.
 workflow_methods = [
     {
         "name": "Register Correspondence",
@@ -27,7 +31,6 @@ workflow_methods = [
         "name": "Reopen Correspondence",
         "method": "murasalat_office.services.lifecycle.reopen_correspondence",
     },
-    
     {
         "name": "Send Referral",
         "method": "murasalat_office.services.lifecycle.send_referral",
@@ -43,20 +46,18 @@ workflow_methods = [
 ]
 
 
-# Native Frappe Assignment works through ToDo records.
-# These events synchronize the explicit current_holder_user
-# projection on Murasalat Correspondence.
-doc_events = {
-    "ToDo": {
-        "after_insert": (
-            "murasalat_office.services.lifecycle." "sync_current_holder_user"
-        ),
-        "on_update": (
-            "murasalat_office.services.lifecycle." "sync_current_holder_user"
-        ),
-        "on_trash": ("murasalat_office.services.lifecycle." "sync_current_holder_user"),
-    },
-}
+# There is intentionally no ToDo doc_event hook.
+#
+# Previous DEV12 behavior tried to infer one
+# Murasalat Correspondence.current_holder_user from the latest
+# open ToDo linked to the Correspondence. That is ambiguous when
+# multiple referrals/assignments exist and also couples assignment
+# to write permission on the parent Correspondence.
+#
+# Native Frappe Assignment should instead be performed on:
+#     Murasalat Referral
+#
+# The Referral identifies the work item; ToDo identifies the user.
 
 
 after_migrate = [

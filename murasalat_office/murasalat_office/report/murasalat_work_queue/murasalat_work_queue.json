@@ -1,8 +1,22 @@
 {
   "doctype": "Report",
   "name": "Murasalat Work Queue",
-  "ref_doctype": "Murasalat Correspondence",
+  "ref_doctype": "Murasalat Referral",
   "report_type": "Script Report",
   "module": "Murasalat Office",
-  "is_standard": "Yes"
+  "is_standard": "Yes",
+  "filters": [
+    {
+      "fieldname": "organization",
+      "label": "Department",
+      "fieldtype": "Link",
+      "options": "Department"
+    },
+    {
+      "fieldname": "user",
+      "label": "User",
+      "fieldtype": "Link",
+      "options": "User"
+    }
+  ]
 }

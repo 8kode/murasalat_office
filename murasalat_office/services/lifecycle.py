@@ -1,10 +1,21 @@
-
 import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
 
+OPEN_REFERRAL_FILTERS = [
+    ["sent_on", "is", "set"],
+    ["completed_on", "is", "not set"],
+]
+
+
 def _append_activity(doc, activity_type, details=None, referral=None):
+    """Append an activity to the current document.
+
+    This operates on the in-memory document and therefore participates in
+    the normal save/Workflow transaction of the document invoking the
+    lifecycle method.
+    """
     doc.append(
         "activities",
         {
@@ -26,6 +37,51 @@ def _append_activity(doc, activity_type, details=None, referral=None):
     )
 
 
+def _append_referral_activity(referral, activity_type, details):
+    """Record a Referral lifecycle event on its parent Correspondence.
+
+    The parent must be writable by the actor because this is a real child-table
+    mutation. This intentionally uses the normal ORM rather than a database
+    bypass, preserving Frappe validation/permission behavior.
+    """
+    if not referral.get("correspondence"):
+        return
+
+    correspondence = frappe.get_doc(
+        "Murasalat Correspondence",
+        referral.correspondence,
+    )
+
+    correspondence.check_permission("write")
+
+    _append_activity(
+        correspondence,
+        activity_type,
+        details=details,
+        referral=referral,
+    )
+
+    correspondence.save()
+
+
+def _get_open_referrals(correspondence_name):
+    """Return open referrals regardless of report/list permissions.
+
+    This is a domain invariant used when closing a Correspondence. It is not
+    a data-exposure API and therefore does not use a permission-aware list.
+    """
+    return frappe.get_all(
+        "Murasalat Referral",
+        filters={
+            "correspondence": correspondence_name,
+            **OPEN_REFERRAL_FILTERS,
+        },
+        fields=["name"],
+        order_by="due_date asc, modified desc",
+        limit_page_length=0,
+    )
+
+
 def register_correspondence(doc):
     if doc.doctype != "Murasalat Correspondence":
         frappe.throw(
@@ -35,27 +91,47 @@ def register_correspondence(doc):
             )
         )
 
-    if not doc.registered_on:
-        doc.registered_on = now_datetime()
+    if doc.registered_on:
+        return
 
-        # Establish the initial organizational holder from the
-        # correspondence direction. A later received referral may
-        # legitimately move the holder to another Department.
-        if not doc.current_holder:
-            if doc.correspondence_direction == "Incoming":
-                doc.current_holder = doc.incoming_target_entry
+    direction = doc.correspondence_direction
 
-            elif doc.correspondence_direction == "Outgoing":
-                doc.current_holder = doc.outgoing_source_entity
+    holder_by_direction = {
+        "Incoming": doc.incoming_target_entry,
+        "Outgoing": doc.outgoing_source_entity,
+        "Internal": doc.internal_target_entry,
+    }
 
-            elif doc.correspondence_direction == "Internal":
-                doc.current_holder = doc.internal_target_entry
-
-        _append_activity(
-            doc,
-            "Registered",
-            "Correspondence officially registered.",
+    if direction not in holder_by_direction:
+        frappe.throw(
+            _(
+                "A valid Correspondence Direction is required before registration."
+            )
         )
+
+    initial_holder = holder_by_direction[direction]
+
+    if not initial_holder:
+        frappe.throw(
+            _(
+                "The organizational holder cannot be empty when correspondence "
+                "is registered."
+            )
+        )
+
+    doc.registered_on = now_datetime()
+    doc.current_holder = initial_holder
+
+    # current_holder_user is retained only as a legacy/deprecated projection
+    # during migration. It is not populated from ToDo anymore.
+    if hasattr(doc, "current_holder_user"):
+        doc.current_holder_user = None
+
+    _append_activity(
+        doc,
+        "Registered",
+        _("Correspondence officially registered."),
+    )
 
 
 def close_correspondence(doc):
@@ -67,13 +143,22 @@ def close_correspondence(doc):
             )
         )
 
-    # Represents the latest official closure.
+    open_referrals = _get_open_referrals(doc.name)
+
+    if open_referrals:
+        frappe.throw(
+            _(
+                "The correspondence cannot be closed while it has "
+                "open referrals."
+            )
+        )
+
     doc.closed_on = now_datetime()
 
     _append_activity(
         doc,
         "Closed",
-        "Correspondence officially closed.",
+        _("Correspondence officially closed."),
     )
 
 
@@ -86,15 +171,17 @@ def seal_correspondence(doc):
             )
         )
 
-    if not doc.record_sealed_on:
-        doc.record_sealed_on = now_datetime()
-        doc.record_sealed_by = frappe.session.user
+    if doc.record_sealed_on:
+        return
 
-        _append_activity(
-            doc,
-            "Sealed",
-            "Correspondence integrity snapshot sealed.",
-        )
+    doc.record_sealed_on = now_datetime()
+    doc.record_sealed_by = frappe.session.user
+
+    _append_activity(
+        doc,
+        "Sealed",
+        _("Correspondence integrity snapshot sealed."),
+    )
 
 
 def reopen_correspondence(doc):
@@ -109,10 +196,64 @@ def reopen_correspondence(doc):
     doc.reopened_on = now_datetime()
     doc.reopened_by = frappe.session.user
 
+    # closed_on represents the current/latest closure state. Historical
+    # reopen/close events remain in the Activity table and Frappe Version history.
+    doc.closed_on = None
+
     _append_activity(
         doc,
         "Reopened",
-        "Correspondence was reopened.",
+        _("Correspondence was reopened."),
+    )
+
+
+def _get_referral_correspondence(doc):
+    if not doc.correspondence:
+        frappe.throw(
+            _("A referral must be linked to a Correspondence.")
+        )
+
+    correspondence = frappe.get_doc(
+        "Murasalat Correspondence",
+        doc.correspondence,
+    )
+    correspondence.check_permission("read")
+    return correspondence
+
+
+def _ensure_correspondence_open_for_send(doc):
+    correspondence = _get_referral_correspondence(doc)
+    if correspondence.closed_on:
+        frappe.throw(
+            _("A referral cannot be sent because the Correspondence is closed.")
+        )
+    return correspondence
+
+def send_referral(doc):
+    if doc.doctype != "Murasalat Referral":
+        frappe.throw(
+            _("Send Referral can only run on Murasalat Referral.")
+        )
+
+    if doc.sent_on:
+        return
+
+    _validate_referral_for_transition(doc)
+    _ensure_correspondence_open_for_send(doc)
+
+    doc.sent_on = now_datetime()
+
+    _append_referral_activity(
+        doc,
+        "Referral Sent",
+        _("Referral {0} was sent to {1}.").format(
+            doc.referral_number or doc.name,
+            (
+                doc.recipient_user
+                if doc.recipient_type == "User"
+                else doc.recipient_department
+            ),
+        ),
     )
 
 
@@ -122,15 +263,31 @@ def receive_referral(doc):
             _("Receive Referral can only run on Murasalat Referral.")
         )
 
+    _validate_referral_for_transition(doc)
+
+    if not doc.sent_on:
+        frappe.throw(
+            _("A referral must be sent before it can be received.")
+        )
+
     if not doc.received_on:
         doc.received_on = now_datetime()
         doc.received_by = frappe.session.user
 
+        _append_referral_activity(
+            doc,
+            "Referral Received",
+            _("Referral {0} was received.").format(
+                doc.referral_number or doc.name,
+            ),
+        )
+
     if not doc.correspondence:
         return
 
-    # Only a Department-targeted referral changes the
-    # correspondence's organizational holder.
+    # A Department-targeted referral moves the organizational holder.
+    # A User-targeted referral does NOT create a second holder model:
+    # the Referral + native ToDo identify the personal work assignment.
     if (
         doc.recipient_type != "Department"
         or not doc.recipient_department
@@ -142,107 +299,29 @@ def receive_referral(doc):
         doc.correspondence,
     )
 
-    # Native permission boundary: receiving a referral that changes
-    # the parent holder requires write permission on that parent.
     correspondence.check_permission("write")
 
-    frappe.db.set_value(
-        "Murasalat Correspondence",
-        correspondence.name,
-        {
-            "current_holder": doc.recipient_department,
-            "current_holder_user": None,
-        },
-        update_modified=True,
-    )
+    correspondence.current_holder = doc.recipient_department
+
+    # Legacy/deprecated projection must never be used as a user assignment
+    # source of truth.
+    if hasattr(correspondence, "current_holder_user"):
+        correspondence.current_holder_user = None
+
+    correspondence.save()
 
 
-def sync_current_holder_user(doc, method=None):
-    if (
-        doc.reference_type != "Murasalat Correspondence"
-        or not doc.reference_name
-    ):
-        return
-
-    # A ToDo must never become an indirect authorization bypass.
-    # The corresponding user must already have native write access
-    # to the parent correspondence.
-    if not frappe.db.exists(
-        "Murasalat Correspondence",
-        doc.reference_name,
-    ):
-        return
-
-    correspondence = frappe.get_doc(
-        "Murasalat Correspondence",
-        doc.reference_name,
-    )
-    correspondence.check_permission("write")
-
-    assignments = frappe.get_all(
-        "ToDo",
-        filters={
-            "reference_type": "Murasalat Correspondence",
-            "reference_name": doc.reference_name,
-            "status": "Open",
-        },
-        fields=[
-            "allocated_to",
-            "modified",
-        ],
-        order_by="modified desc",
-        limit_page_length=1,
-    )
-
-    current_user = (
-        assignments[0].allocated_to
-        if assignments
-        else None
-    )
-
-    frappe.db.set_value(
-        "Murasalat Correspondence",
-        doc.reference_name,
-        "current_holder_user",
-        current_user,
-        update_modified=True,
-    )
-    
-    
-def send_referral(doc):
-    if doc.doctype != "Murasalat Referral":
-        frappe.throw(_("Send Referral can only run on Murasalat Referral."))
-
-    if not doc.correspondence:
-        frappe.throw(
-            _("A referral must be linked to a Correspondence before it can be sent.")
-        )
-
-    if not doc.recipient_type:
-        frappe.throw(
-            _("Recipient Type is required before sending the referral.")
-        )
-
-    if doc.recipient_type == "Department":
-        if not doc.recipient_department:
-            frappe.throw(
-                _("Recipient Department is required before sending the referral.")
-            )
-
-    if doc.recipient_type == "User":
-        if not doc.recipient_user:
-            frappe.throw(
-                _("Recipient User is required before sending the referral.")
-            )
-
-    if not doc.sent_on:
-        doc.sent_on = now_datetime()
-        
-        
 def complete_referral(doc):
     if doc.doctype != "Murasalat Referral":
         frappe.throw(
             _("Complete Referral can only run on Murasalat Referral.")
+        )
+
+    _validate_referral_for_transition(doc)
+
+    if not doc.sent_on:
+        frappe.throw(
+            _("A referral must be sent before it can be completed.")
         )
 
     if not doc.received_on:
@@ -250,6 +329,48 @@ def complete_referral(doc):
             _("A referral must be received before it can be completed.")
         )
 
-    if not doc.completed_on:
-        doc.completed_on = now_datetime()
-        doc.completed_by = frappe.session.user        
+    if doc.completed_on:
+        return
+
+    doc.completed_on = now_datetime()
+    doc.completed_by = frappe.session.user
+
+    _append_referral_activity(
+        doc,
+        "Referral Completed",
+        _("Referral {0} was completed.").format(
+            doc.referral_number or doc.name,
+        ),
+    )
+
+
+def _validate_referral_for_transition(doc):
+    if not doc.correspondence:
+        frappe.throw(
+            _("A referral must be linked to a Correspondence.")
+        )
+
+    if doc.recipient_type == "Department":
+        if not doc.recipient_department:
+            frappe.throw(
+                _("Recipient Department is required.")
+            )
+        if doc.recipient_user:
+            frappe.throw(
+                _("A Department referral cannot also have a User recipient.")
+            )
+
+    elif doc.recipient_type == "User":
+        if not doc.recipient_user:
+            frappe.throw(
+                _("Recipient User is required.")
+            )
+        if doc.recipient_department:
+            frappe.throw(
+                _("A User referral cannot also have a Department recipient.")
+            )
+
+    else:
+        frappe.throw(
+            _("Recipient Type must be User or Department.")
+        )

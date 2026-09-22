@@ -1,10 +1,15 @@
-"""Permission-aware referral inbox using native Frappe permissions."""
+"""Permission-aware referral inbox using native Frappe permissions.
+
+The inbox represents OPEN referral work. Completed referrals are excluded from
+all inbox scopes.
+"""
 
 import frappe
 from frappe import _
 from frappe.utils import getdate, today
 
 from murasalat_office.services.reporting import enrich_with_correspondence
+from murasalat_office.services.lifecycle import OPEN_REFERRAL_FILTERS
 
 
 REFERRAL_FIELDS = [
@@ -30,31 +35,38 @@ CORRESPONDENCE_FIELDS = [
     "confidentiality",
     "importance",
     "current_holder",
-    "current_holder_user",
 ]
 
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
+
     user = frappe.session.user
     scope = filters.get("scope") or "My Work"
     due_only = filters.get("due_only")
     workflow_state = filters.get("workflow_state")
 
-    base_filters = []
+    base_filters = list(OPEN_REFERRAL_FILTERS)
 
     if workflow_state:
-        base_filters.append(["workflow_state", "=", workflow_state])
+        base_filters.append(
+            ["workflow_state", "=", workflow_state]
+        )
 
     if due_only:
-        base_filters.append(["due_date", "is", "set"])
-        base_filters.append(["due_date", "<=", today()])
+        base_filters.extend(
+            [
+                ["due_date", "is", "set"],
+                ["due_date", "<=", today()],
+            ]
+        )
 
     if scope == "My Work":
         referral_filters = base_filters + [
             ["recipient_type", "=", "User"],
             ["recipient_user", "=", user],
         ]
+
         data = _query_referrals(referral_filters)
 
     elif scope == "My Organization":
@@ -107,23 +119,31 @@ def execute(filters=None):
             limit_page_length=0,
         )
 
-        data = _query_delegated_referrals(delegations, base_filters)
+        data = _query_delegated_referrals(
+            delegations,
+            base_filters,
+        )
 
     elif scope == "All Visible":
         data = _query_referrals(base_filters)
 
     else:
-        frappe.throw(_("Unknown inbox scope: {0}").format(scope))
+        frappe.throw(
+            _("Unknown inbox scope: {0}").format(scope)
+        )
 
-    # Linked correspondence is always read through Frappe's own permissions.
-    enrich_with_correspondence(data, CORRESPONDENCE_FIELDS)
+    enrich_with_correspondence(
+        data,
+        CORRESPONDENCE_FIELDS,
+    )
 
     for row in data:
         row["attention"] = _attention(row)
 
         row["is_overdue"] = (
             1
-            if row.due_date and getdate(row.due_date) < getdate(today())
+            if row.due_date
+            and getdate(row.due_date) < getdate(today())
             else 0
         )
 
@@ -131,8 +151,7 @@ def execute(filters=None):
         key=lambda row: (
             row.due_date or "9999-12-31",
             row.get("modified") or "",
-        ),
-        reverse=False,
+        )
     )
 
     return _result(data)
@@ -152,7 +171,6 @@ def _query_referrals(filters, or_filters=None):
 
 
 def _group_delegations(delegations):
-    """Group active delegations by delegator and preserve organization scopes."""
     grouped = {}
 
     for delegation in delegations or []:
@@ -162,19 +180,17 @@ def _group_delegations(delegations):
         if not delegator:
             continue
 
-        grouped.setdefault(delegator, set()).add(organization or "")
+        grouped.setdefault(
+            delegator,
+            set(),
+        ).add(
+            organization or ""
+        )
 
     return grouped
 
 
 def _query_delegated_referrals(delegations, base_filters):
-    """Resolve delegation scopes with batched permission-aware lookups.
-
-    An empty organization means an unrestricted delegation for direct User
-    referrals. A populated organization additionally delegates referrals addressed
-    to that organization, and can scope direct User referrals by correspondence
-    origin. Organization referrals are batched once for all delegated organizations.
-    """
     grouped = _group_delegations(delegations)
 
     if not grouped:
@@ -195,9 +211,15 @@ def _query_delegated_referrals(delegations, base_filters):
         correspondence_rows = frappe.get_list(
             "Murasalat Correspondence",
             filters={
-                "originating_organization": ["in", restricted_orgs]
+                "originating_organization": [
+                    "in",
+                    restricted_orgs,
+                ]
             },
-            fields=["name", "originating_organization"],
+            fields=[
+                "name",
+                "originating_organization",
+            ],
             ignore_permissions=False,
             limit_page_length=0,
         )
@@ -210,16 +232,16 @@ def _query_delegated_referrals(delegations, base_filters):
 
     rows_by_name = {}
 
-    # Organization-targeted referrals are independent of the delegator identity,
-    # so resolve all of them in one permission-aware query.
-    organization_rows = []
-
     if restricted_orgs:
         organization_rows = _query_referrals(
             base_filters
             + [
                 ["recipient_type", "=", "Department"],
-                ["recipient_department", "in", restricted_orgs],
+                [
+                    "recipient_department",
+                    "in",
+                    restricted_orgs,
+                ],
             ]
         )
 
@@ -297,6 +319,26 @@ def _columns():
             "width": 120,
         },
         {
+            "label": _("Recipient Type"),
+            "fieldname": "recipient_type",
+            "fieldtype": "Data",
+            "width": 130,
+        },
+        {
+            "label": _("Recipient Department"),
+            "fieldname": "recipient_department",
+            "fieldtype": "Link",
+            "options": "Department",
+            "width": 180,
+        },
+        {
+            "label": _("Recipient User"),
+            "fieldname": "recipient_user",
+            "fieldtype": "Link",
+            "options": "User",
+            "width": 180,
+        },
+        {
             "label": _("Direction"),
             "fieldname": "direction",
             "fieldtype": "Link",
@@ -323,13 +365,6 @@ def _columns():
             "width": 180,
         },
         {
-            "label": _("Current User"),
-            "fieldname": "current_holder_user",
-            "fieldtype": "Link",
-            "options": "User",
-            "width": 180,
-        },
-        {
             "label": _("Instructions"),
             "fieldname": "instructions",
             "fieldtype": "Small Text",
@@ -339,34 +374,46 @@ def _columns():
 
 
 def _attention(row):
-    if row.due_date and getdate(row.due_date) < getdate(today()):
+    if (
+        row.due_date
+        and getdate(row.due_date) < getdate(today())
+    ):
         return _("Overdue")
 
-    if row.due_date and getdate(row.due_date) == getdate(today()):
+    if (
+        row.due_date
+        and getdate(row.due_date) == getdate(today())
+    ):
         return _("Due Today")
 
-    return row.referral_workflow_state or _("Unassigned Workflow State")
+    return row.referral_workflow_state or _(
+        "Unassigned Workflow State"
+    )
 
 
 def _summary(data):
     return [
         {
             "value": len(data),
-            "label": _("Visible Referrals"),
+            "label": _("Visible Open Referrals"),
             "datatype": "Int",
         },
         {
-            "value": sum(1 for d in data if d.is_overdue),
-            "label": _("Overdue by Due Date"),
+            "value": sum(
+                1
+                for row in data
+                if row.is_overdue
+            ),
+            "label": _("Overdue"),
             "datatype": "Int",
             "indicator": "Red",
         },
         {
             "value": sum(
                 1
-                for d in data
-                if d.due_date
-                and getdate(d.due_date) == getdate(today())
+                for row in data
+                if row.due_date
+                and getdate(row.due_date) == getdate(today())
             ),
             "label": _("Due Today"),
             "datatype": "Int",
