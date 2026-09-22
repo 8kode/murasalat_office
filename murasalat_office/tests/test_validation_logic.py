@@ -68,6 +68,19 @@ def _obj(**values):
     return types.SimpleNamespace(**values)
 
 
+class _FakeDoc(dict):
+    """Minimal document stand-in: dict keys are readable as attributes."""
+
+    def __getattr__(self, item):
+        try:
+            return self[item]
+        except KeyError as exc:
+            raise AttributeError(item) from exc
+
+    def append(self, parentfield, row):
+        self.setdefault("_appended", []).append((parentfield, row))
+
+
 def test_referral_recipient_validation():
     mod = _load("murasalat_office.murasalat_office.doctype.murasalat_referral.murasalat_referral")
     good = object.__new__(mod.MurasalatReferral)
@@ -238,13 +251,38 @@ def test_delegated_inbox_scope_batches_restricted_organizations():
     assert any(["correspondence", "in", ["CORR-A", "CORR-B"]] in call[1] for call in referral_calls)
 
 
+ACTIVITY_CATALOG = [
+    "Created",
+    "Status Changed",
+    "Registered",
+    "Closed",
+    "Sealed",
+    "Reopened",
+    "Referral Sent",
+    "Referral Received",
+    "Referral Completed",
+]
+
+
 def test_activity_catalog_matches_events_emitted_by_controller():
     import json
 
     root = Path(__file__).resolve().parents[1]
-    doctype = json.loads((root / "murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json").read_text())
+    app = root / "murasalat_office"
+    doctype = json.loads((app / "doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json").read_text())
     options = next(field["options"] for field in doctype["fields"] if field["fieldname"] == "activity_type").splitlines()
-    assert options == ["Created", "Status Changed", "Sealed", "Reopened"]
+
+    assert options == ACTIVITY_CATALOG
+
+    # Every advertised option must be emitted by real application code.
+    emitted = "\n".join(
+        path.read_text()
+        for path in root.rglob("*.py")
+        if "tests" not in path.parts
+    )
+
+    for option in options:
+        assert f'"{option}"' in emitted, option
 
 
 def test_correspondence_lifecycle_activity_detection():
@@ -253,21 +291,51 @@ def test_correspondence_lifecycle_activity_detection():
     doc.is_new = lambda: False
     old = _obj(workflow_state="Draft", record_sealed_on=None, reopened_on=None)
     doc.workflow_state = "Review"
-    doc.record_sealed_on = "2026-09-09 12:00:00"
+    doc.record_sealed_on = None
     doc.reopened_on = None
     doc.get_doc_before_save = lambda: old
     events = []
     doc._append_activity = lambda activity_type, **kwargs: events.append(activity_type)
     mod.MurasalatCorrespondence.before_save(doc)
-    assert events == ["Status Changed", "Sealed"]
+
+    # A save records workflow-state changes only. Sealing and reopening are
+    # lifecycle transitions and are recorded by their own methods.
+    assert events == ["Status Changed"]
+
+
+def test_sealing_and_reopening_record_their_own_activity():
+    mod = _load("murasalat_office.services.lifecycle")
+
+    sealed = _FakeDoc(
+        doctype="Murasalat Correspondence",
+        record_sealed_on=None,
+        record_sealed_by=None,
+        current_holder="ORG-1",
+    )
+    mod.seal_correspondence(sealed)
+    assert sealed.record_sealed_on is not None
+    assert sealed.record_sealed_by == "tester@example.com"
+    assert [row["activity_type"] for _, row in sealed["_appended"]] == ["Sealed"]
+
+    reopened = _FakeDoc(
+        doctype="Murasalat Correspondence",
+        closed_on="2026-09-09 12:00:00",
+        current_holder="ORG-1",
+    )
+    mod.reopen_correspondence(reopened)
+    assert reopened.closed_on is None
+    assert [row["activity_type"] for _, row in reopened["_appended"]] == ["Reopened"]
 
 
 def test_api_contract_exposes_governance_and_normalizes_dates():
+    import re
+
     root = Path(__file__).resolve().parents[1]
     source = (root / "api/operations.py").read_text()
     assert "def get_governance_health" in source
     assert 'frappe.only_for("System Manager")' in source
-    assert "frappe.utils.getdate(r.due_date)" in source
+    assert re.search(r"frappe\.utils\.getdate\(\s*row\.due_date\s*\)", source)
+    assert re.search(r"frappe\.utils\.getdate\(\s*frappe\.utils\.today\(\)\s*\)", source)
 
 
 def test_records_use_sealing_terminology_and_shared_file_hash():

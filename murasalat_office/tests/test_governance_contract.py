@@ -1,7 +1,16 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _compact(path):
+    """Collapse whitespace and drop string-literal boundaries.
+
+    Source-contract assertions must survive line wrapping and implicit string
+    concatenation, both of which are ordinary Python formatting.
+    """
+    return " ".join(path.read_text().replace('"', " ").split())
 
 
 def test_governance_report_exists():
@@ -36,6 +45,6 @@ def test_setup_version_matches_release():
 
 
 def test_sealed_attachment_changes_are_rejected():
-    source = (ROOT / "services/records.py").read_text()
+    source = _compact(ROOT / "services/records.py")
     assert "def validate_sealed_attachments" in source
     assert "Attachments cannot be added, removed, or changed after the correspondence is sealed." in source

@@ -37,7 +37,9 @@ def test_doctypes_do_not_ship_role_permission_rows():
     for path in _json_files():
         data = json.loads(path.read_text())
         if isinstance(data, dict) and data.get("doctype") == "DocType":
-            assert "permissions" not in data, path
+            # Desk round-trips an empty ``permissions`` list for every DocType.
+            # What must never ship is a role row: access is site configuration.
+            assert not data.get("permissions"), path
 
 
 def test_reports_do_not_ship_role_lists():
@@ -57,7 +59,7 @@ def test_correspondence_has_native_workflow_field_and_no_fixed_status_select():
 def test_referral_is_standalone_and_workflow_governed():
     data = json.loads((APP / "murasalat_office/doctype/murasalat_referral/murasalat_referral.json").read_text())
     fields = {f["fieldname"]: f for f in data["fields"]}
-    assert data["istable"] == 0
+    assert data.get("istable", 0) == 0
     assert fields["correspondence"]["fieldtype"] == "Link"
     assert fields["workflow_state"]["fieldtype"] == "Data"
     assert "status" not in fields

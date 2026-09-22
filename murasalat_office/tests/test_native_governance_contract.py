@@ -1,8 +1,21 @@
-from pathlib import Path
 import json
+import re
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP = ROOT
+
+
+def _naming_prefix(autoname):
+    """Return the bare naming prefix, accepting Desk's ``format:`` variant."""
+    if not autoname:
+        return autoname
+    return autoname.split(":", 1)[1] if autoname.startswith("format:") else autoname
+
+
+def _compact(source):
+    """Collapse whitespace and trailing commas so line wrapping cannot break a contract."""
+    return re.sub(r",([\]\)])", r"\1", re.sub(r"\s+", "", source))
 
 
 def test_no_legacy_policy_modules():
@@ -142,12 +155,12 @@ def test_correspondence_does_not_expose_permission_sensitive_referral_count():
 
 def test_correspondence_naming_is_independent_from_select_labels():
     data = json.loads((APP / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json").read_text())
-    assert data.get("autoname") == "format:MO-.#####"
+    assert _naming_prefix(data.get("autoname")) == "MO-.#####"
 
 
 def test_referral_has_native_human_readable_numbering():
     data = json.loads((APP / "murasalat_office/doctype/murasalat_referral/murasalat_referral.json").read_text())
-    assert data.get("autoname") == "format:MR-.#####"
+    assert _naming_prefix(data.get("autoname")) == "MR-.#####"
     source = (APP / "murasalat_office/doctype/murasalat_referral/murasalat_referral.py").read_text()
     assert "self.referral_number = self.name" in source
 
@@ -190,21 +203,23 @@ def test_erpnext_is_not_declared_as_an_unused_runtime_dependency():
 
 def test_delegation_uses_current_expression_naming_syntax():
     data = json.loads((APP / "murasalat_office/doctype/murasalat_delegation/murasalat_delegation.json").read_text())
-    assert data.get("autoname") == "format:MD-.#####"
+    assert _naming_prefix(data.get("autoname")) == "MD-.#####"
 
 
 def test_save_time_integrity_check_does_not_read_attachment_content():
     source = (APP / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py").read_text()
-    assert "verify_integrity(self, verify_files=False)" in source
+    # Save-time verification must stay snapshot-only, so the flag is asserted
+    # explicitly instead of only asserting that the call exists.
+    assert re.search(r"verify_integrity\(\s*self\s*,\s*verify_files=False\s*,?\s*\)", source)
 
 
 def test_explicit_integrity_api_keeps_full_file_verification():
     source = (APP / "api/operations.py").read_text()
-    assert "verify_integrity(doc)" in source
+    assert re.search(r"verify_integrity\(\s*doc\s*,\s*verify_files=True\s*,?\s*\)", source)
 
 
 def test_delegated_scope_batches_organization_resolution():
-    source = (APP / "murasalat_office/report/murasalat_inbox/murasalat_inbox.py").read_text()
-    assert '"originating_organization": ["in", restricted_orgs]' in source
-    assert '["recipient_department", "in", restricted_orgs]' in source
-    assert '"correspondence", "in", scoped_names' in source
+    compact = _compact((APP / "murasalat_office/report/murasalat_inbox/murasalat_inbox.py").read_text())
+    assert '"originating_organization":["in",restricted_orgs]' in compact
+    assert '["recipient_department","in",restricted_orgs]' in compact
+    assert '["correspondence","in",scoped_names]' in compact

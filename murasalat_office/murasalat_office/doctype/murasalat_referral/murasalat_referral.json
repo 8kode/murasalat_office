@@ -238,6 +238,6 @@
  "sort_field": "due_date",
  "sort_order": "ASC",
  "states": [],
- "title_field": "correspondence",
+ "title_field": "referral_number",
  "track_changes": 1
 }
