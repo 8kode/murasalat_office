@@ -58,6 +58,35 @@ def _child_fieldname():
     return None
 
 
+def suggest_group_name(workflow_name, action):
+    """A readable group name, following the convention already used on the site.
+
+    The site's existing groups read "Murasalat Referral Send Task", "Murasalat
+    Correspondence Seal Task" and so on: the workflow name without its "Workflow" suffix,
+    then the action, then "Task".
+    """
+    prefix = workflow_name.replace(" Workflow", "").strip()
+    return f"{prefix} {action} Task"
+
+
+def unique_group_name(base):
+    """The base name, or the first free numbered variant of it.
+
+    ``Workflow Transition Tasks`` names its documents by prompting, so the name has to be
+    supplied on insert and must not collide with an existing group.
+    """
+    import frappe
+
+    name = base
+    counter = 1
+
+    while frappe.db.exists(GROUP_DOCTYPE, name):
+        counter += 1
+        name = f"{base} {counter}"
+
+    return name
+
+
 def collect():
     """Every active transition, with the tasks attached to it and the hook behind each.
 
@@ -241,13 +270,13 @@ def attach(workflow, transition, hook, group=None):
     # action label the user sees ("Approve") as well as the row name.
     if frappe.db.exists("Workflow Transition", transition):
         transition_doc = frappe.db.get_value(
-            "Workflow Transition", transition, ["name", "parent"], as_dict=True
+            "Workflow Transition", transition, ["name", "parent", "action"], as_dict=True
         )
     elif workflow:
         transition_doc = frappe.db.get_value(
             "Workflow Transition",
             {"parent": workflow, "action": transition},
-            ["name", "parent"],
+            ["name", "parent", "action"],
             as_dict=True,
         )
     else:
@@ -269,14 +298,21 @@ def attach(workflow, transition, hook, group=None):
         group = frappe.db.get_value("Workflow Transition", transition, LINK_FIELD)
 
     if not group:
-        group = frappe.get_doc(
+        # The doctype prompts for its name, so one has to be supplied here. Without it the
+        # insert fails with "Please set the document name".
+        group = unique_group_name(
+            suggest_group_name(transition_doc.parent, transition_doc.get("action") or hook)
+        )
+
+        frappe.get_doc(
             {
                 "doctype": GROUP_DOCTYPE,
+                "name": group,
                 child_field: [
                     {"doctype": CHILD_DOCTYPE, "task": hook, "enabled": 1, "asynchronous": 0}
                 ],
             }
-        ).insert(ignore_permissions=True).name
+        ).insert(ignore_permissions=True)
 
     else:
         existing = frappe.get_all(

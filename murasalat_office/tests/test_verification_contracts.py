@@ -98,6 +98,17 @@ def test_the_task_setup_separates_state_only_transitions_from_problems():
     assert "no transition task" not in problems_body
 
 
+def test_attach_supplies_a_group_name_because_the_doctype_prompts_for_one():
+    """autoname 'prompt' means the name must be given on insert, not derived."""
+    source = _source(TASKS)
+
+    assert "def suggest_group_name(" in source
+    assert "def unique_group_name(" in source
+    assert '"name": group' in source
+    # the convention already used on the site
+    assert 'replace(" Workflow", "")' in source
+
+
 def test_attach_accepts_the_action_label_a_user_can_see():
     """Transition rows are named by a generated hash, which nobody can guess."""
     source = _source(TASKS)
