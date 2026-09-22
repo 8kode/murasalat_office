@@ -111,3 +111,23 @@ def operational_summary(correspondence):
         ),
         "integrity_check_scope": "record_snapshot_only",
     }
+
+
+@frappe.whitelist()
+def correspondence_overview(correspondence):
+    """Read-only overview panel for one correspondence.
+
+    The panel markup is rendered server-side so it can be tested; access is decided by
+    services.overview, which reads through permission-aware queries only.
+    """
+    from murasalat_office.services.overview import correspondence_overview as build
+
+    return build(correspondence)
+
+
+@frappe.whitelist()
+def referral_overview(referral):
+    """Read-only overview panel for one referral, including its own lifecycle trail."""
+    from murasalat_office.services.overview import referral_overview as build
+
+    return build(referral)

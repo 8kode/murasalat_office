@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "overview_html",
   "naming_section",
   "subject",
   "column_break_fxzw",
@@ -66,6 +67,12 @@
   "workflow_state"
  ],
  "fields": [
+  {
+   "fieldname": "overview_html",
+   "fieldtype": "HTML",
+   "label": "\u0646\u0638\u0631\u0629 \u0634\u0627\u0645\u0644\u0629 \u0639\u0644\u0649 \u0627\u0644\u0645\u0639\u0627\u0645\u0644\u0629",
+   "no_copy": 1
+  },
   {
    "fieldname": "naming_section",
    "fieldtype": "Section Break",

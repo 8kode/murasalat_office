@@ -1,0 +1,242 @@
+{# نظرة شاملة على المعاملة — rendered server-side, autoescaped, RTL.
+   Presentation only: every value came through a permission-aware query. #}
+<style>
+  .mo-ov { direction: rtl; text-align: right; font-size: 13px; color: #1b2a27; margin-bottom: 14px; }
+  .mo-ov * { box-sizing: border-box; }
+  .mo-ov .mo-card { border: 1px solid #dfe8e5; border-radius: 8px; background: #fff; padding: 12px 14px; margin-bottom: 10px; }
+  .mo-ov .mo-head { border-right: 4px solid #2f6b5f; }
+  .mo-ov .mo-title { font-size: 17px; font-weight: 700; color: #123c35; line-height: 1.5; }
+  .mo-ov .mo-sub { color: #63736e; font-size: 12px; margin-top: 2px; }
+  .mo-ov .mo-chip { display: inline-block; border: 1px solid #c9d8d3; border-radius: 12px; padding: 1px 10px; margin: 4px 0 0 6px; font-size: 11.5px; color: #3c4a45; background: #f6f9f8; }
+  .mo-ov .mo-chip.mo-strong { border-color: #123c35; color: #123c35; font-weight: 700; background: #fff; }
+  .mo-ov .mo-chip.mo-red { border-color: #b03a2e; color: #b03a2e; background: #fdf3f1; font-weight: 700; }
+  .mo-ov .mo-chip.mo-orange { border-color: #c9821f; color: #9c6414; background: #fdf8ef; font-weight: 700; }
+  .mo-ov .mo-chip.mo-green { border-color: #16694f; color: #16694f; background: #f1f8f5; font-weight: 700; }
+
+  .mo-ov .mo-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .mo-ov .mo-kpi { flex: 1 1 110px; border: 1px solid #dfe8e5; border-radius: 8px; padding: 8px 10px; background: #fbfdfc; text-align: center; }
+  .mo-ov .mo-kpi .n { font-size: 21px; font-weight: 700; color: #123c35; line-height: 1.2; }
+  .mo-ov .mo-kpi .l { font-size: 11.5px; color: #63736e; margin-top: 2px; }
+  .mo-ov .mo-kpi.mo-alert { border-color: #e7bdb6; background: #fdf6f5; }
+  .mo-ov .mo-kpi.mo-alert .n { color: #b03a2e; }
+  .mo-ov .mo-kpi.mo-warn { border-color: #eed8b0; background: #fdfaf3; }
+  .mo-ov .mo-kpi.mo-warn .n { color: #c9821f; }
+  .mo-ov .mo-kpi.mo-ok { border-color: #c3ddd2; background: #f5faf8; }
+  .mo-ov .mo-kpi.mo-ok .n { color: #16694f; }
+
+  .mo-ov h5.mo-sec { font-size: 13.5px; font-weight: 700; color: #123c35; margin: 0 0 8px 0; padding-right: 8px; border-right: 3px solid #98b5ad; }
+  .mo-ov table.mo-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mo-ov table.mo-tbl th { background: #eef3f1; color: #123c35; text-align: right; padding: 6px 8px; border: 1px solid #e2eae7; font-weight: 700; white-space: nowrap; }
+  .mo-ov table.mo-tbl td { padding: 6px 8px; border: 1px solid #e9efed; vertical-align: middle; }
+  .mo-ov table.mo-tbl tr:nth-child(even) td { background: #fbfdfc; }
+  .mo-ov table.mo-tbl a { color: #1a5d8f; font-weight: 700; text-decoration: none; }
+  .mo-ov table.mo-tbl a:hover { text-decoration: underline; }
+  .mo-ov .mo-empty { color: #86968f; font-size: 12px; padding: 6px 2px; }
+  .mo-ov .mo-muted { color: #86968f; }
+  .mo-ov .mo-num { direction: ltr; text-align: left; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; }
+
+  .mo-ov .mo-timeline { position: relative; margin: 2px 0 0 0; padding: 0 14px 0 0; }
+  .mo-ov .mo-timeline::before { content: ""; position: absolute; top: 4px; bottom: 4px; right: 4px; width: 2px; background: #e2eae7; }
+  .mo-ov .mo-ev { position: relative; padding: 0 12px 10px 0; }
+  .mo-ov .mo-ev::before { content: ""; position: absolute; right: -14px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: #2f6b5f; border: 2px solid #fff; box-shadow: 0 0 0 1px #c9d8d3; }
+  .mo-ov .mo-ev .mo-ev-h { font-weight: 700; color: #123c35; font-size: 12.5px; }
+  .mo-ov .mo-ev .mo-ev-m { font-size: 11.5px; color: #63736e; }
+  .mo-ov .mo-ev .mo-ev-d { font-size: 11.5px; color: #3c4a45; margin-top: 1px; }
+
+  .mo-ov .mo-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .mo-ov .mo-grid > .mo-card { flex: 1 1 300px; margin-bottom: 0; }
+  .mo-ov .mo-kv { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed #edf2f0; font-size: 12px; }
+  .mo-ov .mo-kv:last-child { border-bottom: none; }
+  .mo-ov .mo-kv .k { color: #63736e; }
+  .mo-ov .mo-kv .v { font-weight: 700; color: #1b2a27; text-align: left; }
+  .mo-ov .mo-integrity { border: 1px solid #c3ddd2; background: #f5faf8; border-radius: 8px; padding: 10px 12px; }
+  .mo-ov .mo-integrity .mo-hash { direction: ltr; text-align: left; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10.5px; color: #3c4a45; margin-top: 4px; }
+  .mo-ov .mo-loading { color: #86968f; font-size: 12.5px; padding: 10px 2px; }
+</style>
+
+<div class="mo-ov">
+
+  <div class="mo-card mo-head">
+    <div class="mo-title">{{ subject or "—" }}</div>
+    <div class="mo-sub">
+      <span class="mo-num">{{ name }}</span>
+      {% if concerned_person %} · المعني: {{ concerned_person }}{% endif %}
+      {% if holder %} · الحائز حاليًا: {{ holder }}{% endif %}
+    </div>
+    <div>
+      {% if state %}<span class="mo-chip mo-strong">{{ state }}</span>{% endif %}
+      {% if direction_ar %}<span class="mo-chip">{{ direction_ar }}</span>{% endif %}
+      {% if confidentiality %}<span class="mo-chip">{{ confidentiality }}</span>{% endif %}
+      {% if importance %}<span class="mo-chip">{{ importance }}</span>{% endif %}
+      {% if transaction_type %}<span class="mo-chip">{{ transaction_type }}</span>{% endif %}
+      {% if sealed %}<span class="mo-chip mo-green">مختومة</span>{% endif %}
+      {% if closed_on %}<span class="mo-chip mo-orange">مغلقة</span>{% endif %}
+      {% if is_overdue_style %}{% endif %}
+    </div>
+  </div>
+
+  <div class="mo-kpis">
+    <div class="mo-kpi{% if kpis.open %} mo-ok{% endif %}">
+      <div class="n">{{ kpis.open }}</div><div class="l">إحالات مفتوحة</div>
+    </div>
+    <div class="mo-kpi{% if kpis.overdue %} mo-alert{% endif %}">
+      <div class="n">{{ kpis.overdue }}</div><div class="l">متأخرة</div>
+    </div>
+    <div class="mo-kpi{% if kpis.due_today %} mo-warn{% endif %}">
+      <div class="n">{{ kpis.due_today }}</div><div class="l">تستحق اليوم</div>
+    </div>
+    <div class="mo-kpi">
+      <div class="n">{{ kpis.completed }}</div><div class="l">مكتملة</div>
+    </div>
+    <div class="mo-kpi">
+      <div class="n">{{ kpis.draft }}</div><div class="l">مسوّدات</div>
+    </div>
+    <div class="mo-kpi">
+      <div class="n">{{ kpis.total }}</div><div class="l">إجمالي الإحالات</div>
+    </div>
+    <div class="mo-kpi">
+      <div class="n">{{ attachments_total }}</div><div class="l">مرفقات{% if attachments_secret %} (سرّي {{ attachments_secret }}){% endif %}</div>
+    </div>
+  </div>
+
+  <div class="mo-card">
+    <h5 class="mo-sec">الإحالات على هذه المعاملة{% if referrals %} ({{ referrals | length }}){% endif %}</h5>
+    {% if referrals %}
+    <table class="mo-tbl">
+      <thead>
+        <tr>
+          <th>الإحالة</th>
+          <th>الموجَّه إليه</th>
+          <th>الحالة</th>
+          <th>الاستحقاق</th>
+          <th>أُرسلت</th>
+          <th>استُلمت</th>
+          <th>أُكملت</th>
+          <th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in referrals %}
+        <tr>
+          <td><a href="/app/murasalat-referral/{{ r.name }}">{{ r.referral_number or r.name }}</a></td>
+          <td>{{ r.recipient_label }} <span class="mo-muted">({{ r.recipient_type_ar }})</span></td>
+          <td>
+            {% if r.is_completed %}<span class="mo-chip mo-green">مكتملة</span>
+            {% elif r.is_overdue %}<span class="mo-chip mo-red">متأخرة {{ -r.days_left }}ي</span>
+            {% elif r.is_due_today %}<span class="mo-chip mo-orange">تستحق اليوم</span>
+            {% elif r.is_open %}<span class="mo-chip">مفتوحة</span>
+            {% else %}<span class="mo-chip">مسوّدة</span>{% endif %}
+            {% if r.state %}<span class="mo-muted"> {{ r.state }}</span>{% endif %}
+          </td>
+          <td>{{ r.due_date or "—" }}
+            {% if r.is_open and r.days_left is not none and r.days_left > 0 %}<span class="mo-muted"> (متبقٍ {{ r.days_left }}ي)</span>{% endif %}
+          </td>
+          <td class="mo-muted">{{ r.sent_on or "—" }}</td>
+          <td class="mo-muted">{{ r.received_on or "—" }}</td>
+          <td class="mo-muted">{{ r.completed_on or "—" }}</td>
+          <td>
+            {% if r.private_referral %}<span class="mo-chip mo-red">خاصة</span>{% endif %}
+            {% if r.follow_up %}<span class="mo-chip">متابعة</span>{% endif %}
+            {% if r.paper_copy %}<span class="mo-chip">ورقية</span>{% endif %}
+            {% if r.cc_copy %}<span class="mo-chip">صورة</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="mo-empty">لا توجد إحالات مسجّلة على هذه المعاملة بعد.</div>
+    {% endif %}
+  </div>
+
+  {% if links %}
+  <div class="mo-card">
+    <h5 class="mo-sec">المعاملات المرتبطة ({{ links | length }})</h5>
+    <table class="mo-tbl">
+      <thead><tr><th>المعاملة</th><th>نوع العلاقة</th><th>ملاحظات</th></tr></thead>
+      <tbody>
+        {% for l in links %}
+        <tr>
+          <td><a href="/app/murasalat-correspondence/{{ l.correspondence }}">{{ l.correspondence }}</a></td>
+          <td>{{ l.relationship or "—" }}</td>
+          <td class="mo-muted">{{ l.remarks or "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="mo-grid">
+    <div class="mo-card">
+      <h5 class="mo-sec">البيانات الرسمية</h5>
+      <div class="mo-kv"><span class="k">الرقم الداخلي</span><span class="v mo-num">{{ name }}</span></div>
+      <div class="mo-kv"><span class="k">الرقم الخارجي</span><span class="v">{{ external_letter_number or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">تاريخ الخطاب الخارجي</span><span class="v">{{ external_letter_date or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">الموعد النهائي</span><span class="v">{{ due_date or "—" }}{% if days_left is not none %} <span class="mo-muted">({{ days_left }}ي)</span>{% endif %}</span></div>
+      <div class="mo-kv"><span class="k">عدد الصفحات</span><span class="v">{{ page_count or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">تاريخ التسجيل</span><span class="v">{{ registered_on or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">تاريخ الإغلاق</span><span class="v">{{ closed_on or "—" }}</span></div>
+      {% if reopened_on %}<div class="mo-kv"><span class="k">أُعيد فتحها</span><span class="v">{{ reopened_on }}</span></div>{% endif %}
+    </div>
+
+    <div class="mo-card">
+      <h5 class="mo-sec">طلبات الاعتماد{% if approvals %} ({{ approvals | length }}){% endif %}</h5>
+      {% if approvals %}
+      <table class="mo-tbl">
+        <thead><tr><th>الطلب</th><th>المستوى</th><th>الحالة</th><th>مقدَّم</th><th>القرار</th></tr></thead>
+        <tbody>
+          {% for a in approvals %}
+          <tr>
+            <td><a href="/app/murasalat-approval-request/{{ a.name }}">{{ a.name }}</a></td>
+            <td>{{ a.approval_level or "—" }}</td>
+            <td>{{ a.workflow_state or "—" }}</td>
+            <td class="mo-muted">{{ a.requested_by or "—" }}<br>{{ a.requested_on or "" }}</td>
+            <td class="mo-muted">
+              {% if a.approved_on %}{{ a.approved_by or "—" }}<br>{{ a.approved_on }}
+              {% else %}<span class="mo-chip mo-orange">بانتظار القرار</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="mo-empty">لا توجد طلبات اعتماد.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mo-grid" style="margin-top:10px">
+    <div class="mo-card">
+      <h5 class="mo-sec">آخر الحركات</h5>
+      {% if activity %}
+      <div class="mo-timeline">
+        {% for e in activity %}
+        <div class="mo-ev">
+          <div class="mo-ev-h">{{ e.activity_type_ar }}</div>
+          <div class="mo-ev-m">{{ e.activity_on or "" }} · {{ e.actor or "—" }}{% if e.referral_number %} · {{ e.referral_number }}{% endif %}</div>
+          {% if e.details %}<div class="mo-ev-d">{{ e.details }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="mo-empty">لا توجد حركات مسجّلة.</div>
+      {% endif %}
+    </div>
+
+    <div class="mo-card">
+      <h5 class="mo-sec">حالة الختم والسلامة</h5>
+      {% if sealed %}
+      <div class="mo-integrity">
+        <div class="mo-kv"><span class="k">تاريخ الختم</span><span class="v">{{ sealed_on or "—" }}</span></div>
+        <div class="mo-kv"><span class="k">خُتم بواسطة</span><span class="v">{{ sealed_by or "—" }}</span></div>
+        {% if seal_reason %}<div class="mo-kv"><span class="k">سبب الختم</span><span class="v">{{ seal_reason }}</span></div>{% endif %}
+        {% if integrity_hash %}<div class="mo-hash">{{ integrity_hash }}</div>{% endif %}
+      </div>
+      {% else %}
+      <div class="mo-empty">المعاملة غير مختومة. عند الختم تُجمَّد حقول الهوية والتصنيف وتُسجَّل بصمة سلامة.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,200 @@
+{# نظرة شاملة على الإحالة — rendered server-side, autoescaped, RTL.
+   The parent file is shown only when the user may read it; otherwise it prints as مقيدة. #}
+<style>
+  .mo-ov { direction: rtl; text-align: right; font-size: 13px; color: #1b2a27; margin-bottom: 14px; }
+  .mo-ov * { box-sizing: border-box; }
+  .mo-ov .mo-card { border: 1px solid #dfe8e5; border-radius: 8px; background: #fff; padding: 12px 14px; margin-bottom: 10px; }
+  .mo-ov .mo-head { border-right: 4px solid #2f6b5f; }
+  .mo-ov .mo-title { font-size: 17px; font-weight: 700; color: #123c35; line-height: 1.5; }
+  .mo-ov .mo-sub { color: #63736e; font-size: 12px; margin-top: 2px; }
+  .mo-ov .mo-chip { display: inline-block; border: 1px solid #c9d8d3; border-radius: 12px; padding: 1px 10px; margin: 4px 0 0 6px; font-size: 11.5px; color: #3c4a45; background: #f6f9f8; }
+  .mo-ov .mo-chip.mo-strong { border-color: #123c35; color: #123c35; font-weight: 700; background: #fff; }
+  .mo-ov .mo-chip.mo-red { border-color: #b03a2e; color: #b03a2e; background: #fdf3f1; font-weight: 700; }
+  .mo-ov .mo-chip.mo-orange { border-color: #c9821f; color: #9c6414; background: #fdf8ef; font-weight: 700; }
+  .mo-ov .mo-chip.mo-green { border-color: #16694f; color: #16694f; background: #f1f8f5; font-weight: 700; }
+  .mo-ov .mo-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .mo-ov .mo-kpi { flex: 1 1 110px; border: 1px solid #dfe8e5; border-radius: 8px; padding: 8px 10px; background: #fbfdfc; text-align: center; }
+  .mo-ov .mo-kpi .n { font-size: 21px; font-weight: 700; color: #123c35; line-height: 1.2; }
+  .mo-ov .mo-kpi .l { font-size: 11.5px; color: #63736e; margin-top: 2px; }
+  .mo-ov .mo-kpi.mo-alert { border-color: #e7bdb6; background: #fdf6f5; }
+  .mo-ov .mo-kpi.mo-alert .n { color: #b03a2e; }
+  .mo-ov .mo-kpi.mo-warn { border-color: #eed8b0; background: #fdfaf3; }
+  .mo-ov .mo-kpi.mo-warn .n { color: #c9821f; }
+  .mo-ov .mo-kpi.mo-ok { border-color: #c3ddd2; background: #f5faf8; }
+  .mo-ov .mo-kpi.mo-ok .n { color: #16694f; }
+  .mo-ov h5.mo-sec { font-size: 13.5px; font-weight: 700; color: #123c35; margin: 0 0 8px 0; padding-right: 8px; border-right: 3px solid #98b5ad; }
+  .mo-ov table.mo-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mo-ov table.mo-tbl th { background: #eef3f1; color: #123c35; text-align: right; padding: 6px 8px; border: 1px solid #e2eae7; font-weight: 700; white-space: nowrap; }
+  .mo-ov table.mo-tbl td { padding: 6px 8px; border: 1px solid #e9efed; vertical-align: middle; }
+  .mo-ov table.mo-tbl tr:nth-child(even) td { background: #fbfdfc; }
+  .mo-ov table.mo-tbl a { color: #1a5d8f; font-weight: 700; text-decoration: none; }
+  .mo-ov table.mo-tbl a:hover { text-decoration: underline; }
+  .mo-ov .mo-empty { color: #86968f; font-size: 12px; padding: 6px 2px; }
+  .mo-ov .mo-muted { color: #86968f; }
+  .mo-ov .mo-num { direction: ltr; text-align: left; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; }
+  .mo-ov .mo-stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .mo-ov .mo-stamp { flex: 1 1 150px; border: 1px solid #dfe8e5; border-radius: 8px; padding: 8px 10px; background: #fbfdfc; }
+  .mo-ov .mo-stamp .l { font-size: 11.5px; color: #63736e; }
+  .mo-ov .mo-stamp .v { font-size: 13px; font-weight: 700; color: #123c35; margin-top: 2px; }
+  .mo-ov .mo-stamp .w { font-size: 11px; color: #86968f; }
+  .mo-ov .mo-stamp.mo-pending { border-style: dashed; background: #fdfbf7; }
+  .mo-ov .mo-stamp.mo-pending .v { color: #a9b3af; font-weight: 400; }
+  .mo-ov .mo-instr { border: 1px solid #dfe8e5; background: #fbfdfc; border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; font-size: 12.5px; }
+  .mo-ov .mo-timeline { position: relative; margin: 2px 0 0 0; padding: 0 14px 0 0; }
+  .mo-ov .mo-timeline::before { content: ""; position: absolute; top: 4px; bottom: 4px; right: 4px; width: 2px; background: #e2eae7; }
+  .mo-ov .mo-ev { position: relative; padding: 0 12px 10px 0; }
+  .mo-ov .mo-ev::before { content: ""; position: absolute; right: -14px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: #2f6b5f; border: 2px solid #fff; box-shadow: 0 0 0 1px #c9d8d3; }
+  .mo-ov .mo-ev .mo-ev-h { font-weight: 700; color: #123c35; font-size: 12.5px; }
+  .mo-ov .mo-ev .mo-ev-m { font-size: 11.5px; color: #63736e; }
+  .mo-ov .mo-ev .mo-ev-d { font-size: 11.5px; color: #3c4a45; margin-top: 1px; }
+  .mo-ov .mo-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .mo-ov .mo-grid > .mo-card { flex: 1 1 320px; margin-bottom: 0; }
+  .mo-ov .mo-kv { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed #edf2f0; font-size: 12px; }
+  .mo-ov .mo-kv:last-child { border-bottom: none; }
+  .mo-ov .mo-kv .k { color: #63736e; }
+  .mo-ov .mo-kv .v { font-weight: 700; color: #1b2a27; text-align: left; }
+  .mo-ov .mo-locked { border: 1px dashed #d7cfc5; background: #fdfbf8; border-radius: 8px; padding: 12px; color: #8a7f70; font-size: 12.5px; }
+</style>
+
+<div class="mo-ov">
+
+  <div class="mo-card mo-head">
+    <div class="mo-title">إحالة {{ referral_number }}</div>
+    <div class="mo-sub">
+      الموجَّه إليه: <strong>{{ recipient_label }}</strong> ({{ recipient_type_ar }})
+      {% if parent %} · المعاملة: <strong>{{ correspondence }}</strong>{% endif %}
+    </div>
+    <div>
+      {% if state %}<span class="mo-chip mo-strong">{{ state }}</span>{% endif %}
+      {% if is_draft %}<span class="mo-chip">مسوّدة — لم تُرسل</span>{% endif %}
+      {% if is_overdue %}<span class="mo-chip mo-red">متأخرة {{ -days_left }} يومًا</span>
+      {% elif is_due_today %}<span class="mo-chip mo-orange">تستحق اليوم</span>
+      {% elif is_open and days_left is not none %}<span class="mo-chip mo-green">متبقٍ {{ days_left }} يومًا</span>{% endif %}
+      {% if completed_on %}<span class="mo-chip mo-green">مكتملة</span>{% endif %}
+      {% if private_referral %}<span class="mo-chip mo-red">خاصة</span>{% endif %}
+      {% if importance %}<span class="mo-chip">{{ importance }}</span>{% endif %}
+      {% if direction %}<span class="mo-chip">{{ direction }}</span>{% endif %}
+      {% if follow_up %}<span class="mo-chip">للمتابعة</span>{% endif %}
+      {% if paper_copy %}<span class="mo-chip">نسخة ورقية</span>{% endif %}
+      {% if cc_copy %}<span class="mo-chip">صورة للعلم</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="mo-stamps">
+    <div class="mo-stamp{% if not sent_on %} mo-pending{% endif %}">
+      <div class="l">أُرسلت</div>
+      <div class="v">{{ sent_on or "لم تُرسل" }}</div>
+    </div>
+    <div class="mo-stamp{% if not received_on %} mo-pending{% endif %}">
+      <div class="l">استُلمت</div>
+      <div class="v">{{ received_on or "لم تُستلم" }}</div>
+      {% if received_by %}<div class="w">{{ received_by }}</div>{% endif %}
+    </div>
+    <div class="mo-stamp{% if not completed_on %} mo-pending{% endif %}">
+      <div class="l">أُكملت</div>
+      <div class="v">{{ completed_on or "لم تُكمل" }}</div>
+      {% if completed_by %}<div class="w">{{ completed_by }}</div>{% endif %}
+    </div>
+    <div class="mo-stamp">
+      <div class="l">الموعد النهائي</div>
+      <div class="v">{{ due_date or "—" }}</div>
+      {% if is_open and days_left is not none %}
+      <div class="w">{% if days_left < 0 %}تجاوزت الموعد{% elif days_left == 0 %}تستحق اليوم{% else %}متبقٍ {{ days_left }} يومًا{% endif %}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mo-card">
+    <h5 class="mo-sec">التعليمات إلى المستلِم</h5>
+    <div class="mo-instr">{{ instructions or "—" }}</div>
+  </div>
+
+  <div class="mo-grid">
+    <div class="mo-card">
+      <h5 class="mo-sec">المعاملة المرجعية</h5>
+      {% if parent %}
+      <div class="mo-kv"><span class="k">الرقم</span><span class="v"><a href="/app/murasalat-correspondence/{{ parent.name }}">{{ parent.name }}</a></span></div>
+      <div class="mo-kv"><span class="k">الموضوع</span><span class="v">{{ parent.subject or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">الاتجاه</span><span class="v">{{ parent_direction_ar or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">الحالة</span><span class="v">{{ parent.workflow_state or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">القسم الحائز</span><span class="v">{{ parent.current_holder or "—" }}</span></div>
+      <div class="mo-kv"><span class="k">سرّية المعاملة</span><span class="v">{{ parent.confidentiality or "—" }}</span></div>
+      {% if parent.record_sealed_on %}<div class="mo-kv"><span class="k">الحالة الأمنية</span><span class="v"><span class="mo-chip mo-green">مختومة</span></span></div>{% endif %}
+      {% else %}
+      <div class="mo-locked">مقيّد — لا تملك صلاحية قراءة المعاملة المرتبطة. تُعرض بيانات الإحالة وحدها.</div>
+      {% endif %}
+    </div>
+
+    <div class="mo-card">
+      <h5 class="mo-sec">بقية إحالات المعاملة{% if siblings %} ({{ siblings | length }}){% endif %}</h5>
+      {% if siblings %}
+      <table class="mo-tbl">
+        <thead><tr><th>الإحالة</th><th>الموجَّه إليه</th><th>الحالة</th><th>الاستحقاق</th></tr></thead>
+        <tbody>
+          {% for s in siblings %}
+          <tr>
+            <td><a href="/app/murasalat-referral/{{ s.name }}">{{ s.referral_number or s.name }}</a></td>
+            <td>{{ s.recipient_label }}</td>
+            <td>
+              {% if s.is_completed %}<span class="mo-chip mo-green">مكتملة</span>
+              {% elif s.is_overdue %}<span class="mo-chip mo-red">متأخرة</span>
+              {% elif s.is_due_today %}<span class="mo-chip mo-orange">تستحق اليوم</span>
+              {% elif s.is_open %}<span class="mo-chip">مفتوحة</span>
+              {% else %}<span class="mo-chip">مسوّدة</span>{% endif %}
+            </td>
+            <td class="mo-muted">{{ s.due_date or "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% elif parent %}
+      <div class="mo-empty">لا توجد إحالات أخرى على هذه المعاملة.</div>
+      {% else %}
+      <div class="mo-empty">غير متاح — صلاحية المعاملة مطلوبة لعرض بقية الإحالات.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mo-grid" style="margin-top:10px">
+    <div class="mo-card">
+      <h5 class="mo-sec">مسار هذه الإحالة</h5>
+      {% if activity %}
+      <div class="mo-timeline">
+        {% for e in activity %}
+        <div class="mo-ev">
+          <div class="mo-ev-h">{{ e.activity_type_ar }}</div>
+          <div class="mo-ev-m">{{ e.activity_on or "" }} · {{ e.actor or "—" }}</div>
+          {% if e.details %}<div class="mo-ev-d">{{ e.details }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% elif sent_on %}
+      <div class="mo-empty">لا توجد حركات مسجّلة لهذه الإحالة بعد.</div>
+      {% else %}
+      <div class="mo-empty">لم تُرسل الإحالة بعد — ستظهر حركاتها هنا بعد الإرسال.</div>
+      {% endif %}
+    </div>
+
+    <div class="mo-card">
+      <h5 class="mo-sec">طلبات اعتماد المعاملة{% if approvals %} ({{ approvals | length }}){% endif %}</h5>
+      {% if approvals %}
+      <table class="mo-tbl">
+        <thead><tr><th>الطلب</th><th>المستوى</th><th>الحالة</th><th>القرار</th></tr></thead>
+        <tbody>
+          {% for a in approvals %}
+          <tr>
+            <td><a href="/app/murasalat-approval-request/{{ a.name }}">{{ a.name }}</a></td>
+            <td>{{ a.approval_level or "—" }}</td>
+            <td>{{ a.workflow_state or "—" }}</td>
+            <td class="mo-muted">{{ a.approved_by or "بانتظار القرار" }}{% if a.approved_on %}<br>{{ a.approved_on }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="mo-empty">لا توجد طلبات اعتماد.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>

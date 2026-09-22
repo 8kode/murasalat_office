@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "overview_html",
   "correspondence",
   "recipient_type",
   "direction",
@@ -37,6 +38,12 @@
   "legacy_history"
  ],
  "fields": [
+  {
+   "fieldname": "overview_html",
+   "fieldtype": "HTML",
+   "label": "نظرة شاملة على الإحالة",
+   "no_copy": 1
+  },
   {
    "fieldname": "correspondence",
    "fieldtype": "Link",
