@@ -73,11 +73,26 @@ def test_setup_resolves_report_names_the_same_way_the_smoke_check_does():
     assert "report_name" in source
 
 
-def test_the_task_setup_keeps_tasks_synchronous_and_idempotent():
+def test_the_task_setup_matches_hooks_by_task_name_not_by_transition_action():
+    """A transition's action is what the user clicks; the task names the hook.
+
+    Matching on the action found nothing and reported a working setup as unconfigured.
+    """
     source = _source(TASKS)
 
+    assert "row['hooks']" in source or 'row["hooks"]' in source
+    assert "task.task in hook_names()" in source
+    assert "unattached_hooks" in source
+
+
+def test_the_task_setup_reports_problems_instead_of_guessing_attachments():
+    source = _source(TASKS)
+
+    assert "def problems(" in source
+    assert "def unattached_hooks(" in source
+    assert "def attach(" in source
+    # which transition runs which hook is a business decision, so it is passed in
     assert '"asynchronous": 0' in source
-    assert "if row[\"attached\"]" in source
     assert "supports_transition_tasks()" in source
 
 

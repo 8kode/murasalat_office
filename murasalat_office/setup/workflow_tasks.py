@@ -50,17 +50,24 @@ def _child_fieldname():
 
 
 def collect():
-    """Every (workflow, transition, hook) that needs a task row.
+    """Every active transition, with the tasks attached to it and the hook behind each.
 
-    Pure read: returns a list of dicts, creates nothing.
+    Reads the transition's task rows, not the transition's action. The two are different
+    values: a transition's action is what the user clicks ("Register"), while the task it
+    carries names the ``workflow_methods`` entry ("Register Correspondence"). Matching on
+    the action finds nothing and reports a working setup as unconfigured.
     """
     import frappe
 
-    wanted = set(hook_names())
-    plan = []
+    hooks = hook_names()
+    rows = []
+    child_field = _child_fieldname() if supports_transition_tasks() else None
 
     for workflow in frappe.get_all(
-        "Workflow", filters={"is_active": 1}, fields=["name", "document_type"], limit_page_length=0
+        "Workflow",
+        filters={"is_active": 1},
+        fields=["name", "document_type"],
+        limit_page_length=0,
     ):
         transitions = frappe.get_all(
             "Workflow Transition",
@@ -71,15 +78,23 @@ def collect():
         )
 
         for transition in transitions:
-            if transition.action not in wanted:
-                continue
-
-            existing = None
+            group = None
 
             if supports_transition_tasks():
-                existing = frappe.db.get_value("Workflow Transition", transition.name, LINK_FIELD)
+                group = frappe.db.get_value("Workflow Transition", transition.name, LINK_FIELD)
 
-            plan.append(
+            tasks = []
+
+            if group and child_field:
+                tasks = frappe.get_all(
+                    CHILD_DOCTYPE,
+                    filters={"parent": group, "parentfield": child_field},
+                    fields=["name", "task", "enabled", "asynchronous"],
+                    order_by="idx",
+                    limit_page_length=0,
+                )
+
+            rows.append(
                 {
                     "workflow": workflow.name,
                     "doctype": workflow.document_type,
@@ -87,16 +102,52 @@ def collect():
                     "action": transition.action,
                     "from": transition.state,
                     "to": transition.next_state,
-                    "hook": transition.action,
-                    "attached": bool(existing),
+                    "group": group,
+                    "tasks": tasks,
+                    "hooks": [task.task for task in tasks if task.task in hooks],
                 }
             )
 
-    return plan
+    return rows
+
+
+def unattached_hooks(rows=None):
+    """Hook names that no transition task refers to, so they can never fire."""
+    attached = {name for row in (rows if rows is not None else collect()) for name in row["hooks"]}
+    return [name for name in hook_names() if name not in attached]
+
+
+def problems(rows=None):
+    """Configuration that is wrong rather than merely absent."""
+    found = []
+
+    for row in rows if rows is not None else collect():
+        for task in row["tasks"]:
+            label = f"{row['workflow']}: {row['action']} ({row['from']} -> {row['to']}): {task.task}"
+
+            if task.task not in hook_names():
+                found.append(f"{label}: no workflow_methods entry with this name")
+            elif not task.enabled:
+                found.append(f"{label}: not enabled, so it never runs")
+            elif task.asynchronous:
+                found.append(
+                    f"{label}: 'Asynchronous' is on, so it runs outside the transition's transaction"
+                )
+
+        if not row["tasks"]:
+            found.append(
+                f"{row['workflow']}: {row['action']} ({row['from']} -> {row['to']}): "
+                "no transition task, so no hook runs on this transition"
+            )
+
+    for name in unattached_hooks(rows if rows is not None else collect()):
+        found.append(f"hook '{name}' is declared but attached to no transition")
+
+    return found
 
 
 def plan():
-    """Print what apply would do. Changes nothing."""
+    """Print the transition-to-hook mapping and anything wrong with it. Changes nothing."""
     print("Murasalat Office transition tasks")
     print("=" * 40)
 
@@ -111,78 +162,104 @@ def plan():
 
     rows = collect()
 
-    if not rows:
-        print("No transition matches a registered workflow_methods name.")
-        return rows
-
     for row in rows:
-        state = "attached" if row["attached"] else "needs a task"
-        print(
-            f"  {row['action']:<24} {row['from']} -> {row['to']:<24} "
-            f"hook={row['hook']:<24} {state}"
-        )
+        where = f"{row['from']} -> {row['to']}"
+        print(f"{row['workflow']}: {row['action']} ({where})")
 
-    pending = [row for row in rows if not row["attached"]]
+        if not row["tasks"]:
+            print("    (no transition task)")
+            continue
+
+        for task in row["tasks"]:
+            if task.task in hook_names():
+                state = "ok" if (task.enabled and not task.asynchronous) else "check"
+                print(f"    {state:<6} task {task.task} -> {task.task and ''}{''}")
+            else:
+                print(f"    check  task {task.task} (no such hook)")
+
+    found = problems(rows)
     print("=" * 40)
-    print(f"{len(rows)} transition(s) map to a hook, {len(pending)} still need a task")
+
+    if found:
+        print(f"{len(found)} problem(s):")
+        for line in found:
+            print(f"  - {line}")
+    else:
+        print("every declared hook is attached, enabled and synchronous")
 
     return rows
 
 
-def apply():
-    """Create the missing transition-task groups and attach them. Idempotent."""
+def attach(workflow, transition, hook, group=None):
+    """Attach one hook to one transition, explicitly.
+
+    Automatic attachment is deliberately not offered: which transition should run which
+    lifecycle method is a business decision that cannot be derived from metadata. Pass the
+    three names you mean.
+
+        bench --site <site> execute \
+          murasalat_office.setup.workflow_tasks.attach \
+          --kwargs "{'workflow': 'Murasalat Correspondence Workflow', \
+                     'transition': 'Register', 'hook': 'Register Correspondence'}"
+    """
     import frappe
 
     if not supports_transition_tasks():
         print("This Frappe version does not implement transition tasks; nothing to do.")
-        return []
+        return
 
-    if not frappe.db.exists("DocType", GROUP_DOCTYPE):
-        print(f"{GROUP_DOCTYPE} does not exist on this site; nothing to do.")
-        return []
+    if hook not in hook_names():
+        print(f"No workflow_methods entry is named '{hook}'.")
+        return
+
+    transition_doc = frappe.db.get_value("Workflow Transition", transition, ["name", "parent"], as_dict=True)
+
+    if not transition_doc:
+        print(f"No Workflow Transition named '{transition}'.")
+        return
+
+    if workflow and transition_doc.parent != workflow:
+        print(f"Transition '{transition}' belongs to '{transition_doc.parent}', not '{workflow}'.")
+        return
 
     child_field = _child_fieldname()
 
-    if not child_field:
-        print(f"{GROUP_DOCTYPE} has no table field pointing at {CHILD_DOCTYPE}; nothing to do.")
-        return []
+    if not group:
+        group = frappe.db.get_value("Workflow Transition", transition, LINK_FIELD)
 
-    hooks = {entry.get("name"): entry.get("method") for entry in (frappe.get_hooks("workflow_methods") or [])}
-    attached = []
-
-    for row in collect():
-        if row["attached"]:
-            print(f"  ok    {row['action']}")
-            continue
-
+    if not group:
         group = frappe.get_doc(
             {
                 "doctype": GROUP_DOCTYPE,
                 child_field: [
-                    {
-                        "doctype": CHILD_DOCTYPE,
-                        "task": row["hook"],
-                        "enabled": 1,
-                        # Inline, in the transition's own transaction. An asynchronous task
-                        # would run after the transition, outside its save.
-                        "asynchronous": 0,
-                    }
+                    {"doctype": CHILD_DOCTYPE, "task": hook, "enabled": 1, "asynchronous": 0}
                 ],
             }
-        ).insert(ignore_permissions=True)
+        ).insert(ignore_permissions=True).name
 
-        workflow = frappe.get_doc("Workflow", row["workflow"])
+    else:
+        existing = frappe.get_all(
+            CHILD_DOCTYPE,
+            filters={"parent": group, "parentfield": child_field, "task": hook},
+            limit_page_length=0,
+        )
 
-        for transition in workflow.transitions:
-            if transition.name == row["transition"]:
-                transition.set(LINK_FIELD, group.name)
+        if existing:
+            print(f"'{hook}' is already attached to '{transition}' ({group}).")
+            return
 
-        workflow.save(ignore_permissions=True)
+        group_doc = frappe.get_doc(GROUP_DOCTYPE, group)
+        group_doc.append(child_field, {"doctype": CHILD_DOCTYPE, "task": hook, "enabled": 1, "asynchronous": 0})
+        group_doc.save(ignore_permissions=True)
 
-        attached.append(row["action"])
-        print(f"  set   {row['action']} -> {hooks.get(row['hook'], row['hook'])} ({group.name})")
+    if transition_doc.parent:
+        workflow_doc = frappe.get_doc("Workflow", transition_doc.parent)
+
+        for row in workflow_doc.transitions:
+            if row.name == transition:
+                row.set(LINK_FIELD, group)
+
+        workflow_doc.save(ignore_permissions=True)
 
     frappe.db.commit()
-
-    print(f"{len(attached)} transition task(s) created")
-    return attached
+    print(f"attached '{hook}' to '{transition}' ({group})")
