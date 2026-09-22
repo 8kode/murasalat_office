@@ -345,32 +345,12 @@ def complete_referral(doc):
 
 
 def _validate_referral_for_transition(doc):
-    if not doc.correspondence:
-        frappe.throw(
-            _("A referral must be linked to a Correspondence.")
-        )
+    """Delegate to the controller's own invariants so the two layers cannot drift.
 
-    if doc.recipient_type == "Department":
-        if not doc.recipient_department:
-            frappe.throw(
-                _("Recipient Department is required.")
-            )
-        if doc.recipient_user:
-            frappe.throw(
-                _("A Department referral cannot also have a User recipient.")
-            )
-
-    elif doc.recipient_type == "User":
-        if not doc.recipient_user:
-            frappe.throw(
-                _("Recipient User is required.")
-            )
-        if doc.recipient_department:
-            frappe.throw(
-                _("A User referral cannot also have a Department recipient.")
-            )
-
-    else:
-        frappe.throw(
-            _("Recipient Type must be User or Department.")
-        )
+    ``Murasalat Referral.validate()`` already runs these three rules on every save.
+    Calling them here as well makes a failing transition report its reason before any
+    lifecycle field is stamped, instead of failing later inside the transition's save.
+    """
+    doc._validate_recipient()
+    doc._validate_dates()
+    doc._validate_correspondence()

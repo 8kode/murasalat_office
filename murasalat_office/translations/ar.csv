@@ -398,3 +398,10 @@ Murasalat Overdue,المعاملات المتأخرة,
 ATTENTION,تحذير,
 Audit Security,تدقيق الأمان,
 Attachments Gallery,معرض المرفقات,
+User referrals require a user recipient and no department recipient.,الإحالة إلى مستخدم تتطلب تحديد المستخدم دون قسم.
+Department referrals require a department recipient and no user recipient.,الإحالة إلى قسم تتطلب تحديد القسم دون مستخدم.
+Recipient Type must be User or Department.,يجب أن يكون نوع المستلم مستخدماً أو قسماً.
+A referral cannot be completed before it is received.,لا يمكن إكمال الإحالة قبل استلامها.
+A referral cannot be received before it is sent.,لا يمكن استلام الإحالة قبل إرسالها.
+A referral must be linked to a Correspondence.,يجب ربط الإحالة بمعاملة.
+A new referral cannot be created because the Correspondence is closed.,لا يمكن إنشاء إحالة جديدة لأن المعاملة مغلقة.

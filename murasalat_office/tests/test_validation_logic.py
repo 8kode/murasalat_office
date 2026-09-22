@@ -27,6 +27,13 @@ def _load(module_name):
     frappe.session = types.SimpleNamespace(user="tester@example.com")
     frappe.db = types.SimpleNamespace(exists=lambda *args, **kwargs: None)
 
+    # Default parent stand-in for the closed-correspondence rule; tests that care
+    # about it replace this with their own fake to inspect what was requested.
+    frappe.get_doc = lambda doctype, name: types.SimpleNamespace(
+        closed_on=None,
+        check_permission=lambda ptype=None: None,
+    )
+
     document = type("Document", (), {})
     frappe_model = types.ModuleType("frappe.model")
     frappe_document = types.ModuleType("frappe.model.document")
@@ -81,24 +88,114 @@ class _FakeDoc(dict):
         self.setdefault("_appended", []).append((parentfield, row))
 
 
+class _Parent(types.SimpleNamespace):
+    """Parent correspondence stand-in that records the permission it was asked for."""
+
+    def __init__(self, closed_on=None):
+        super().__init__(closed_on=closed_on, checked=[])
+
+    def check_permission(self, ptype):
+        self.checked.append(ptype)
+
+
+def _referral(mod, is_new=True, **fields):
+    """Build a referral carrying every field the controller reads."""
+    doc = object.__new__(mod.MurasalatReferral)
+    doc.recipient_type = "User"
+    doc.recipient_user = "user@example.com"
+    doc.recipient_department = None
+    doc.correspondence = "MO-00001"
+    doc.sent_on = None
+    doc.received_on = None
+    doc.completed_on = None
+    doc.is_new = lambda: is_new
+    for name, value in fields.items():
+        setattr(doc, name, value)
+    return doc
+
+
 def test_referral_recipient_validation():
     mod = _load("murasalat_office.murasalat_office.doctype.murasalat_referral.murasalat_referral")
-    good = object.__new__(mod.MurasalatReferral)
-    good.recipient_type = "User"
-    good.recipient_user = "user@example.com"
-    good.recipient_department = None
-    mod.MurasalatReferral.validate(good)
+    mod.frappe.get_doc = lambda doctype, name: _Parent()
 
-    bad = object.__new__(mod.MurasalatReferral)
-    bad.recipient_type = "User"
-    bad.recipient_user = None
-    bad.recipient_department = None
+    mod.MurasalatReferral.validate(_referral(mod))
+
+    for invalid in (
+        {"recipient_user": None},
+        {"recipient_department": "ORG-1"},
+    ):
+        try:
+            mod.MurasalatReferral.validate(_referral(mod, **invalid))
+        except ValidationError:
+            pass
+        else:
+            raise AssertionError(f"Invalid User referral was accepted: {invalid}")
+
+
+def test_referral_receipt_requires_send():
+    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_referral.murasalat_referral")
+    mod.frappe.get_doc = lambda doctype, name: _Parent()
+
+    doc = _referral(mod, is_new=False, received_on="2026-09-09 10:00:00")
     try:
-        mod.MurasalatReferral.validate(bad)
+        mod.MurasalatReferral.validate(doc)
     except ValidationError:
         pass
     else:
-        raise AssertionError("Invalid User referral was accepted")
+        raise AssertionError("A referral was received without being sent")
+
+    doc.sent_on = "2026-09-09 08:00:00"
+    mod.MurasalatReferral.validate(doc)
+
+
+def test_referral_completion_requires_receipt():
+    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_referral.murasalat_referral")
+    mod.frappe.get_doc = lambda doctype, name: _Parent()
+
+    doc = _referral(
+        mod,
+        is_new=False,
+        sent_on="2026-09-09 08:00:00",
+        completed_on="2026-09-09 12:00:00",
+    )
+    try:
+        mod.MurasalatReferral.validate(doc)
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("A referral was completed without being received")
+
+    # Receipt recorded without sending is refused too: both stamps are required.
+    doc.received_on = "2026-09-09 10:00:00"
+    mod.MurasalatReferral.validate(doc)
+
+
+def test_new_referral_is_refused_on_a_closed_correspondence():
+    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_referral.murasalat_referral")
+    parent = _Parent(closed_on="2026-09-09 12:00:00")
+    mod.frappe.get_doc = lambda doctype, name: parent
+
+    try:
+        mod.MurasalatReferral.validate(_referral(mod))
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("A referral was created on a closed correspondence")
+
+    assert parent.checked == ["read"], "the rule must rely on native read permission"
+
+
+def test_existing_referral_is_not_frozen_when_the_correspondence_closes():
+    """The rule is scoped to creation, so closing the parent must not lock its rows."""
+    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_referral.murasalat_referral")
+    parent = _Parent(closed_on="2026-09-09 12:00:00")
+    mod.frappe.get_doc = lambda doctype, name: parent
+
+    mod.MurasalatReferral.validate(
+        _referral(mod, is_new=False, sent_on="2026-09-09 08:00:00")
+    )
+
+    assert parent.checked == [], "an edit must not require a parent read"
 
 
 def test_delegation_validation():
@@ -374,3 +471,27 @@ def test_permission_aware_reporting_uses_restricted_subject_placeholder():
     source = (root / "services/reporting.py").read_text()
     assert '[Restricted]' in source
     assert 'ignore_permissions=False' in source
+
+
+def test_transition_guard_delegates_to_the_controller_rules():
+    mod = _load("murasalat_office.services.lifecycle")
+    doc = types.SimpleNamespace(doctype="Murasalat Referral")
+    calls = []
+    doc._validate_recipient = lambda: calls.append("recipient")
+    doc._validate_dates = lambda: calls.append("dates")
+    doc._validate_correspondence = lambda: calls.append("correspondence")
+
+    mod._validate_referral_for_transition(doc)
+
+    assert calls == ["recipient", "dates", "correspondence"]
+
+
+def test_referral_rules_are_not_restated_in_the_lifecycle_layer():
+    """One source of truth: the controller owns the rules, lifecycle only calls them."""
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "services/lifecycle.py").read_text()
+    assert "doc._validate_recipient()" in source
+    assert "Recipient User is required." not in source
+    assert "Recipient Department is required." not in source
+    assert "A User referral cannot also have a Department recipient." not in source
+    assert "A Department referral cannot also have a User recipient." not in source
