@@ -164,9 +164,9 @@ def _check_workflow():
                             f"no transition task, so {expected.split('.')[-1]} never runs",
                         )
                     else:
-                        _warn(
+                        _pass(
                             f"{action} ({transition.state} -> {transition.next_state})",
-                            "no transition task; no hook of this name is registered",
+                            "state-only transition; no lifecycle hook required",
                         )
                     continue
 

@@ -1,0 +1,892 @@
+From 3896cddc2524b6a381d24f2d3ef289030a5fa1fb Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Wed, 23 Sep 2026 01:55:18 +0300
+Subject: [PATCH] Make the seal cover the letter itself, and make amending it
+ attributable
+
+The snapshot omitted the body, its due date and the concerned person, so the
+text of a sealed letter could be rewritten with no trace. Include them, and
+read the record's own seal state when verification finds no snapshot.
+
+Give the seal a documented exit: reopening now requires a reason, records the
+previous snapshot in the activity trail, and lifts the seal, so a corrected
+record is amended in the open rather than silently.
+
+Freeze the approval decision on the server. read_only is not enforced there,
+which left the recorded approver forgeable and the timestamp backdatable.
+---
+ docs/SEAL_INTEGRITY.md                        |  61 +++
+ .../murasalat_approval_request.py             |  62 +++
+ .../murasalat_correspondence.json             |   7 +
+ .../murasalat_correspondence_activity.json    | 166 ++++----
+ murasalat_office/services/lifecycle.py        |  50 ++-
+ murasalat_office/services/records.py          |  10 +-
+ murasalat_office/tests/test_seal_integrity.py | 357 ++++++++++++++++++
+ .../tests/test_validation_logic.py            |   5 +-
+ murasalat_office/translations/ar.csv          |   2 +
+ 9 files changed, 633 insertions(+), 87 deletions(-)
+ create mode 100644 docs/SEAL_INTEGRITY.md
+ create mode 100644 murasalat_office/tests/test_seal_integrity.py
+
+diff --git a/docs/SEAL_INTEGRITY.md b/docs/SEAL_INTEGRITY.md
+new file mode 100644
+index 0000000..88715c1
+--- /dev/null
++++ b/docs/SEAL_INTEGRITY.md
+@@ -0,0 +1,61 @@
++# Seal integrity and the documented amendment path
++
++A sealed correspondence is the evidentiary record of an official transaction. This
++note states what the seal covers, what it refuses, and how a sealed record may still
++be corrected.
++
++## What the seal covers
++
++`services/records.py::canonical_payload` defines the snapshot. It includes the identity
++and classification fields, the **letter body** (`notes`), its `due_date`, and the
++`concerned_person`, plus a per-attachment digest (file, hash, secrecy, type, folder).
++
++The body belongs in the snapshot: a correspondence whose text or deadline can be
++rewritten after sealing has no evidentiary value, even if its classification fields are
++frozen.
++
++## What is refused
++
++While `record_sealed_on` is set, `validate_immutable_fields` rejects any change to a
++field in `IMMUTABLE_AFTER_SEALING`, and `validate_sealed_attachments` rejects any change
++to the attachment set. `verify_integrity` fails closed: a record that declares itself
++sealed but stores no snapshot is **not** verified.
++
++## The amendment path
++
++There is no silent amendment. Correcting a sealed record means reopening it:
++
++1. **Reopen** (`services/lifecycle.py::reopen_correspondence`) requires a
++   `reopen_reason`. The reason is mandatory because reopening lifts the seal.
++2. Reopening writes two activity rows: `Reopened` (with the reason) and, when a seal was
++   present, `Unsealed` — carrying the **previous snapshot hash, its seal date and the
++   sealer** in the activity details, so the earlier form of the record remains provable.
++3. The seal fields (`record_sealed_on`, `record_sealed_by`, `integrity_hash`) are cleared.
++4. The record is edited and **sealed again**, which produces a new snapshot.
++
++Reopening an open, unsealed record changes nothing (idempotent).
++
++**Policy note:** this is the "documented amendment" option — correction is permitted but
++always attributed and always leaves the previous snapshot behind. The stricter
++alternative (refuse every amendment, even a documented one) is a one-line change in
++`reopen_correspondence`; it has not been taken because official correspondence
++occasionally has to be corrected, and an unattributable correction outside the system is
++worse than an attributable one inside it.
++
++## Approval attribution
++
++`Murasalat Approval Request.approved_by` / `approved_on` are `read_only` in the DocType,
++but **Frappe does not enforce `read_only` server-side** — the metadata alone leaves the
++decision forgeable through the API. `_freeze_decision` closes that:
++
++* a request cannot be created already approved;
++* `approved_by` must be the acting user, and `approved_on` is stamped from server time
++  when the decision is first recorded;
++* once recorded, neither value can be changed — no reassignment, no backdating.
++
++## What still needs a running site
++
++These are metadata and logic contracts verified without a bench. Confirming that Desk
++renders the `Reopen Reason` field, that the `Unsealed` activity option displays, and that
++a real reopen-then-reseal cycle behaves as described requires `bench --site <site> ...`
++and is covered by `docs/VERIFICATION.md`.
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request.py b/murasalat_office/murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request.py
+index 4ef2e85..fb37bfe 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request.py
++++ b/murasalat_office/murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request.py
+@@ -4,6 +4,22 @@ from frappe.model.document import Document
+ from frappe.utils import now_datetime
+ 
+ 
++def _val(doc, field, default=None):
++    """Read a field without assuming the whole Document is materialised.
++
++    Controllers are exercised against partially built objects, so a field that was
++    never set must read as its default instead of raising.
++    """
++    if hasattr(doc, field):
++        return getattr(doc, field)
++
++    getter = getattr(doc, "get", None)
++
++    if callable(getter):
++        return getter(field, default)
++
++    return default
++
+ class MurasalatApprovalRequest(Document):
+     """Approval request data model; workflow authority belongs entirely to Desk."""
+ 
+@@ -12,6 +28,11 @@ class MurasalatApprovalRequest(Document):
+             self.requested_by = frappe.session.user
+             if not self.requested_on:
+                 self.requested_on = now_datetime()
++            if _val(self, "approved_by") or _val(self, "approved_on"):
++                frappe.throw(
++                    _("An approval request cannot be created already approved."),
++                    frappe.PermissionError,
++                )
+ 
+         before = self.get_doc_before_save()
+         if before and before.requested_by != self.requested_by:
+@@ -24,3 +45,44 @@ class MurasalatApprovalRequest(Document):
+             self.requested_by = frappe.session.user
+         if not self.approval_level or self.approval_level < 1:
+             frappe.throw(_("Approval Level must be at least 1."))
++
++        self._freeze_decision(before)
++
++    def _freeze_decision(self, before):
++        """Stamp the decision once, by the acting user, and never rewrite it.
++
++        ``approved_by``/``approved_on`` are ``read_only`` in the DocType, but Frappe
++        does not enforce ``read_only`` server-side, so the field metadata alone leaves
++        the decision forgeable through the API. These rules make the recorded approver
++        unforgeable and the timestamp unbackdatable.
++        """
++        approved_by = _val(self, "approved_by")
++        approved_on = _val(self, "approved_on")
++
++        if not approved_by:
++            if approved_on:
++                frappe.throw(
++                    _("Approved On cannot be recorded without Approved By."),
++                    frappe.PermissionError,
++                )
++            return
++
++        recorded_by = _val(before, "approved_by") if before else None
++        recorded_on = _val(before, "approved_on") if before else None
++
++        if recorded_by:
++            if recorded_by != approved_by or recorded_on != approved_on:
++                frappe.throw(
++                    _("The approval decision is already recorded and cannot be changed."),
++                    frappe.PermissionError,
++                )
++            return
++
++        if approved_by != frappe.session.user:
++            frappe.throw(
++                _("Approved By must be the user recording the decision."),
++                frappe.PermissionError,
++            )
++
++        if not approved_on:
++            self.approved_on = now_datetime()
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
+index 4694052..bd3fecf 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
+@@ -60,6 +60,7 @@
+   "record_sealed_on",
+   "record_sealed_by",
+   "seal_reason",
++  "reopen_reason",
+   "integrity_hash",
+   "reopened_on",
+   "reopened_by",
+@@ -320,6 +321,12 @@
+    "fieldtype": "Small Text",
+    "label": "Seal Reason"
+   },
++  {
++   "description": "Required when reopening: reopening lifts the integrity seal and the reason is recorded in the activity trail.",
++   "fieldname": "reopen_reason",
++   "fieldtype": "Small Text",
++   "label": "Reopen Reason"
++  },
+   {
+    "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",
+    "fieldname": "integrity_hash",
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json b/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json
+index f4f0910..873b203 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json
+@@ -1,84 +1,84 @@
+ {
+-  "actions": [],
+-  "creation": "2026-09-10 20:59:09.874922",
+-  "doctype": "DocType",
+-  "engine": "InnoDB",
+-  "field_order": [
+-    "activity_type",
+-    "activity_on",
+-    "actor",
+-    "acting_for",
+-    "delegation",
+-    "organization",
+-    "referral_number",
+-    "details"
+-  ],
+-  "fields": [
+-    {
+-      "fieldname": "activity_type",
+-      "fieldtype": "Select",
+-      "in_list_view": 1,
+-      "label": "Activity Type",
+-      "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed",
+-      "reqd": 1
+-    },
+-    {
+-      "fieldname": "activity_on",
+-      "fieldtype": "Datetime",
+-      "in_list_view": 1,
+-      "label": "Activity On",
+-      "read_only": 1
+-    },
+-    {
+-      "fieldname": "actor",
+-      "fieldtype": "Link",
+-      "label": "Actor",
+-      "options": "User",
+-      "read_only": 1
+-    },
+-    {
+-      "fieldname": "acting_for",
+-      "fieldtype": "Link",
+-      "label": "Acting For",
+-      "options": "User",
+-      "read_only": 1
+-    },
+-    {
+-      "fieldname": "delegation",
+-      "fieldtype": "Link",
+-      "label": "Delegation",
+-      "options": "Murasalat Delegation",
+-      "read_only": 1
+-    },
+-    {
+-      "fieldname": "organization",
+-      "fieldtype": "Link",
+-      "label": "Organization Context",
+-      "options": "Department",
+-      "read_only": 1
+-    },
+-    {
+-      "fieldname": "referral_number",
+-      "fieldtype": "Data",
+-      "label": "Referral Number",
+-      "read_only": 1
+-    },
+-    {
+-      "fieldname": "details",
+-      "fieldtype": "Small Text",
+-      "label": "Details",
+-      "read_only": 1
+-    }
+-  ],
+-  "istable": 1,
+-  "links": [],
+-  "modified": "2026-09-13 22:39:03.961197",
+-  "modified_by": "Administrator",
+-  "module": "Murasalat Office",
+-  "name": "Murasalat Correspondence Activity",
+-  "owner": "Administrator",
+-  "row_format": "Dynamic",
+-  "sort_field": "creation",
+-  "sort_order": "DESC",
+-  "states": []
+-}
+\ No newline at end of file
++ "actions": [],
++ "creation": "2026-09-10 20:59:09.874922",
++ "doctype": "DocType",
++ "engine": "InnoDB",
++ "field_order": [
++  "activity_type",
++  "activity_on",
++  "actor",
++  "acting_for",
++  "delegation",
++  "organization",
++  "referral_number",
++  "details"
++ ],
++ "fields": [
++  {
++   "fieldname": "activity_type",
++   "fieldtype": "Select",
++   "in_list_view": 1,
++   "label": "Activity Type",
++   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed\nUnsealed",
++   "reqd": 1
++  },
++  {
++   "fieldname": "activity_on",
++   "fieldtype": "Datetime",
++   "in_list_view": 1,
++   "label": "Activity On",
++   "read_only": 1
++  },
++  {
++   "fieldname": "actor",
++   "fieldtype": "Link",
++   "label": "Actor",
++   "options": "User",
++   "read_only": 1
++  },
++  {
++   "fieldname": "acting_for",
++   "fieldtype": "Link",
++   "label": "Acting For",
++   "options": "User",
++   "read_only": 1
++  },
++  {
++   "fieldname": "delegation",
++   "fieldtype": "Link",
++   "label": "Delegation",
++   "options": "Murasalat Delegation",
++   "read_only": 1
++  },
++  {
++   "fieldname": "organization",
++   "fieldtype": "Link",
++   "label": "Organization Context",
++   "options": "Department",
++   "read_only": 1
++  },
++  {
++   "fieldname": "referral_number",
++   "fieldtype": "Data",
++   "label": "Referral Number",
++   "read_only": 1
++  },
++  {
++   "fieldname": "details",
++   "fieldtype": "Small Text",
++   "label": "Details",
++   "read_only": 1
++  }
++ ],
++ "istable": 1,
++ "links": [],
++ "modified": "2026-09-13 22:39:03.961197",
++ "modified_by": "Administrator",
++ "module": "Murasalat Office",
++ "name": "Murasalat Correspondence Activity",
++ "owner": "Administrator",
++ "row_format": "Dynamic",
++ "sort_field": "creation",
++ "sort_order": "DESC",
++ "states": []
++}
+diff --git a/murasalat_office/services/lifecycle.py b/murasalat_office/services/lifecycle.py
+index bdc4913..704a32d 100644
+--- a/murasalat_office/services/lifecycle.py
++++ b/murasalat_office/services/lifecycle.py
+@@ -185,6 +185,14 @@ def seal_correspondence(doc):
+ 
+ 
+ def reopen_correspondence(doc):
++    """Reopen a correspondence and lift any seal on it.
++
++    There is no silent way to amend a sealed record. Amending one means
++    reopening it: the previous snapshot is written to the activity trail, the
++    seal is lifted, and the record must be sealed again afterwards, which
++    produces a new snapshot. A reason is mandatory so the amendment is
++    attributable.
++    """
+     if doc.doctype != "Murasalat Correspondence":
+         frappe.throw(
+             _(
+@@ -193,6 +201,26 @@ def reopen_correspondence(doc):
+             )
+         )
+ 
++    was_sealed = bool(doc.get("record_sealed_on") or doc.get("integrity_hash"))
++
++    # Idempotent: reopening an open, unsealed record changes nothing.
++    if not doc.get("closed_on") and not was_sealed:
++        return
++
++    reason = (doc.get("reopen_reason") or "").strip()
++
++    if not reason:
++        frappe.throw(
++            _(
++                "A reason is required to reopen a correspondence, because "
++                "reopening lifts the integrity seal."
++            )
++        )
++
++    previous_snapshot = doc.get("integrity_hash")
++    previous_sealed_on = doc.get("record_sealed_on")
++    previous_sealed_by = doc.get("record_sealed_by")
++
+     doc.reopened_on = now_datetime()
+     doc.reopened_by = frappe.session.user
+ 
+@@ -203,9 +231,29 @@ def reopen_correspondence(doc):
+     _append_activity(
+         doc,
+         "Reopened",
+-        _("Correspondence was reopened."),
++        _("Correspondence was reopened. Reason: {0}").format(reason),
+     )
+ 
++    if was_sealed:
++        # The old snapshot survives in the activity trail, so the record can
++        # still be proven to have existed in that exact form.
++        _append_activity(
++            doc,
++            "Unsealed",
++            _(
++                "Integrity seal lifted to allow a documented amendment. "
++                "Previous snapshot: {0} (sealed on {1} by {2})."
++            ).format(
++                previous_snapshot or _("none"),
++                previous_sealed_on or _("unknown"),
++                previous_sealed_by or _("unknown"),
++            ),
++        )
++
++        doc.record_sealed_on = None
++        doc.record_sealed_by = None
++        doc.integrity_hash = None
++
+ 
+ def _get_referral_correspondence(doc):
+     if not doc.correspondence:
+diff --git a/murasalat_office/services/records.py b/murasalat_office/services/records.py
+index 79ab8c9..5fd7901 100644
+--- a/murasalat_office/services/records.py
++++ b/murasalat_office/services/records.py
+@@ -23,6 +23,9 @@ IMMUTABLE_AFTER_SEALING = {
+     "subject",
+     "page_count",
+     "seal_reason",
++    "notes",
++    "due_date",
++    "concerned_person",
+ }
+ 
+ 
+@@ -47,6 +50,9 @@ def canonical_payload(doc):
+         "originating_organization": doc.originating_organization,
+         "seal_reason": doc.seal_reason,
+         "page_count": doc.page_count,
++        "notes": doc.notes,
++        "due_date": str(doc.due_date or ""),
++        "concerned_person": doc.concerned_person,
+         "attachments": [
+             {
+                 "file": row.file,
+@@ -159,8 +165,10 @@ def verify_integrity(
+ ) -> bool:
+     """Verify the stored integrity snapshot."""
+ 
++    # A record that declares itself sealed but carries no snapshot cannot be
++    # verified; returning True there would report a broken seal as intact.
+     if not doc.integrity_hash:
+-        return True
++        return not doc.record_sealed_on
+ 
+     if verify_files:
+         for row in doc.attachments or []:
+diff --git a/murasalat_office/tests/test_seal_integrity.py b/murasalat_office/tests/test_seal_integrity.py
+new file mode 100644
+index 0000000..c5824a0
+--- /dev/null
++++ b/murasalat_office/tests/test_seal_integrity.py
+@@ -0,0 +1,357 @@
++"""Contract tests for seal integrity and approval attribution.
++
++Framework-light on purpose: the modules under test are loaded by path with a
++minimal ``frappe`` stub, so the rules they encode can be exercised without a
++bench. What is pinned here is the *policy*, not Desk rendering:
++
++* a sealed record's body is inside the snapshot, so amending it is detectable;
++* there is no silent amendment — reopening requires a reason and preserves the
++  previous snapshot in the activity trail;
++* the recorded approver cannot be forged and the timestamp cannot be backdated.
++"""
++import csv
++import importlib.util
++import json
++import sys
++import types
++from datetime import datetime
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++class MurasalatThrow(Exception):
++    """Stands in for the exception ``frappe.throw`` raises."""
++
++
++class FakeDoc:
++    """Minimal stand-in for a Frappe Document."""
++
++    def __init__(self, **kwargs):
++        self.doctype = kwargs.pop("doctype", "Murasalat Correspondence")
++        self.appended = []
++        self.__dict__.update(kwargs)
++
++    def append(self, table, row):
++        self.appended.append((table, row))
++
++    def get(self, key, default=None):
++        return self.__dict__.get(key, default)
++
++    def is_new(self):
++        return False
++
++    def get_doc_before_save(self):
++        return self.__dict__.get("_before")
++
++    @property
++    def activity_types(self):
++        return [row["activity_type"] for _, row in self.appended]
++
++
++def _install_frappe_stub():
++    frappe = types.ModuleType("frappe")
++
++    def throw(message, exc=None, **kwargs):
++        raise MurasalatThrow(str(message))
++
++    class PermissionError(Exception):
++        pass
++
++    frappe.throw = throw
++    frappe._ = lambda text: text
++    frappe.PermissionError = PermissionError
++    frappe.session = types.SimpleNamespace(user="tester@example.com")
++    frappe.db = types.SimpleNamespace(get_value=lambda *a, **k: None)
++    frappe.get_doc = lambda *a, **k: None
++    frappe.get_all = lambda *a, **k: []
++
++    utils = types.ModuleType("frappe.utils")
++    utils.now_datetime = datetime.now
++    frappe.utils = utils
++
++    model = types.ModuleType("frappe.model")
++    document = types.ModuleType("frappe.model.document")
++
++    class Document:
++        pass
++
++    document.Document = Document
++    model.document = document
++
++    sys.modules["frappe"] = frappe
++    sys.modules["frappe.utils"] = utils
++    sys.modules["frappe.model"] = model
++    sys.modules["frappe.model.document"] = document
++
++
++@pytest.fixture(autouse=True)
++def _stubbed_frappe():
++    """Give every test in this file a deterministic stub, then restore."""
++    saved = {
++        key: sys.modules.get(key)
++        for key in ("frappe", "frappe.utils", "frappe.model", "frappe.model.document")
++    }
++    _install_frappe_stub()
++    yield
++    for key, value in saved.items():
++        if value is None:
++            sys.modules.pop(key, None)
++        else:
++            sys.modules[key] = value
++
++
++def _load(name, relative_path):
++    spec = importlib.util.spec_from_file_location(name, ROOT / relative_path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def _records():
++    return _load("murasalat_records_under_test", "services/records.py")
++
++
++def _lifecycle():
++    return _load("murasalat_lifecycle_under_test", "services/lifecycle.py")
++
++
++def _approval_module():
++    return _load(
++        "murasalat_approval_under_test",
++        "murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request.py",
++    )
++
++
++def _sealed_correspondence(**overrides):
++    values = dict(
++        name="CORR-1",
++        correspondence_direction="Incoming",
++        transaction_type="Letter",
++        confidentiality="Normal",
++        importance="Normal",
++        subject="خطاب وارد",
++        external_letter_number="12/2026",
++        external_letter_date="2026-09-01",
++        incoming_source_entity="ORG-A",
++        incoming_target_entry="ORG-B",
++        outgoing_source_entity=None,
++        outgoing_target_entry=None,
++        internal_source_entity=None,
++        internal_target_entry=None,
++        originating_organization="ORG-A",
++        seal_reason="ملف مكتمل",
++        page_count=2,
++        notes="نص الخطاب",
++        due_date="2026-09-20",
++        concerned_person="ORG-C",
++        attachments=[],
++        record_sealed_on="2026-09-10 09:00:00",
++        record_sealed_by="sealer@example.com",
++        integrity_hash=None,
++        closed_on=None,
++        reopened_on=None,
++        reopen_reason=None,
++    )
++    values.update(overrides)
++    return FakeDoc(**values)
++
++
++# ------------------------------------------------------------------ snapshot scope
++
++
++def test_the_letter_body_is_inside_the_seal_snapshot():
++    """The body, its due date and its concerned person are the record's content."""
++    records = _records()
++
++    for field in ("notes", "due_date", "concerned_person"):
++        assert field in records.IMMUTABLE_AFTER_SEALING, field
++
++
++def test_editing_the_body_after_sealing_changes_the_integrity_hash():
++    records = _records()
++
++    original = _sealed_correspondence()
++    amended = _sealed_correspondence(notes="نص مُعدَّل")
++
++    assert records.canonical_payload(original) != records.canonical_payload(amended)
++    assert records.compute_integrity_hash(original) != records.compute_integrity_hash(amended)
++
++
++def test_editing_the_body_after_sealing_is_refused():
++    records = _records()
++
++    before = _sealed_correspondence()
++    after = _sealed_correspondence(notes="نص مُعدَّل")
++    after._before = before
++
++    with pytest.raises(MurasalatThrow) as error:
++        records.validate_immutable_fields(after)
++
++    assert "notes" in str(error.value)
++
++
++def test_a_sealed_record_without_a_snapshot_fails_verification():
++    """Claiming to be sealed with no stored snapshot is not a pass."""
++    records = _records()
++
++    unverifiable = _sealed_correspondence(integrity_hash=None)
++    assert records.verify_integrity(unverifiable, verify_files=False) is False
++
++
++# ------------------------------------------------------------------ amendment path
++
++
++def test_reopening_without_a_reason_is_refused():
++    lifecycle = _lifecycle()
++    doc = _sealed_correspondence()
++
++    with pytest.raises(MurasalatThrow) as error:
++        lifecycle.reopen_correspondence(doc)
++
++    assert "reason" in str(error.value).lower()
++    assert doc.activity_types == []
++    assert doc.record_sealed_on == "2026-09-10 09:00:00"
++
++
++def test_reopening_lifts_the_seal_and_keeps_the_previous_snapshot():
++    lifecycle = _lifecycle()
++    doc = _sealed_correspondence(
++        integrity_hash="a" * 64,
++        closed_on="2026-09-21 10:00:00",
++        reopen_reason="تصحيح رقم الخطاب",
++    )
++
++    lifecycle.reopen_correspondence(doc)
++
++    assert doc.record_sealed_on is None
++    assert doc.record_sealed_by is None
++    assert doc.integrity_hash is None
++    assert doc.closed_on is None
++    assert doc.reopened_by == "tester@example.com"
++
++    assert doc.activity_types == ["Reopened", "Unsealed"]
++    unsealed = doc.appended[1][1]
++    assert "a" * 64 in unsealed["details"]
++    assert "2026-09-10 09:00:00" in unsealed["details"]
++    assert "sealer@example.com" in unsealed["details"]
++    assert "تصحيح رقم الخطاب" in doc.appended[0][1]["details"]
++
++
++def test_reopening_an_open_unsealed_record_changes_nothing():
++    lifecycle = _lifecycle()
++    doc = _sealed_correspondence(record_sealed_on=None, record_sealed_by=None, closed_on=None)
++
++    lifecycle.reopen_correspondence(doc)
++
++    assert doc.activity_types == []
++    assert doc.reopened_on is None
++
++
++def test_the_reason_field_is_declared_and_translated():
++    data = json.loads(
++        (
++            ROOT
++            / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json"
++        ).read_text()
++    )
++    fieldnames = {field["fieldname"] for field in data["fields"]}
++    assert "reopen_reason" in fieldnames
++    assert "reopen_reason" in data["field_order"]
++
++    sources = _translation_sources()
++    assert "Reopen Reason" in sources
++
++
++def test_the_unsealed_activity_is_a_valid_select_option():
++    """Recording the event must not be rejected by the child table's options."""
++    data = json.loads(
++        (
++            ROOT
++            / "murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json"
++        ).read_text()
++    )
++    for field in data["fields"]:
++        if field["fieldname"] == "activity_type" and field.get("fieldtype") == "Select":
++            assert "Unsealed" in field.get("options", "").split("\n")
++            return
++    pytest.fail("activity_type is not a Select; the option list assertion does not apply")
++
++
++# ------------------------------------------------------------------ approval record
++
++
++def _approval(before=None, **overrides):
++    document = _approval_module().MurasalatApprovalRequest()
++    document.is_new = lambda: False
++    document.get_doc_before_save = lambda: before
++    document.correspondence = "CORR-1"
++    document.approval_level = 1
++    document.requested_by = "creator@example.com"
++    document.requested_on = "2026-09-10 08:00:00"
++    document.workflow_state = "Pending"
++    document.decision_note = None
++    document.approved_by = None
++    document.approved_on = None
++    for key, value in overrides.items():
++        setattr(document, key, value)
++    return document
++
++
++def test_the_decision_is_stamped_with_the_acting_user_and_the_server_time():
++    document = _approval(approved_by="tester@example.com")
++
++    document.validate()
++
++    assert document.approved_by == "tester@example.com"
++    assert document.approved_on is not None
++
++
++def test_the_decision_cannot_name_another_user():
++    document = _approval(approved_by="someone.else@example.com")
++
++    with pytest.raises(MurasalatThrow):
++        document.validate()
++
++
++def test_a_recorded_decision_cannot_be_rewritten_or_backdated():
++    recorded = types.SimpleNamespace(
++        approved_by="approver@example.com",
++        approved_on="2026-09-12 10:00:00",
++        requested_by="creator@example.com",
++        correspondence="CORR-1",
++    )
++
++    rewritten = _approval(before=recorded, approved_by="approver@example.com", approved_on="2020-01-01 00:00:00")
++    with pytest.raises(MurasalatThrow):
++        rewritten.validate()
++
++    reassigned = _approval(before=recorded, approved_by="tester@example.com", approved_on="2026-09-12 10:00:00")
++    with pytest.raises(MurasalatThrow):
++        reassigned.validate()
++
++
++def test_a_decision_without_an_approver_is_refused():
++    document = _approval(approved_on="2026-09-12 10:00:00")
++
++    with pytest.raises(MurasalatThrow):
++        document.validate()
++
++
++def test_a_request_cannot_be_created_already_approved():
++    document = _approval(approved_by="tester@example.com")
++    document.is_new = lambda: True
++    document.requested_on = None
++
++    with pytest.raises(MurasalatThrow):
++        document.validate()
++
++
++# ------------------------------------------------------------------ translation file
++
++
++def _translation_sources():
++    rows = list(csv.reader((ROOT / "translations/ar.csv").read_text(encoding="utf-8").splitlines()))
++    return {row[0].strip() for row in rows[1:] if row and row[0].strip()}
+diff --git a/murasalat_office/tests/test_validation_logic.py b/murasalat_office/tests/test_validation_logic.py
+index e48077a..8c8986f 100644
+--- a/murasalat_office/tests/test_validation_logic.py
++++ b/murasalat_office/tests/test_validation_logic.py
+@@ -357,8 +357,7 @@ ACTIVITY_CATALOG = [
+     "Reopened",
+     "Referral Sent",
+     "Referral Received",
+-    "Referral Completed",
+-]
++    "Referral Completed", "Unsealed",]
+ 
+ 
+ def test_activity_catalog_matches_events_emitted_by_controller():
+@@ -417,7 +416,9 @@ def test_sealing_and_reopening_record_their_own_activity():
+     reopened = _FakeDoc(
+         doctype="Murasalat Correspondence",
+         closed_on="2026-09-09 12:00:00",
++        record_sealed_on=None,
+         current_holder="ORG-1",
++        reopen_reason="تصحيح إداري",
+     )
+     mod.reopen_correspondence(reopened)
+     assert reopened.closed_on is None
+diff --git a/murasalat_office/translations/ar.csv b/murasalat_office/translations/ar.csv
+index fe699ee..6914cb5 100644
+--- a/murasalat_office/translations/ar.csv
++++ b/murasalat_office/translations/ar.csv
+@@ -407,3 +407,5 @@ A referral must be linked to a Correspondence.,يجب ربط الإحالة بم
+ A new referral cannot be created because the Correspondence is closed.,لا يمكن إنشاء إحالة جديدة لأن المعاملة مغلقة.,
+ Body,المضمون,
+ Draft — Not Sent,مسوّدة — لم تُرسل,
++Reopen Reason,سبب إعادة الفتح,
++Unsealed,رُفع الختم,
+-- 
+2.43.0
+

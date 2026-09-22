@@ -1,0 +1,729 @@
+From a98d1726bf3d39b6eccf37c4f59ebab9d5c29a4f Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Wed, 23 Sep 2026 01:56:54 +0300
+Subject: [PATCH] Run the suite on every push, and check the metadata against
+ itself
+
+Nothing ran automatically before this: the framework-light suite was only ever run by
+hand. Add CI over it, plus a standalone metadata validator that also runs locally.
+
+The validator immediately paid for itself, catching six report definitions missing
+report_name and disabled, and ten redundant translation rows, two of which carried
+conflicting Arabic for the same term. Fix all of it so the check starts green.
+
+Add the read-only site script for what needs a migrated database: transition tasks
+enabled and not asynchronous, reports carrying roles, hooks resolving.
+---
+ .github/workflows/ci.yml                      |  38 ++++
+ docs/VERIFICATION.md                          |  49 +++++
+ .../murasalat_due_today.json                  |  20 +-
+ .../murasalat_follow_up_queue.json            |  20 +-
+ .../murasalat_my_work/murasalat_my_work.json  |  20 +-
+ .../murasalat_security_health.json            |  20 +-
+ .../murasalat_work_queue.json                 |  44 ++--
+ murasalat_office/tests/validate_metadata.py   | 152 +++++++++++++
+ murasalat_office/translations/ar.csv          |  16 +-
+ murasalat_office/verification/__init__.py     |   0
+ murasalat_office/verification/site_smoke.py   | 201 ++++++++++++++++++
+ 11 files changed, 509 insertions(+), 71 deletions(-)
+ create mode 100644 .github/workflows/ci.yml
+ create mode 100644 docs/VERIFICATION.md
+ create mode 100644 murasalat_office/tests/validate_metadata.py
+ create mode 100644 murasalat_office/verification/__init__.py
+ create mode 100644 murasalat_office/verification/site_smoke.py
+
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+new file mode 100644
+index 0000000..4d6cb17
+--- /dev/null
++++ b/.github/workflows/ci.yml
+@@ -0,0 +1,38 @@
++name: CI
++
++on:
++  push:
++    branches: ["**"]
++  pull_request:
++
++jobs:
++  framework-light:
++    name: Framework-light suite
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++
++      - uses: actions/setup-python@v5
++        with:
++          python-version: "3.12"
++
++      - uses: actions/setup-node@v4
++        with:
++          node-version: "22"
++
++      - name: Install the test runner
++        run: python -m pip install --upgrade pip pytest
++
++      - name: Run the suite
++        run: python -m pytest murasalat_office/tests -q
++
++      - name: Byte-compile every module
++        run: python -m compileall -q murasalat_office
++
++      - name: Validate the metadata against itself
++        run: python murasalat_office/tests/validate_metadata.py
++
++      - name: Parse every client script and print format template
++        run: |
++          find murasalat_office -name '*.js' -not -path '*/node_modules/*' -print0 \
++            | xargs -0 -n1 node --check
+diff --git a/docs/VERIFICATION.md b/docs/VERIFICATION.md
+new file mode 100644
+index 0000000..4d389d6
+--- /dev/null
++++ b/docs/VERIFICATION.md
+@@ -0,0 +1,49 @@
++# Verification: what is proven, and what only a running site can prove
++
++The sandbox that authored these branches has no bench. Everything below is therefore split
++into what the framework-light suite proves, what the site script proves on your bench, and
++what a human still has to look at.
++
++## 1. Proven without a bench
++
++```bash
++python -m pytest murasalat_office/tests -q      # the suite
++python -m compileall -q murasalat_office        # every module byte-compiles
++python murasalat_office/tests/validate_metadata.py   # metadata agrees with itself
++node --check <every .js>
++```
++
++`.github/workflows/ci.yml` runs exactly these on every push and pull request, so a branch
++cannot land with a broken report return, an unparsable JSON file, a report without its
++client script, or a translation row that lost a column.
++
++`validate_metadata.py` is also worth running locally before you commit metadata changes —
++it is the check that catches the mistakes a metadata-only commit makes easy.
++
++## 2. Proven on your bench, read-only
++
++```bash
++bench migrate
++bench --site <site> execute murasalat_office.verification.site_smoke.run
++```
++
++It checks that the doctypes migrated, that each workflow has active transitions **and**
++transition tasks with `Enabled` on and `Asynchronous` off (an asynchronous task silently
++never fires the lifecycle method), that every report exists with roles attached, that the
++print formats are present, that every lifecycle hook resolves to a real function, and that
++Arabic translations loaded. Every line prints PASS or FAIL.
++
++## 3. Still needs human eyes
++
++These are the items no script here can settle:
++
++| Item | Where to look |
++| --- | --- |
++| Chart and summary cards on the reports | Open each report; the summary must appear as cards, not as an empty chart |
++| The `Reopen Reason` field and the `Unsealed` activity option | Open a sealed correspondence, reopen it, read the activity trail |
++| The overview panel at the top of each form | Open a correspondence and a referral |
++| Both print formats | Print preview on a real record — confirm Arabic renders and columns line up |
++| List-view indicators | The correspondence list (sealed/closed) and the referral list (overdue/due today) |
++| Report access after roles are applied | `bench --site <site> execute murasalat_office.setup.report_access.apply_report_roles`, then reopen a report as a non-System-Manager user |
++
++Report the failures you see and they get fixed against a named symptom rather than a guess.
+diff --git a/murasalat_office/murasalat_office/report/murasalat_due_today/murasalat_due_today.json b/murasalat_office/murasalat_office/report/murasalat_due_today/murasalat_due_today.json
+index 2b2896b..98baacf 100644
+--- a/murasalat_office/murasalat_office/report/murasalat_due_today/murasalat_due_today.json
++++ b/murasalat_office/murasalat_office/report/murasalat_due_today/murasalat_due_today.json
+@@ -1,11 +1,13 @@
+ {
+-  "doctype": "Report",
+-  "name": "Murasalat Due Today",
+-  "module": "Murasalat Office",
+-  "ref_doctype": "Murasalat Referral",
+-  "report_type": "Script Report",
+-  "is_standard": "Yes",
+-  "prepared_report": "No",
+-  "add_total_row": 0,
+-  "filters": []
++ "doctype": "Report",
++ "name": "Murasalat Due Today",
++ "module": "Murasalat Office",
++ "ref_doctype": "Murasalat Referral",
++ "report_type": "Script Report",
++ "is_standard": "Yes",
++ "prepared_report": "No",
++ "add_total_row": 0,
++ "filters": [],
++ "report_name": "Murasalat Due Today",
++ "disabled": 0
+ }
+diff --git a/murasalat_office/murasalat_office/report/murasalat_follow_up_queue/murasalat_follow_up_queue.json b/murasalat_office/murasalat_office/report/murasalat_follow_up_queue/murasalat_follow_up_queue.json
+index b39c7b4..cb74a0a 100644
+--- a/murasalat_office/murasalat_office/report/murasalat_follow_up_queue/murasalat_follow_up_queue.json
++++ b/murasalat_office/murasalat_office/report/murasalat_follow_up_queue/murasalat_follow_up_queue.json
+@@ -1,11 +1,13 @@
+ {
+-  "doctype": "Report",
+-  "name": "Murasalat Follow Up Queue",
+-  "module": "Murasalat Office",
+-  "ref_doctype": "Murasalat Referral",
+-  "report_type": "Script Report",
+-  "is_standard": "Yes",
+-  "prepared_report": "No",
+-  "add_total_row": 0,
+-  "filters": []
++ "doctype": "Report",
++ "name": "Murasalat Follow Up Queue",
++ "module": "Murasalat Office",
++ "ref_doctype": "Murasalat Referral",
++ "report_type": "Script Report",
++ "is_standard": "Yes",
++ "prepared_report": "No",
++ "add_total_row": 0,
++ "filters": [],
++ "report_name": "Murasalat Follow Up Queue",
++ "disabled": 0
+ }
+diff --git a/murasalat_office/murasalat_office/report/murasalat_my_work/murasalat_my_work.json b/murasalat_office/murasalat_office/report/murasalat_my_work/murasalat_my_work.json
+index d686db1..ef43a76 100644
+--- a/murasalat_office/murasalat_office/report/murasalat_my_work/murasalat_my_work.json
++++ b/murasalat_office/murasalat_office/report/murasalat_my_work/murasalat_my_work.json
+@@ -1,11 +1,13 @@
+ {
+-  "doctype": "Report",
+-  "name": "Murasalat My Work",
+-  "module": "Murasalat Office",
+-  "ref_doctype": "Murasalat Referral",
+-  "report_type": "Script Report",
+-  "is_standard": "Yes",
+-  "prepared_report": "No",
+-  "add_total_row": 0,
+-  "filters": []
++ "doctype": "Report",
++ "name": "Murasalat My Work",
++ "module": "Murasalat Office",
++ "ref_doctype": "Murasalat Referral",
++ "report_type": "Script Report",
++ "is_standard": "Yes",
++ "prepared_report": "No",
++ "add_total_row": 0,
++ "filters": [],
++ "report_name": "Murasalat My Work",
++ "disabled": 0
+ }
+diff --git a/murasalat_office/murasalat_office/report/murasalat_security_health/murasalat_security_health.json b/murasalat_office/murasalat_office/report/murasalat_security_health/murasalat_security_health.json
+index c2bbca2..d3f543c 100644
+--- a/murasalat_office/murasalat_office/report/murasalat_security_health/murasalat_security_health.json
++++ b/murasalat_office/murasalat_office/report/murasalat_security_health/murasalat_security_health.json
+@@ -1,11 +1,13 @@
+ {
+-  "doctype": "Report",
+-  "name": "Murasalat Security Health",
+-  "module": "Murasalat Office",
+-  "ref_doctype": "Murasalat Correspondence",
+-  "report_type": "Script Report",
+-  "is_standard": "Yes",
+-  "prepared_report": "No",
+-  "add_total_row": 0,
+-  "filters": []
++ "doctype": "Report",
++ "name": "Murasalat Security Health",
++ "module": "Murasalat Office",
++ "ref_doctype": "Murasalat Correspondence",
++ "report_type": "Script Report",
++ "is_standard": "Yes",
++ "prepared_report": "No",
++ "add_total_row": 0,
++ "filters": [],
++ "report_name": "Murasalat Security Health",
++ "disabled": 0
+ }
+diff --git a/murasalat_office/murasalat_office/report/murasalat_work_queue/murasalat_work_queue.json b/murasalat_office/murasalat_office/report/murasalat_work_queue/murasalat_work_queue.json
+index 72252ba..675d36f 100644
+--- a/murasalat_office/murasalat_office/report/murasalat_work_queue/murasalat_work_queue.json
++++ b/murasalat_office/murasalat_office/report/murasalat_work_queue/murasalat_work_queue.json
+@@ -1,22 +1,24 @@
+ {
+-  "doctype": "Report",
+-  "name": "Murasalat Work Queue",
+-  "ref_doctype": "Murasalat Referral",
+-  "report_type": "Script Report",
+-  "module": "Murasalat Office",
+-  "is_standard": "Yes",
+-  "filters": [
+-    {
+-      "fieldname": "organization",
+-      "label": "Department",
+-      "fieldtype": "Link",
+-      "options": "Department"
+-    },
+-    {
+-      "fieldname": "user",
+-      "label": "User",
+-      "fieldtype": "Link",
+-      "options": "User"
+-    }
+-  ]
+-}
+\ No newline at end of file
++ "doctype": "Report",
++ "name": "Murasalat Work Queue",
++ "ref_doctype": "Murasalat Referral",
++ "report_type": "Script Report",
++ "module": "Murasalat Office",
++ "is_standard": "Yes",
++ "filters": [
++  {
++   "fieldname": "organization",
++   "label": "Department",
++   "fieldtype": "Link",
++   "options": "Department"
++  },
++  {
++   "fieldname": "user",
++   "label": "User",
++   "fieldtype": "Link",
++   "options": "User"
++  }
++ ],
++ "report_name": "Murasalat Work Queue",
++ "disabled": 0
++}
+diff --git a/murasalat_office/tests/validate_metadata.py b/murasalat_office/tests/validate_metadata.py
+new file mode 100644
+index 0000000..9d96236
+--- /dev/null
++++ b/murasalat_office/tests/validate_metadata.py
+@@ -0,0 +1,152 @@
++"""Validate the app's own metadata. Standalone, no pytest and no bench required.
++
++Run directly (``python murasalat_office/tests/validate_metadata.py``) or from CI. Exits
++non-zero with a report of every problem found. This is the check that catches the class of
++mistake that a metadata-only commit makes easy: a report without a client script, a JSON
++file that no longer parses, a translation row that lost a column.
++"""
++import csv
++import json
++import re
++import sys
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++APP = ROOT
++REPORTS = APP / "murasalat_office/report"
++REQUIRED_REPORT_KEYS = (
++    "doctype",
++    "name",
++    "report_name",
++    "report_type",
++    "is_standard",
++    "ref_doctype",
++    "module",
++    "disabled",
++)
++problems: list[str] = []
++
++
++def problem(message: str) -> None:
++    problems.append(message)
++
++
++def check_json_files() -> None:
++    for path in sorted(APP.rglob("*.json")):
++        try:
++            json.loads(path.read_text(encoding="utf-8"))
++        except Exception as error:  # noqa: BLE001 - the message is the point
++            problem(f"{path.relative_to(APP)}: invalid JSON ({error})")
++
++
++def check_doctypes() -> None:
++    for path in sorted(APP.glob("murasalat_office/doctype/*/*.json")):
++        data = json.loads(path.read_text(encoding="utf-8"))
++        if data.get("doctype") != "DocType":
++            continue
++
++        name = data.get("name") or path.stem
++        for key in ("name", "module", "fields", "field_order"):
++            if not data.get(key):
++                problem(f"DocType {name}: missing '{key}'")
++
++        fieldnames = [field["fieldname"] for field in data.get("fields", [])]
++        for fieldname in data.get("field_order", []):
++            if fieldname not in fieldnames:
++                problem(f"DocType {name}: field_order names unknown field '{fieldname}'")
++
++        for fieldname in fieldnames:
++            if fieldnames.count(fieldname) > 1:
++                problem(f"DocType {name}: duplicate field '{fieldname}'")
++
++        for field in data.get("fields", []):
++            if field.get("fieldtype") == "Select" and not field.get("options"):
++                problem(f"DocType {name}: Select '{field['fieldname']}' has no options")
++            if field.get("fieldtype") == "Link" and not field.get("options"):
++                problem(f"DocType {name}: Link '{field['fieldname']}' has no target")
++
++
++def check_reports() -> None:
++    folders = [f for f in sorted(REPORTS.iterdir()) if f.is_dir() and f.name != "__pycache__"]
++
++    if not folders:
++        problem("no report folders found")
++
++    for folder in folders:
++        slug = folder.name
++        script = folder / f"{slug}.py"
++        client = folder / f"{slug}.js"
++        meta = folder / f"{slug}.json"
++
++        for path in (script, client, meta):
++            if not path.is_file():
++                problem(f"report {slug}: missing {path.name}")
++
++        if not script.is_file() or not meta.is_file():
++            continue
++
++        data = json.loads(meta.read_text(encoding="utf-8"))
++
++        for key in REQUIRED_REPORT_KEYS:
++            if data.get(key) in (None, ""):
++                problem(f"report {slug}: missing '{key}'")
++
++        if data.get("name") != data.get("report_name"):
++            problem(f"report {slug}: name and report_name disagree")
++
++        if data.get("report_type") == "Script Report":
++            source = script.read_text(encoding="utf-8")
++            if not re.search(r"^\s*return\s+\S", source, re.M):
++                problem(f"report {slug}: the script never returns a result")
++            # The 4th positional value is the chart and the 5th the summary. A summary
++            # handed over as the 4th value is silently dropped by the report view.
++            if re.search(r"return\s+[\w_]+\(\)?[^,]*,\s*data\s*,\s*None\s*,\s*summary\s*$", source, re.M):
++                problem(f"report {slug}: summary passed in the chart position")
++
++
++def check_translations() -> None:
++    path = APP / "translations/ar.csv"
++    if not path.is_file():
++        problem("translations/ar.csv is missing")
++        return
++
++    rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
++    seen: dict[tuple[str, str], set[str]] = {}
++
++    for index, row in enumerate(rows[1:], start=2):
++        if not any(cell.strip() for cell in row):
++            continue
++        if len(row) < 2:
++            problem(f"ar.csv line {index}: fewer than two columns")
++            continue
++        source = row[0].strip()
++        if not source:
++            problem(f"ar.csv line {index}: empty source")
++            continue
++        context = row[2].strip() if len(row) > 2 else ""
++        seen.setdefault((source, context), set()).add(row[1].strip())
++
++    for (source, context), translations in sorted(seen.items()):
++        if len(translations) > 1:
++            where = f"{source!r}" + (f" in context {context!r}" if context else "")
++            problem(f"ar.csv: conflicting translations for {where}: {sorted(translations)}")
++
++
++def main() -> int:
++    check_json_files()
++    check_doctypes()
++    check_reports()
++    check_translations()
++
++    if problems:
++        print(f"metadata validation failed with {len(problems)} problem(s):")
++        for message in problems:
++            print(f"  - {message}")
++        return 1
++
++    print("metadata validation passed")
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff --git a/murasalat_office/translations/ar.csv b/murasalat_office/translations/ar.csv
+index 6914cb5..6d62684 100644
+--- a/murasalat_office/translations/ar.csv
++++ b/murasalat_office/translations/ar.csv
+@@ -70,7 +70,7 @@ Target Entity,الجهة المستهدفة,
+ Internal Parties,الأطراف الداخلية,
+ Referral Number,رقم الإحالة,
+ To Organization,إلى الجهة,
+-To User,إلى المستخدم,
++To User,الموظف المستلم,
+ Direction,اتجاه الإحالة,
+ Instructions to Recipient,التوجيهات للمستلم,
+ Instructions,التوجيهات,
+@@ -203,7 +203,7 @@ Total Murasalat Referrals,إجمالي الإحالات,
+ Attention,التنبيه,
+ Referral,الإحالة,
+ Recipient,المستلم,
+-Recipient Department,الجهة المستلِمة,
++Recipient Department,القسم المستلِم,
+ Recipient User,المستخدم المستلِم,
+ Current Department,الجهة الحالية,
+ Current User,المستخدم الحالي,
+@@ -353,12 +353,9 @@ Internal — From / To,داخلي — من / إلى,
+ External — From / To,خارجي — من / إلى,
+ Referral Direction,اتجاه الإحالة,
+ Recipient Type,محال إلى,
+-Recipient Department,القسم المستلِم,
+-Recipient User,المستخدم المستلِم,
+ From Department,من القسم,
+ To Department,إلى القسم,
+ From User,من المستخدم,
+-To User,الموظف المستلم,
+ Internal department sending the correspondence.,القسم الداخلي الذي يرسل المعاملة.,
+ Internal department receiving the correspondence.,القسم الداخلي الذي يستلم المعاملة.,
+ Internal user sending the correspondence.,المستخدم الداخلي الذي يرسل المعاملة.,
+@@ -367,7 +364,6 @@ Outgoing — From / To,صادر — من / إلى,
+ Incoming — From / To,وارد — من / إلى,
+ External party receiving the correspondence.,الجهة الخارجية التي تستلم المعاملة.,
+ External party sending the correspondence.,الجهة الخارجية التي ترسل المعاملة.,
+-Incoming — From / To,وارد — من / إلى,
+ External party that sent the correspondence.,الجهة الخارجية التي أرسلت المعاملة.,
+ External party that received the correspondence.,الجهة الخارجية التي استلمت المعاملة.,
+ Receiving Department,القسم المستلِم,
+@@ -377,11 +373,7 @@ Sending User,المستخدم المرسِل,
+ External Recipient,المستلم الخارجي,
+ Pages,عدد الصفحات,
+ Content & Notes,المحتوى والملاحظات,
+-Attachments,المرفقات,
+-Linked Correspondence,المعاملة المرتبطة,
+ Related Referrals,الإحالات المرتبطة,
+-Operational Activity,سجل النشاط التشغيلي,
+-Security / Audit,الأمان والتدقيق,
+ Correspondence Details,تفاصيل المعاملة,
+ Referral Details,تفاصيل الإحالة,
+ Related Correspondence,المعاملات المرتبطة,
+@@ -391,10 +383,6 @@ Security & Audit,الأمان والتدقيق,
+ Correspondence Summary,ملخص المعاملة,
+ Referral Summary,ملخص الإحالة,
+ Murasalat Summary,ملخص المعاملات,
+-Murasalat Work Queue,قائمة العمل,
+-Murasalat Employee Productivity,إنتاجية الموظفين,
+-Murasalat Security Health,سلامة الحوكمة الأمنية,
+-Murasalat Overdue,المعاملات المتأخرة,
+ ATTENTION,تحذير,
+ Audit Security,تدقيق الأمان,
+ Attachments Gallery,معرض المرفقات,
+diff --git a/murasalat_office/verification/__init__.py b/murasalat_office/verification/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/murasalat_office/verification/site_smoke.py b/murasalat_office/verification/site_smoke.py
+new file mode 100644
+index 0000000..c8845a0
+--- /dev/null
++++ b/murasalat_office/verification/site_smoke.py
+@@ -0,0 +1,201 @@
++"""Configuration checks that need a running site.
++
++The framework-light suite cannot see a migrated database, so a handful of things can only
++be confirmed on a bench. Run them after ``bench migrate``:
++
++    bench --site <site> execute murasalat_office.verification.site_smoke.run
++
++Every check is read-only and reports a pass/fail line. This covers *configuration*; it does
++not judge how anything looks. The rendering checklist lives in docs/VERIFICATION.md.
++"""
++import frappe
++
++
++def _ok(label, detail=""):
++    print(f"  PASS  {label}" + (f"  [{detail}]" if detail else ""))
++
++
++def _fail(label, detail=""):
++    print(f"  FAIL  {label}" + (f"  [{detail}]" if detail else ""))
++    return 1
++
++
++def _check_doctypes():
++    failures = 0
++    print("doctypes")
++
++    for doctype in (
++        "Murasalat Correspondence",
++        "Murasalat Referral",
++        "Murasalat Approval Request",
++        "Murasalat Correspondence Activity",
++        "Murasalat Correspondence Link",
++        "Murasalat Attachment",
++        "Murasalat User Organization Membership",
++    ):
++        if frappe.db.exists("DocType", doctype):
++            _ok(doctype)
++        else:
++            failures += _fail(doctype, "not migrated")
++
++    return failures
++
++
++def _check_workflow():
++    print("workflow")
++    failures = 0
++
++    for doctype in ("Murasalat Correspondence", "Murasalat Referral"):
++        workflows = frappe.get_all(
++            "Workflow",
++            filters={"document_type": doctype, "is_active": 1},
++            fields=["name"],
++            limit_page_length=0,
++        )
++        if not workflows:
++            failures += _fail(f"{doctype}: active workflow")
++            continue
++
++        for workflow in workflows:
++            transitions = frappe.get_all(
++                "Workflow Transition",
++                filters={"parent": workflow.name},
++                fields=["name", "action", "state", "next_state"],
++                limit_page_length=0,
++            )
++            _ok(f"{doctype}: workflow {workflow.name}", f"{len(transitions)} transitions")
++
++            tasks = frappe.get_all(
++                "Workflow Transition Task",
++                filters={"parenttype": "Workflow Transition", "parent": ("in", [t.name for t in transitions])},
++                fields=["name", "enabled", "asynchronous", "task"],
++                limit_page_length=0,
++            )
++            for task in tasks:
++                if not task.enabled:
++                    failures += _fail(f"transition task {task.name}", "not enabled")
++                elif task.asynchronous:
++                    failures += _fail(
++                        f"transition task {task.name}",
++                        "'Asynchronous' is on, so the lifecycle method will not run inline",
++                    )
++                else:
++                    _ok(f"transition task {task.name}", task.task)
++
++            if transitions and not tasks:
++                failures += _fail(
++                    f"{doctype}: transition tasks",
++                    "no Workflow Transition Task rows, so no lifecycle method fires",
++                )
++
++    return failures
++
++
++def _check_reports():
++    print("reports")
++    failures = 0
++
++    report_dir = frappe.get_app_path("murasalat_office", "murasalat_office", "report")
++    import os
++
++    slugs = sorted(
++        name
++        for name in os.listdir(report_dir)
++        if os.path.isdir(os.path.join(report_dir, name)) and name != "__pycache__"
++    )
++
++    for slug in slugs:
++        name = frappe.db.get_value("Report", {"name": ("like", f"%{slug.split('_')[-1]}%")}, "name")
++        if not name:
++            failures += _fail(slug, "Report document not found after migrate")
++            continue
++
++        roles = frappe.get_all(
++            "Has Role", filters={"parent": name, "parenttype": "Report"}, fields=["role"], limit_page_length=0
++        )
++        if not roles:
++            failures += _fail(
++                name,
++                "no roles attached, so report access is not explicitly governed "
++                "(run murasalat_office.setup.report_access.apply_report_roles)",
++            )
++        else:
++            _ok(name, ", ".join(sorted(row.role for row in roles)))
++
++    return failures
++
++
++def _check_print_formats():
++    print("print formats")
++    failures = 0
++
++    for doctype, expected in (
++        ("Murasalat Correspondence", "Murasalat Correspondence Print"),
++        ("Murasalat Referral", "Murasalat Referral Notification"),
++    ):
++        names = frappe.get_all(
++            "Print Format", filters={"doc_type": doctype}, fields=["name"], limit_page_length=0
++        )
++        if not names:
++            failures += _fail(f"{doctype}: print format")
++        else:
++            _ok(f"{doctype}: {expected}", ", ".join(sorted(row.name for row in names)))
++
++    return failures
++
++
++def _check_lifecycle_hooks():
++    print("lifecycle hooks")
++    failures = 0
++
++    import importlib
++
++    from murasalat_office import hooks
++
++    for entry in getattr(hooks, "workflow_methods", []) or []:
++        target = entry.get("method")
++        try:
++            module_path, function_name = target.rsplit(".", 1)
++            getattr(importlib.import_module(module_path), function_name)
++        except Exception as error:  # noqa: BLE001 - the message is the point
++            failures += _fail(f"{entry.get('workflow_action') or '?'}: {target}", str(error))
++        else:
++            _ok(f"{entry.get('workflow_action') or '?'}: {target}")
++
++    return failures
++
++
++def _check_translations():
++    print("translations")
++
++    rows = frappe.get_all("Translation", filters={"language": "ar"}, limit_page_length=0)
++    if not rows:
++        return _fail("Arabic translations", "no Translation rows for 'ar'")
++
++    _ok("Arabic translations", f"{len(rows)} rows")
++    return 0
++
++
++def run():
++    print("Murasalat Office site verification")
++    print("=" * 40)
++    failures = 0
++
++    for check in (
++        _check_doctypes,
++        _check_workflow,
++        _check_reports,
++        _check_print_formats,
++        _check_lifecycle_hooks,
++        _check_translations,
++    ):
++        failures += check()
++
++    print("=" * 40)
++    if failures:
++        print(f"{failures} check(s) failed")
++    else:
++        print("all configuration checks passed")
++    print("Rendering still has to be eyeballed: see docs/VERIFICATION.md")
++
++    return failures
+-- 
+2.43.0
+

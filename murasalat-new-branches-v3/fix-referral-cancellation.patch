@@ -1,0 +1,668 @@
+From 662c291e6cf78ef7e8debef4e1f9a4bf1b6460d8 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Wed, 23 Sep 2026 01:57:21 +0300
+Subject: [PATCH] Let a referral be called off, and give the reports an
+ explicit audience
+
+A sent referral had no exit. Add cancellation with a mandatory reason, refused on a
+completed referral, recorded on the correspondence trail, and excluded from the open
+set so it stops blocking a closure.
+
+Reports shipped with no roles attached, which leaves report access implicit. Add a
+post-migrate step that attaches the correspondence roles and System Manager. The JSON
+stays role-free on purpose: migrate syncs it before those roles exist.
+
+Two modules appended activity rows with different argument orders. Keep one
+implementation, and have both delegate to it.
+---
+ .../murasalat_correspondence.json             |   3 +-
+ .../murasalat_correspondence.py               |  35 +--
+ .../murasalat_correspondence_activity.json    |   2 +-
+ .../murasalat_referral.json                   |  22 ++
+ murasalat_office/services/activity.py         |  36 +++
+ murasalat_office/services/lifecycle.py        |  75 +++--
+ murasalat_office/setup/report_access.py       |  82 ++++++
+ .../tests/test_referral_cancellation.py       | 259 ++++++++++++++++++
+ .../tests/test_validation_logic.py            |   2 +-
+ 9 files changed, 461 insertions(+), 55 deletions(-)
+ create mode 100644 murasalat_office/services/activity.py
+ create mode 100644 murasalat_office/setup/report_access.py
+ create mode 100644 murasalat_office/tests/test_referral_cancellation.py
+
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
+index bd3fecf..cb708d0 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
+@@ -85,7 +85,8 @@
+    "in_list_view": 1,
+    "in_standard_filter": 1,
+    "label": "Subject",
+-   "reqd": 1
++   "reqd": 1,
++   "search_index": 1
+   },
+   {
+    "fieldname": "workflow_state",
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py
+index b194c60..7a3283b 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py
+@@ -3,6 +3,7 @@ from frappe import _
+ from frappe.model.document import Document
+ from frappe.utils import now_datetime
+ 
++from murasalat_office.services.activity import append_activity
+ from murasalat_office.services.records import (
+     compute_integrity_hash,
+     validate_immutable_fields,
+@@ -204,30 +205,10 @@ class MurasalatCorrespondence(Document):
+         referral=None,
+         details=None,
+     ):
+-        self.append(
+-            "activities",
+-            {
+-                "activity_type": activity_type,
+-                "activity_on": now_datetime(),
+-                "actor": frappe.session.user,
+-                "organization": (
+-                    getattr(
+-                        referral,
+-                        "recipient_department",
+-                        None,
+-                    )
+-                    if referral
+-                    else self.current_holder
+-                ),
+-                "referral_number": (
+-                    getattr(
+-                        referral,
+-                        "referral_number",
+-                        None,
+-                    )
+-                    if referral
+-                    else None
+-                ),
+-                "details": details,
+-            },
+-        )
+\ No newline at end of file
++        """Delegate to the single shared implementation in ``services.activity``."""
++        return append_activity(
++            self,
++            activity_type,
++            details=details,
++            referral=referral,
++        )
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json b/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json
+index 873b203..4619481 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json
+@@ -19,7 +19,7 @@
+    "fieldtype": "Select",
+    "in_list_view": 1,
+    "label": "Activity Type",
+-   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed\nUnsealed",
++   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed\nUnsealed\nReferral Cancelled",
+    "reqd": 1
+   },
+   {
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json
+index 25177e7..84323a5 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json
+@@ -35,6 +35,9 @@
+   "received_on",
+   "completed_by",
+   "completed_on",
++  "cancel_reason",
++  "cancelled_on",
++  "cancelled_by",
+   "legacy_history"
+  ],
+  "fields": [
+@@ -180,6 +183,25 @@
+    "label": "Completed On",
+    "read_only": 1
+   },
++  {
++   "description": "Required when cancelling: the reason is written to the activity trail.",
++   "fieldname": "cancel_reason",
++   "fieldtype": "Small Text",
++   "label": "Cancel Reason"
++  },
++  {
++   "fieldname": "cancelled_on",
++   "fieldtype": "Datetime",
++   "label": "Cancelled On",
++   "read_only": 1
++  },
++  {
++   "fieldname": "cancelled_by",
++   "fieldtype": "Link",
++   "label": "Cancelled By",
++   "options": "User",
++   "read_only": 1
++  },
+   {
+    "fieldname": "legacy_history",
+    "fieldtype": "Long Text",
+diff --git a/murasalat_office/services/activity.py b/murasalat_office/services/activity.py
+new file mode 100644
+index 0000000..7be30c0
+--- /dev/null
++++ b/murasalat_office/services/activity.py
+@@ -0,0 +1,36 @@
++"""The single implementation of the activity-trail append.
++
++Both the document controller and the lifecycle service record events in the activity
++table. Having one implementation keeps the two from drifting apart — they previously
++disagreed about argument order, which is the kind of difference that stays invisible
++until an event records the wrong organization.
++"""
++import frappe
++from frappe.utils import now_datetime
++
++
++def append_activity(doc, activity_type, details=None, referral=None):
++    """Append an activity to the in-memory document.
++
++    Operating on the document (rather than the database) means the row participates in
++    the caller's own save/Workflow transaction.
++    """
++    doc.append(
++        "activities",
++        {
++            "activity_type": activity_type,
++            "activity_on": now_datetime(),
++            "actor": frappe.session.user,
++            "organization": (
++                referral.get("recipient_department")
++                if referral and referral.get("recipient_department")
++                else doc.get("current_holder")
++            ),
++            "referral_number": (
++                referral.get("referral_number")
++                if referral
++                else None
++            ),
++            "details": details,
++        },
++    )
+diff --git a/murasalat_office/services/lifecycle.py b/murasalat_office/services/lifecycle.py
+index 704a32d..47c1d8d 100644
+--- a/murasalat_office/services/lifecycle.py
++++ b/murasalat_office/services/lifecycle.py
+@@ -2,39 +2,20 @@ import frappe
+ from frappe import _
+ from frappe.utils import now_datetime
+ 
++from murasalat_office.services.activity import append_activity
+ 
++
++# A referral that is still open work: sent, not finished, and not called off.
+ OPEN_REFERRAL_FILTERS = [
+     ["sent_on", "is", "set"],
+     ["completed_on", "is", "not set"],
++    ["cancelled_on", "is", "not set"],
+ ]
+ 
+ 
+ def _append_activity(doc, activity_type, details=None, referral=None):
+-    """Append an activity to the current document.
+-
+-    This operates on the in-memory document and therefore participates in
+-    the normal save/Workflow transaction of the document invoking the
+-    lifecycle method.
+-    """
+-    doc.append(
+-        "activities",
+-        {
+-            "activity_type": activity_type,
+-            "activity_on": now_datetime(),
+-            "actor": frappe.session.user,
+-            "organization": (
+-                referral.get("recipient_department")
+-                if referral and referral.get("recipient_department")
+-                else doc.get("current_holder")
+-            ),
+-            "referral_number": (
+-                referral.get("referral_number")
+-                if referral
+-                else None
+-            ),
+-            "details": details,
+-        },
+-    )
++    """Delegate to the single shared implementation in ``services.activity``."""
++    return append_activity(doc, activity_type, details=details, referral=referral)
+ 
+ 
+ def _append_referral_activity(referral, activity_type, details):
+@@ -143,6 +124,10 @@ def close_correspondence(doc):
+             )
+         )
+ 
++    # Idempotent: closing an already-closed correspondence changes nothing.
++    if doc.get("closed_on"):
++        return
++
+     open_referrals = _get_open_referrals(doc.name)
+ 
+     if open_referrals:
+@@ -392,6 +377,46 @@ def complete_referral(doc):
+     )
+ 
+ 
++def cancel_referral(doc):
++    """Call off a referral that is still open work.
++
++    Cancellation is terminal and attributable: it takes a mandatory reason, is refused on
++    a referral that already completed, and removes the referral from the open set so it no
++    longer blocks closing its correspondence.
++    """
++    if doc.doctype != "Murasalat Referral":
++        frappe.throw(
++            _("Cancel Referral can only run on Murasalat Referral.")
++        )
++
++    if doc.get("completed_on"):
++        frappe.throw(
++            _("A completed referral cannot be cancelled; it is already finished.")
++        )
++
++    if doc.get("cancelled_on"):
++        return
++
++    reason = (doc.get("cancel_reason") or "").strip()
++
++    if not reason:
++        frappe.throw(
++            _("A reason is required to cancel a referral.")
++        )
++
++    doc.cancelled_on = now_datetime()
++    doc.cancelled_by = frappe.session.user
++
++    _append_referral_activity(
++        doc,
++        "Referral Cancelled",
++        _("Referral {0} was cancelled. Reason: {1}").format(
++            doc.referral_number or doc.name,
++            reason,
++        ),
++    )
++
++
+ def _validate_referral_for_transition(doc):
+     """Delegate to the controller's own invariants so the two layers cannot drift.
+ 
+diff --git a/murasalat_office/setup/report_access.py b/murasalat_office/setup/report_access.py
+new file mode 100644
+index 0000000..51c1b8e
+--- /dev/null
++++ b/murasalat_office/setup/report_access.py
+@@ -0,0 +1,82 @@
++"""Attach access roles to the operational reports, after migrate.
++
++The report definitions deliberately ship without roles. A Report's roles are Link fields
++to Role documents, and ``bench migrate`` syncs the JSON **before** the correspondence roles
++exist on a fresh site, so a role named in the JSON can fail the sync. Running this after
++migrate avoids that ordering trap while still making report access explicit rather than
++implicit.
++
++    bench --site <site> execute murasalat_office.setup.report_access.apply_report_roles
++
++It is idempotent: roles that are already attached are left alone.
++"""
++from pathlib import Path
++
++CORRESPONDENCE_ROLES = (
++    "Correspondence Clerk",
++    "Correspondence Supervisor",
++    "Correspondence Auditor",
++)
++
++ALWAYS = ("System Manager",)
++
++
++def report_slugs():
++    """Every shipped report, read from the app tree.
++
++    Kept free of ``frappe`` on purpose so it can be asserted without a bench.
++    """
++    root = Path(__file__).resolve().parents[1] / "murasalat_office/report"
++    if not root.is_dir():
++        return []
++    return sorted(
++        folder.name
++        for folder in root.iterdir()
++        if folder.is_dir() and folder.name != "__pycache__"
++    )
++
++
++def desired_roles():
++    return tuple(sorted(set(ALWAYS) | set(CORRESPONDENCE_ROLES)))
++
++
++def apply_report_roles():
++    import frappe
++
++    created = []
++
++    for role in CORRESPONDENCE_ROLES:
++        if not frappe.db.exists("Role", role):
++            frappe.get_doc(
++                {"doctype": "Role", "role_name": role, "desk_access": 1}
++            ).insert(ignore_permissions=True)
++            created.append(role)
++
++    changed = []
++    wanted = desired_roles()
++
++    for slug in report_slugs():
++        name = frappe.db.get_value("Report", {"name": ("like", f"%{slug}%")}, "name")
++        if not name:
++            print(f"  skip  {slug}: no Report document (run bench migrate first)")
++            continue
++
++        report = frappe.get_doc("Report", name)
++        attached = {row.role for row in report.roles}
++        missing = [role for role in wanted if role not in attached]
++
++        if not missing:
++            print(f"  ok    {name}")
++            continue
++
++        for role in missing:
++            report.append("roles", {"role": role})
++
++        report.save(ignore_permissions=True)
++        changed.append(name)
++        print(f"  set   {name} <- {', '.join(missing)}")
++
++    if created:
++        print(f"created roles: {', '.join(created)}")
++    print(f"{len(changed)} report(s) updated")
++    return changed
+diff --git a/murasalat_office/tests/test_referral_cancellation.py b/murasalat_office/tests/test_referral_cancellation.py
+new file mode 100644
+index 0000000..14f2e82
+--- /dev/null
++++ b/murasalat_office/tests/test_referral_cancellation.py
+@@ -0,0 +1,259 @@
++"""Contract tests for report access, referral cancellation and the shared activity trail."""
++import importlib.util
++import json
++import sys
++import types
++from datetime import datetime
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++HOLDER = {"parent": None}
++
++
++class MurasalatThrow(Exception):
++    pass
++
++
++class FakeParent:
++    def __init__(self):
++        self.appended = []
++        self.saved = False
++        self.current_holder = "ORG-1"
++
++    def check_permission(self, *args):
++        return True
++
++    def append(self, table, row):
++        self.appended.append((table, row))
++
++    def get(self, key, default=None):
++        return self.__dict__.get(key, default)
++
++    def save(self):
++        self.saved = True
++
++
++class FakeDoc:
++    def __init__(self, **kwargs):
++        self.doctype = kwargs.pop("doctype", "Murasalat Referral")
++        self.appended = []
++        self.__dict__.update(kwargs)
++
++    def append(self, table, row):
++        self.appended.append((table, row))
++
++    def get(self, key, default=None):
++        return self.__dict__.get(key, default)
++
++    def is_new(self):
++        return False
++
++
++def _install_frappe_stub():
++    frappe = types.ModuleType("frappe")
++
++    def throw(message, exc=None, **kwargs):
++        raise MurasalatThrow(str(message))
++
++    class PermissionError(Exception):
++        pass
++
++    frappe.throw = throw
++    frappe._ = lambda text: text
++    frappe.PermissionError = PermissionError
++    frappe.session = types.SimpleNamespace(user="tester@example.com")
++    frappe.db = types.SimpleNamespace(get_value=lambda *a, **k: None, exists=lambda *a, **k: True)
++    frappe.get_doc = lambda *a, **k: HOLDER["parent"]
++    frappe.get_all = lambda *a, **k: []
++
++    utils = types.ModuleType("frappe.utils")
++    utils.now_datetime = datetime.now
++    frappe.utils = utils
++
++    sys.modules["frappe"] = frappe
++    sys.modules["frappe.utils"] = utils
++
++
++@pytest.fixture(autouse=True)
++def _stubbed_frappe():
++    saved = {key: sys.modules.get(key) for key in ("frappe", "frappe.utils")}
++    HOLDER["parent"] = None
++    _install_frappe_stub()
++    yield
++    for key, value in saved.items():
++        if value is None:
++            sys.modules.pop(key, None)
++        else:
++            sys.modules[key] = value
++
++
++def _load(name, relative_path):
++    spec = importlib.util.spec_from_file_location(name, ROOT / relative_path)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++def _lifecycle():
++    return _load("lc_under_test", "services/lifecycle.py")
++
++
++def _referral(**overrides):
++    values = dict(
++        name="REF-1",
++        referral_number="REF-1",
++        correspondence=None,
++        sent_on="2026-09-01 08:00:00",
++        received_on=None,
++        completed_on=None,
++        cancelled_on=None,
++        cancelled_by=None,
++        cancel_reason=None,
++    )
++    values.update(overrides)
++    return FakeDoc(**values)
++
++
++# ------------------------------------------------------------------ cancellation
++
++
++def test_cancelling_requires_a_reason():
++    lifecycle = _lifecycle()
++
++    with pytest.raises(MurasalatThrow):
++        lifecycle.cancel_referral(_referral(cancel_reason="   "))
++
++
++def test_a_completed_referral_cannot_be_cancelled():
++    lifecycle = _lifecycle()
++
++    with pytest.raises(MurasalatThrow) as error:
++        lifecycle.cancel_referral(
++            _referral(completed_on="2026-09-10 09:00:00", cancel_reason="تأخر الرد")
++        )
++
++    assert "completed" in str(error.value).lower()
++
++
++def test_cancelling_is_attributed_and_recorded_on_the_correspondence():
++    lifecycle = _lifecycle()
++    HOLDER["parent"] = FakeParent()
++    doc = _referral(correspondence="CORR-1", cancel_reason="وصل بالخطأ")
++
++    lifecycle.cancel_referral(doc)
++
++    assert doc.cancelled_on is not None
++    assert doc.cancelled_by == "tester@example.com"
++
++    activity = HOLDER["parent"].appended[0][1]
++    assert activity["activity_type"] == "Referral Cancelled"
++    assert "وصل بالخطأ" in activity["details"]
++    assert HOLDER["parent"].saved is True
++
++
++def test_cancelling_twice_changes_nothing():
++    lifecycle = _lifecycle()
++    HOLDER["parent"] = FakeParent()
++    doc = _referral(correspondence="CORR-1", cancelled_on="2026-09-12 10:00:00", cancel_reason="سابق")
++
++    lifecycle.cancel_referral(doc)
++
++    assert HOLDER["parent"].appended == []
++
++
++def test_a_cancelled_referral_is_no_longer_open_work():
++    """Otherwise a called-off referral would block closing its correspondence forever."""
++    lifecycle = _lifecycle()
++
++    assert ["cancelled_on", "is", "not set"] in lifecycle.OPEN_REFERRAL_FILTERS
++
++
++def test_closing_a_correspondence_twice_changes_nothing():
++    lifecycle = _lifecycle()
++    doc = FakeDoc(
++        doctype="Murasalat Correspondence",
++        closed_on="2026-09-20 10:00:00",
++        current_holder="ORG-1",
++    )
++
++    lifecycle.close_correspondence(doc)
++
++    assert doc.appended == []
++    assert doc.closed_on == "2026-09-20 10:00:00"
++
++
++# ------------------------------------------------------------------ one append path
++
++
++def test_there_is_exactly_one_activity_append_implementation():
++    activity = (ROOT / "services/activity.py").read_text(encoding="utf-8")
++    lifecycle = (ROOT / "services/lifecycle.py").read_text(encoding="utf-8")
++    controller = (
++        ROOT
++        / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py"
++    ).read_text(encoding="utf-8")
++    import_line = "from murasalat_office.services.activity import append_activity"
++
++    assert activity.count("doc.append(") == 1
++    assert "doc.append(" not in lifecycle
++    assert "self.append(" not in controller
++    assert import_line in lifecycle
++    assert import_line in controller
++
++
++def test_the_cancellation_vocabulary_is_declared_everywhere_it_is_used():
++    referral = json.loads(
++        (
++            ROOT / "murasalat_office/doctype/murasalat_referral/murasalat_referral.json"
++        ).read_text(encoding="utf-8")
++    )
++    fieldnames = {field["fieldname"] for field in referral["fields"]}
++    for field in ("cancel_reason", "cancelled_on", "cancelled_by"):
++        assert field in fieldnames, field
++        assert field in referral["field_order"], field
++
++    activity = json.loads(
++        (
++            ROOT
++            / "murasalat_office/doctype/murasalat_correspondence_activity/murasalat_correspondence_activity.json"
++        ).read_text(encoding="utf-8")
++    )
++    options = next(
++        field["options"] for field in activity["fields"] if field["fieldname"] == "activity_type"
++    )
++    assert "Referral Cancelled" in options.split("\n")
++
++    translations = (ROOT / "translations/ar.csv").read_text(encoding="utf-8")
++    for label in ("Cancel Reason", "Cancelled On", "Cancelled By", "Referral Cancelled"):
++        assert f"{label}," in translations, label
++
++
++# ------------------------------------------------------------------ report access
++
++
++def _report_access():
++    return _load("report_access_under_test", "setup/report_access.py")
++
++
++def test_report_access_covers_every_shipped_report():
++    module = _report_access()
++    folders = sorted(
++        folder.name
++        for folder in (ROOT / "murasalat_office/report").iterdir()
++        if folder.is_dir() and folder.name != "__pycache__"
++    )
++
++    assert module.report_slugs() == folders
++    assert len(module.report_slugs()) >= 10
++
++
++def test_report_access_grants_governance_roles_and_nothing_surprising():
++    module = _report_access()
++
++    assert "System Manager" in module.desired_roles()
++    for role in module.CORRESPONDENCE_ROLES:
++        assert role in module.desired_roles()
++    assert "Guest" not in module.desired_roles()
++    assert "All" not in module.desired_roles()
+diff --git a/murasalat_office/tests/test_validation_logic.py b/murasalat_office/tests/test_validation_logic.py
+index 8c8986f..b46b64d 100644
+--- a/murasalat_office/tests/test_validation_logic.py
++++ b/murasalat_office/tests/test_validation_logic.py
+@@ -357,7 +357,7 @@ ACTIVITY_CATALOG = [
+     "Reopened",
+     "Referral Sent",
+     "Referral Received",
+-    "Referral Completed", "Unsealed",]
++    "Referral Completed", "Unsealed", "Referral Cancelled",]
+ 
+ 
+ def test_activity_catalog_matches_events_emitted_by_controller():
+-- 
+2.43.0
+
