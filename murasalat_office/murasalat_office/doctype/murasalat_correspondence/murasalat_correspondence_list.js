@@ -1,3 +1,9 @@
+// Copyright (c) 2026, Murasalat Office and contributors
+// For license information, please see license.txt
+//
+// مؤشر حالة المعاملة في القائمة: يصف حالة المستند نفسها (مختومة/مغلقة/حالة سير العمل)
+// بدل أن يصف تاريخًا لا يعبّر عن حالة المعاملة.
+
 frappe.listview_settings["Murasalat Correspondence"] = {
     add_fields: [
         "subject",
@@ -6,14 +12,36 @@ frappe.listview_settings["Murasalat Correspondence"] = {
         "confidentiality",
         "importance",
         "due_date",
-        "current_holder_user",
+        "closed_on",
+        "record_sealed_on",
+        "current_holder",
     ],
     hide_name_column: true,
+
     get_indicator(doc) {
-        if (!doc.due_date) return [__("No Due Date"), "gray", "due_date,is,set"];
-        const today = frappe.datetime.get_today();
-        if (doc.due_date < today) return [__("Overdue"), "red", "due_date,<," + today];
-        if (doc.due_date === today) return [__("Due Today"), "orange", "due_date,=," + today];
-        return [__("Scheduled"), "blue", "due_date,>," + today];
+        // الأخصّ أولًا: الختم يعلو على أي حالة أخرى.
+        if (doc.record_sealed_on) {
+            return [__("Sealed"), "green", "record_sealed_on,is,set"];
+        }
+
+        if (doc.closed_on) {
+            return [__("Closed"), "gray", "closed_on,is,set"];
+        }
+
+        const state = (doc.workflow_state || "").trim();
+
+        if (state) {
+            const colors = {
+                Draft: "orange",
+                Registered: "blue",
+                Review: "purple",
+                Closed: "gray",
+                Sealed: "green",
+            };
+            const color = colors[state] || "blue";
+            return [__(state), color, "workflow_state,=," + state];
+        }
+
+        return [__("Draft"), "orange", "workflow_state,is,not set"];
     },
 };

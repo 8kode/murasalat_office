@@ -28,6 +28,7 @@
   },
   {
    "fetch_from": "correspondence.subject",
+   "fetch_if_empty": 1,
    "fieldname": "subject",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -96,9 +97,11 @@
  "owner": "Administrator",
  "row_format": "Dynamic",
  "search_fields": "correspondence,subject,requested_by",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "subject",
  "track_changes": 1,
  "track_seen": 1
 }
