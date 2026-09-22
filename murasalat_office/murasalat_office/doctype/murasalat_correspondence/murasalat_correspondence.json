@@ -6,7 +6,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "overview_html",
   "naming_section",
   "subject",
   "column_break_fxzw",
@@ -64,7 +63,9 @@
   "reopened_on",
   "reopened_by",
   "section_break_qtbc",
-  "workflow_state"
+  "workflow_state",
+  "overview_tab",
+  "overview_html"
  ],
  "fields": [
   {
@@ -413,10 +414,15 @@
   {
    "fieldname": "attachments_gallery_section",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "overview_tab",
+   "fieldtype": "Tab Break",
+   "label": "OverView"
   }
  ],
  "links": [],
- "modified": "2026-09-21 22:46:39.649013",
+ "modified": "2026-09-23 01:25:03.293115",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Correspondence",

@@ -6,7 +6,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "overview_html",
   "correspondence",
   "recipient_type",
   "direction",
@@ -35,13 +34,15 @@
   "received_on",
   "completed_by",
   "completed_on",
-  "legacy_history"
+  "legacy_history",
+  "overview_tab",
+  "overview_html"
  ],
  "fields": [
   {
    "fieldname": "overview_html",
    "fieldtype": "HTML",
-   "label": "نظرة شاملة على الإحالة",
+   "label": "\u0646\u0638\u0631\u0629 \u0634\u0627\u0645\u0644\u0629 \u0639\u0644\u0649 \u0627\u0644\u0625\u062d\u0627\u0644\u0629",
    "no_copy": 1
   },
   {
@@ -229,10 +230,15 @@
    "fieldname": "attachments_gallery",
    "fieldtype": "Attachment Gallery",
    "label": "Attachments Gallery"
+  },
+  {
+   "fieldname": "overview_tab",
+   "fieldtype": "Tab Break",
+   "label": "OverView"
   }
  ],
  "links": [],
- "modified": "2026-09-22 00:05:28.076913",
+ "modified": "2026-09-23 01:27:53.060901",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Referral",
