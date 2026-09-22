@@ -357,7 +357,7 @@ ACTIVITY_CATALOG = [
     "Reopened",
     "Referral Sent",
     "Referral Received",
-    "Referral Completed", "Unsealed",]
+    "Referral Completed", "Unsealed", "Referral Cancelled",]
 
 
 def test_activity_catalog_matches_events_emitted_by_controller():

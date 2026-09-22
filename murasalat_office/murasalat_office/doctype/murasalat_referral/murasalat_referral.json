@@ -35,6 +35,9 @@
   "received_on",
   "completed_by",
   "completed_on",
+  "cancel_reason",
+  "cancelled_on",
+  "cancelled_by",
   "legacy_history"
  ],
  "fields": [
@@ -178,6 +181,25 @@
    "fieldname": "completed_on",
    "fieldtype": "Datetime",
    "label": "Completed On",
+   "read_only": 1
+  },
+  {
+   "description": "Required when cancelling: the reason is written to the activity trail.",
+   "fieldname": "cancel_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancel Reason"
+  },
+  {
+   "fieldname": "cancelled_on",
+   "fieldtype": "Datetime",
+   "label": "Cancelled On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
    "read_only": 1
   },
   {

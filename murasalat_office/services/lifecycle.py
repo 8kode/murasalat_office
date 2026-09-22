@@ -2,39 +2,20 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
+from murasalat_office.services.activity import append_activity
 
+
+# A referral that is still open work: sent, not finished, and not called off.
 OPEN_REFERRAL_FILTERS = [
     ["sent_on", "is", "set"],
     ["completed_on", "is", "not set"],
+    ["cancelled_on", "is", "not set"],
 ]
 
 
 def _append_activity(doc, activity_type, details=None, referral=None):
-    """Append an activity to the current document.
-
-    This operates on the in-memory document and therefore participates in
-    the normal save/Workflow transaction of the document invoking the
-    lifecycle method.
-    """
-    doc.append(
-        "activities",
-        {
-            "activity_type": activity_type,
-            "activity_on": now_datetime(),
-            "actor": frappe.session.user,
-            "organization": (
-                referral.get("recipient_department")
-                if referral and referral.get("recipient_department")
-                else doc.get("current_holder")
-            ),
-            "referral_number": (
-                referral.get("referral_number")
-                if referral
-                else None
-            ),
-            "details": details,
-        },
-    )
+    """Delegate to the single shared implementation in ``services.activity``."""
+    return append_activity(doc, activity_type, details=details, referral=referral)
 
 
 def _append_referral_activity(referral, activity_type, details):
@@ -142,6 +123,10 @@ def close_correspondence(doc):
                 "Murasalat Correspondence."
             )
         )
+
+    # Idempotent: closing an already-closed correspondence changes nothing.
+    if doc.get("closed_on"):
+        return
 
     open_referrals = _get_open_referrals(doc.name)
 
@@ -388,6 +373,46 @@ def complete_referral(doc):
         "Referral Completed",
         _("Referral {0} was completed.").format(
             doc.referral_number or doc.name,
+        ),
+    )
+
+
+def cancel_referral(doc):
+    """Call off a referral that is still open work.
+
+    Cancellation is terminal and attributable: it takes a mandatory reason, is refused on
+    a referral that already completed, and removes the referral from the open set so it no
+    longer blocks closing its correspondence.
+    """
+    if doc.doctype != "Murasalat Referral":
+        frappe.throw(
+            _("Cancel Referral can only run on Murasalat Referral.")
+        )
+
+    if doc.get("completed_on"):
+        frappe.throw(
+            _("A completed referral cannot be cancelled; it is already finished.")
+        )
+
+    if doc.get("cancelled_on"):
+        return
+
+    reason = (doc.get("cancel_reason") or "").strip()
+
+    if not reason:
+        frappe.throw(
+            _("A reason is required to cancel a referral.")
+        )
+
+    doc.cancelled_on = now_datetime()
+    doc.cancelled_by = frappe.session.user
+
+    _append_referral_activity(
+        doc,
+        "Referral Cancelled",
+        _("Referral {0} was cancelled. Reason: {1}").format(
+            doc.referral_number or doc.name,
+            reason,
         ),
     )
 

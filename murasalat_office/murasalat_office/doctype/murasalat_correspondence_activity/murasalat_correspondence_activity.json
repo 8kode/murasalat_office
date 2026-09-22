@@ -19,7 +19,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Activity Type",
-   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed\nUnsealed",
+   "options": "Created\nStatus Changed\nRegistered\nClosed\nSealed\nReopened\nReferral Sent\nReferral Received\nReferral Completed\nUnsealed\nReferral Cancelled",
    "reqd": 1
   },
   {

@@ -3,6 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now_datetime
 
+from murasalat_office.services.activity import append_activity
 from murasalat_office.services.records import (
     compute_integrity_hash,
     validate_immutable_fields,
@@ -204,30 +205,10 @@ class MurasalatCorrespondence(Document):
         referral=None,
         details=None,
     ):
-        self.append(
-            "activities",
-            {
-                "activity_type": activity_type,
-                "activity_on": now_datetime(),
-                "actor": frappe.session.user,
-                "organization": (
-                    getattr(
-                        referral,
-                        "recipient_department",
-                        None,
-                    )
-                    if referral
-                    else self.current_holder
-                ),
-                "referral_number": (
-                    getattr(
-                        referral,
-                        "referral_number",
-                        None,
-                    )
-                    if referral
-                    else None
-                ),
-                "details": details,
-            },
+        """Delegate to the single shared implementation in ``services.activity``."""
+        return append_activity(
+            self,
+            activity_type,
+            details=details,
+            referral=referral,
         )
