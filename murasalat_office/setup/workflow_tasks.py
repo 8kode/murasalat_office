@@ -24,12 +24,21 @@ CHILD_DOCTYPE = "Workflow Transition Task"
 LINK_FIELD = "transition_tasks"
 
 
-def hook_names():
-    """The names of the app's registered workflow_methods, in declaration order."""
+def hook_methods():
+    """Map each registered workflow_methods name to the method it will call."""
     import frappe
 
     entries = frappe.get_hooks("workflow_methods") or []
-    return [entry.get("name") for entry in entries if entry.get("name")]
+    return {entry.get("name"): entry.get("method") for entry in entries if entry.get("name")}
+
+
+def hook_names():
+    """The names of the app's registered workflow_methods, in declaration order."""
+    return list(hook_methods())
+
+
+def HOOK_METHODS():  # noqa: N802 - kept as a name so plan reads naturally
+    return hook_methods()
 
 
 def supports_transition_tasks():
@@ -111,6 +120,20 @@ def collect():
     return rows
 
 
+def state_only_transitions(rows=None):
+    """Transitions that change the state and run no hook.
+
+    Not a defect: most transitions only move a document along its path. Listing them keeps
+    the distinction visible between "deliberately does nothing else" and "should do
+    something and does not".
+    """
+    return [
+        f"{row['workflow']}: {row['action']} ({row['from']} -> {row['to']})"
+        for row in (rows if rows is not None else collect())
+        if not row["tasks"]
+    ]
+
+
 def unattached_hooks(rows=None):
     """Hook names that no transition task refers to, so they can never fire."""
     attached = {name for row in (rows if rows is not None else collect()) for name in row["hooks"]}
@@ -133,12 +156,6 @@ def problems(rows=None):
                 found.append(
                     f"{label}: 'Asynchronous' is on, so it runs outside the transition's transaction"
                 )
-
-        if not row["tasks"]:
-            found.append(
-                f"{row['workflow']}: {row['action']} ({row['from']} -> {row['to']}): "
-                "no transition task, so no hook runs on this transition"
-            )
 
     for name in unattached_hooks(rows if rows is not None else collect()):
         found.append(f"hook '{name}' is declared but attached to no transition")
@@ -171,13 +188,15 @@ def plan():
             continue
 
         for task in row["tasks"]:
-            if task.task in hook_names():
-                state = "ok" if (task.enabled and not task.asynchronous) else "check"
-                print(f"    {state:<6} task {task.task} -> {task.task and ''}{''}")
+            method = HOOK_METHODS().get(task.task)
+
+            if method and task.enabled and not task.asynchronous:
+                print(f"    ok     {task.task} -> {method.split('.')[-1]}")
             else:
-                print(f"    check  task {task.task} (no such hook)")
+                print(f"    check  {task.task} -> {method or 'no such hook'}")
 
     found = problems(rows)
+    state_only = state_only_transitions(rows)
     print("=" * 40)
 
     if found:
@@ -186,6 +205,12 @@ def plan():
             print(f"  - {line}")
     else:
         print("every declared hook is attached, enabled and synchronous")
+
+    if state_only:
+        print()
+        print(f"{len(state_only)} transition(s) only change the state and run no hook:")
+        for line in state_only:
+            print(f"  - {line}")
 
     return rows
 
@@ -212,15 +237,31 @@ def attach(workflow, transition, hook, group=None):
         print(f"No workflow_methods entry is named '{hook}'.")
         return
 
-    transition_doc = frappe.db.get_value("Workflow Transition", transition, ["name", "parent"], as_dict=True)
+    # A transition is identified by a generated name, which nobody can guess. Accept the
+    # action label the user sees ("Approve") as well as the row name.
+    if frappe.db.exists("Workflow Transition", transition):
+        transition_doc = frappe.db.get_value(
+            "Workflow Transition", transition, ["name", "parent"], as_dict=True
+        )
+    elif workflow:
+        transition_doc = frappe.db.get_value(
+            "Workflow Transition",
+            {"parent": workflow, "action": transition},
+            ["name", "parent"],
+            as_dict=True,
+        )
+    else:
+        transition_doc = None
 
     if not transition_doc:
-        print(f"No Workflow Transition named '{transition}'.")
+        print(f"No Workflow Transition '{transition}'" + (f" in '{workflow}'." if workflow else "."))
         return
 
     if workflow and transition_doc.parent != workflow:
         print(f"Transition '{transition}' belongs to '{transition_doc.parent}', not '{workflow}'.")
         return
+
+    transition = transition_doc.name
 
     child_field = _child_fieldname()
 

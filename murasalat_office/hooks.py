@@ -43,6 +43,14 @@ workflow_methods = [
         "name": "Complete Referral",
         "method": "murasalat_office.services.lifecycle.complete_referral",
     },
+    {
+        "name": "Stamp Approval",
+        "method": "murasalat_office.services.approvals.stamp_approval",
+    },
+    {
+        "name": "Clear Approval",
+        "method": "murasalat_office.services.approvals.clear_approval",
+    },
 ]
 
 

@@ -16,6 +16,7 @@ APP_OWNED_LABELS = (
     "Audit & Security",
     "Body",
     "Cancel Reason",
+    "Clear Approval",
     "Cancelled By",
     "Cancelled On",
     "Correspondence Register",
@@ -30,6 +31,7 @@ APP_OWNED_LABELS = (
     "Sealed By",
     "Sealed On",
     "Sender",
+    "Stamp Approval",
     "Unsealed",
 )
 

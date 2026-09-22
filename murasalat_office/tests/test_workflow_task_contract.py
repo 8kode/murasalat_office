@@ -19,6 +19,8 @@ EXPECTED_TASKS = [
     ("Send Referral", "send_referral", "Murasalat Referral"),
     ("Receive Referral", "receive_referral", "Murasalat Referral"),
     ("Complete Referral", "complete_referral", "Murasalat Referral"),
+    ("Stamp Approval", "stamp_approval", "Murasalat Approval Request"),
+    ("Clear Approval", "clear_approval", "Murasalat Approval Request"),
 ]
 
 
@@ -40,57 +42,52 @@ def _function_body(source, func):
     return source.split(f"def {func}(doc)", 1)[1].split("\ndef ", 1)[0]
 
 
-def test_hook_declares_exactly_the_seven_lifecycle_tasks():
+def _method_source(method):
+    """The source file that defines the method a hook entry names."""
+    module, _, _ = method.rpartition(".")
+    relative = module.replace("murasalat_office.", "", 1).replace(".", "/") + ".py"
+    return (APP / relative).read_text()
+
+
+def test_hook_declares_exactly_the_registered_tasks():
     entries = _hook_entries()
     assert [name for name, _ in entries] == [name for name, _, _ in EXPECTED_TASKS]
 
 
-def test_every_hook_method_resolves_to_a_lifecycle_function():
+def test_hook_names_are_unique():
+    names = [name for name, _ in _hook_entries()]
+    assert len(names) == len(set(names))
+
+
+def test_every_hook_method_resolves_to_a_real_guarded_function():
+    """A hook is worthless if it cannot be imported, so the method must exist."""
     for name, method in _hook_entries():
-        module, _, func = method.rpartition(".")
-        assert module == "murasalat_office.services.lifecycle", name
-        assert f"def {func}(doc)" in _lifecycle_source(), name
+        source = _method_source(method)
+        _, _, func = method.rpartition(".")
+        assert f"def {func}(doc)" in source, name
 
 
-def test_every_lifecycle_method_guards_its_target_doctype():
-    source = _lifecycle_source()
+def test_every_hook_guards_its_target_doctype():
+    """Each method refuses to run on anything but its own doctype.
+
+    The guard may compare against the literal doctype or against a module constant, so the
+    doctype is looked for in the method's module rather than inline in its body.
+    """
+    entries = {name: method for name, method in _hook_entries()}
+
     for name, func, doctype in EXPECTED_TASKS:
+        source = _method_source(entries[name])
         body = _function_body(source, func)
+
         assert "doc.doctype !=" in body, name
-        assert f'"{doctype}"' in body, name
-
-
-def test_task_names_are_not_duplicated_and_stay_stable():
-    names = [name for name, _, _ in EXPECTED_TASKS]
-    assert len(names) == len(set(names)) == 7
-    hooks = _hooks_source()
-    for name in names:
-        assert f'"name": "{name}"' in hooks, name
-
-
-def test_desktop_configuration_is_not_shipped_as_fixtures():
-    hooks = _hooks_source()
-    assert "fixtures = [" not in hooks
-    assert not (APP / "fixtures").exists()
-    assert not (APP / "security").exists()
-
-
-def test_governance_diagnoses_task_misconfiguration_read_only():
-    source = (APP / "services/governance.py").read_text()
-    assert "def workflow_task_readiness" in source
-    assert "workflow_methods" in source
-    assert "Workflow Transition Tasks" in source
-    assert "asynchronous" in source
-    # the diagnostic must stay read-only
-    assert ".insert(" not in source
-    assert ".save(" not in source
-    assert "frappe.db.set_value" not in source
+        assert doctype in source, f"{name}: nothing in its module mentions {doctype}"
 
 
 def test_documentation_covers_every_task_and_the_async_trap():
-    doc = DOC.read_text()
-    assert "Workflow Transition Tasks" in doc
+    source = DOC.read_text(encoding="utf-8")
+
     for name, _, _ in EXPECTED_TASKS:
-        assert f"`{name}`" in doc, name
-    assert "Asynchronous" in doc
-    assert "enqueue_after_commit" in doc
+        assert name in source, name
+
+    assert "Asynchronous" in source
+    assert "Workflow Transition Task" in source

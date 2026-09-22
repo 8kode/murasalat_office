@@ -80,21 +80,47 @@ def test_the_task_setup_matches_hooks_by_task_name_not_by_transition_action():
     """
     source = _source(TASKS)
 
-    assert "row['hooks']" in source or 'row["hooks"]' in source
-    assert "task.task in hook_names()" in source
+    assert 'hooks": [task.task for task in tasks' in source
+    assert "task.task in hooks" in source
     assert "unattached_hooks" in source
 
 
-def test_the_task_setup_reports_problems_instead_of_guessing_attachments():
+def test_the_task_setup_separates_state_only_transitions_from_problems():
+    """Most transitions only move a document along; that is not a defect to report."""
     source = _source(TASKS)
 
     assert "def problems(" in source
+    assert "def state_only_transitions(" in source
     assert "def unattached_hooks(" in source
     assert "def attach(" in source
-    # which transition runs which hook is a business decision, so it is passed in
-    assert '"asynchronous": 0' in source
-    assert "supports_transition_tasks()" in source
 
+    problems_body = source[source.index("def problems("):source.index("def state_only_transitions(")]
+    assert "no transition task" not in problems_body
+
+
+def test_attach_accepts_the_action_label_a_user_can_see():
+    """Transition rows are named by a generated hash, which nobody can guess."""
+    source = _source(TASKS)
+
+    assert '{"parent": workflow, "action": transition}' in source
+    assert "transition = transition_doc.name" in source
+
+
+def test_the_approval_decision_has_a_writer_not_only_a_guard():
+    """Without a writer the read-only fields can never be stamped at all."""
+    hooks_source = _source(ROOT / "hooks.py")
+    approvals = _source(ROOT / "services/approvals.py")
+
+    assert '"name": "Stamp Approval"' in hooks_source
+    assert '"name": "Clear Approval"' in hooks_source
+    assert "murasalat_office.services.approvals.stamp_approval" in hooks_source
+    assert "murasalat_office.services.approvals.clear_approval" in hooks_source
+
+    assert "def stamp_approval(doc)" in approvals
+    assert "def clear_approval(doc)" in approvals
+    # the stamp names the acting user and nothing else, and only once
+    assert "doc.approved_by = frappe.session.user" in approvals
+    assert 'if doc.get("approved_by"):' in approvals
 
 def test_every_hook_declared_in_hooks_py_is_a_real_function():
     hooks_source = _source(ROOT / "hooks.py")

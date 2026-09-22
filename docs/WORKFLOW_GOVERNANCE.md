@@ -236,3 +236,42 @@ The one thing the code base does own is the **contract**: the seven names in
 `hooks.py`, the methods behind them in `services/lifecycle.py`, and a regression test
 (`tests/test_workflow_task_contract.py`) that fails if a hook name, its method, its DocType
 guard, or its entry in this document drifts apart.
+
+## Approval decision tasks
+
+The Approval Request's `Approved By` / `Approved On` fields are read-only, so nothing in
+the Desk UI can write them. These two tasks are the writers; without them the `Approve`
+transition changes the state and records no decision at all.
+
+| Task | Method | Runs on | Attach to |
+| --- | --- | --- | --- |
+| `Stamp Approval` | `murasalat_office.services.approvals.stamp_approval` | `Murasalat Approval Request` | the `Approve` transition |
+| `Clear Approval` | `murasalat_office.services.approvals.clear_approval` | `Murasalat Approval Request` | the `Return for Amendment` transition |
+
+`Stamp Approval` records the acting user and the server time on the first approval only.
+It never names anyone but the user who ran the transition, and
+`MurasalatApprovalRequest._freeze_decision` refuses any later rewrite — so a recorded
+decision cannot be reassigned or backdated through the API either.
+
+`Clear Approval` withdraws the stamp when a request is returned for amendment, so the
+record stops claiming an approval that no longer stands. The earlier decision is not lost:
+`track_changes` keeps it in Frappe's Version history.
+
+Attaching them is an explicit step, because which transition runs which task is a business
+decision:
+
+```bash
+bench --site <site> execute murasalat_office.setup.workflow_tasks.attach \
+  --kwargs "{'workflow': 'Murasalat Approval Workflow', 'transition': 'Approve', 'hook': 'Stamp Approval'}"
+
+bench --site <site> execute murasalat_office.setup.workflow_tasks.attach \
+  --kwargs "{'workflow': 'Murasalat Approval Workflow', 'transition': 'Return for Amendment', 'hook': 'Clear Approval'}"
+```
+
+The transition argument takes the action label you see in the Desk, not the generated row
+name, so the command is copy-pasteable.
+
+**Keep `Asynchronous` off** on every `Workflow Transition Task`. An asynchronous task runs
+outside the transition's own transaction, so a failure in the lifecycle method separates
+from the state change that triggered it and the document can end up in a state its data
+does not support.
