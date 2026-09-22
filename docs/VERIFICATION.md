@@ -27,11 +27,24 @@ bench migrate
 bench --site <site> execute murasalat_office.verification.site_smoke.run
 ```
 
-It checks that the doctypes migrated, that each workflow has active transitions **and**
-transition tasks with `Enabled` on and `Asynchronous` off (an asynchronous task silently
-never fires the lifecycle method), that every report exists with roles attached, that the
-print formats are present, that every lifecycle hook resolves to a real function, and that
-Arabic translations loaded. Every line prints PASS or FAIL.
+It prints PASS / WARN / FAIL for: the migrated doctypes; each active workflow and whether
+every transition whose action matches a `workflow_methods` name actually has a task
+attached, with `Enabled` on and `Asynchronous` off; each report with the roles attached to
+it; the print formats; that every lifecycle hook resolves to a real function; and that the
+Arabic catalogue and the `ar` language are in place.
+
+Two things to know before reading its output:
+
+* **A lifecycle method needs a transition task.** The `workflow_methods` hook does not fire
+  by itself — `apply_workflow` only runs the hooks reachable through a
+  `Workflow Transition Task`. Until those rows exist a transition changes the state and
+  nothing else. `bench --site <site> execute murasalat_office.setup.workflow_tasks.plan`
+  prints the mapping read-only; `... .apply` creates it.
+* **Transition tasks are a Frappe develop (v16) feature.** On version-15 `apply_workflow`
+  contains no transition-task handling, so these hooks cannot fire from a transition at
+  all; the script reports that as a WARN rather than a fixable failure. Attach the lifecycle
+  methods another way on v15 (a Server Script or a `doc_events` hook), or run the app on the
+  version that implements them.
 
 ## 3. Still needs human eyes
 

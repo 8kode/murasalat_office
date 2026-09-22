@@ -1,16 +1,22 @@
 """Attach access roles to the operational reports, after migrate.
 
-The report definitions deliberately ship without roles. A Report's roles are Link fields
-to Role documents, and ``bench migrate`` syncs the JSON **before** the correspondence roles
-exist on a fresh site, so a role named in the JSON can fail the sync. Running this after
-migrate avoids that ordering trap while still making report access explicit rather than
-implicit.
+The report definitions deliberately ship without roles. A Report's roles are Link fields to
+Role documents, and ``bench migrate`` syncs a report's JSON **before** the correspondence
+roles exist on a fresh site, so a role named in the JSON can fail the sync. Running this
+after migrate avoids that ordering trap while still making report access explicit.
 
     bench --site <site> execute murasalat_office.setup.report_access.apply_report_roles
 
-It is idempotent: roles that are already attached are left alone.
+It is idempotent: roles already attached are left alone.
+
+**Why this writes child rows directly instead of appending to the Report:** saving a Report
+document writes its definition back out to the app tree. Doing that from a setup script
+silently edits tracked source files as a side effect of configuring a site — which is
+exactly what happened the first time this ran. The roles now go straight into the ``Has
+Role`` table, so configuring a site no longer modifies the repository.
 """
-from pathlib import Path
+import json
+import os
 
 CORRESPONDENCE_ROLES = (
     "Correspondence Clerk",
@@ -21,19 +27,50 @@ CORRESPONDENCE_ROLES = (
 ALWAYS = ("System Manager",)
 
 
-def report_slugs():
-    """Every shipped report, read from the app tree.
+def report_dir():
+    """The report folder inside the app, resolved without importing frappe."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(os.path.dirname(here), "murasalat_office", "report")
 
-    Kept free of ``frappe`` on purpose so it can be asserted without a bench.
-    """
-    root = Path(__file__).resolve().parents[1] / "murasalat_office/report"
-    if not root.is_dir():
+
+def report_slugs():
+    """Every shipped report, read from the app tree."""
+    base = report_dir()
+
+    if not os.path.isdir(base):
         return []
+
     return sorted(
-        folder.name
-        for folder in root.iterdir()
-        if folder.is_dir() and folder.name != "__pycache__"
+        folder
+        for folder in os.listdir(base)
+        if os.path.isdir(os.path.join(base, folder)) and folder != "__pycache__"
     )
+
+
+def report_names():
+    """The Report document name for each shipped report, read from its own definition.
+
+    Resolved from disk rather than guessed with a ``like`` filter: a guess matches the
+    wrong document when one report name contains another.
+    """
+    base = report_dir()
+    names = []
+
+    for slug in report_slugs():
+        meta_path = os.path.join(base, slug, f"{slug}.json")
+
+        if not os.path.isfile(meta_path):
+            continue
+
+        with open(meta_path) as handle:
+            definition = json.load(handle)
+
+        name = definition.get("report_name") or definition.get("name")
+
+        if name:
+            names.append((slug, name))
+
+    return names
 
 
 def desired_roles():
@@ -52,17 +89,23 @@ def apply_report_roles():
             ).insert(ignore_permissions=True)
             created.append(role)
 
-    changed = []
     wanted = desired_roles()
+    changed = []
 
-    for slug in report_slugs():
-        name = frappe.db.get_value("Report", {"name": ("like", f"%{slug}%")}, "name")
-        if not name:
+    for slug, name in report_names():
+        if not frappe.db.exists("Report", name):
             print(f"  skip  {slug}: no Report document (run bench migrate first)")
             continue
 
-        report = frappe.get_doc("Report", name)
-        attached = {row.role for row in report.roles}
+        attached = {
+            row.role
+            for row in frappe.get_all(
+                "Has Role",
+                filters={"parent": name, "parenttype": "Report", "parentfield": "roles"},
+                fields=["role"],
+                limit_page_length=0,
+            )
+        }
         missing = [role for role in wanted if role not in attached]
 
         if not missing:
@@ -70,13 +113,26 @@ def apply_report_roles():
             continue
 
         for role in missing:
-            report.append("roles", {"role": role})
+            # A direct child insert, so the Report definition on disk is left untouched.
+            frappe.get_doc(
+                {
+                    "doctype": "Has Role",
+                    "parent": name,
+                    "parenttype": "Report",
+                    "parentfield": "roles",
+                    "role": role,
+                }
+            ).insert(ignore_permissions=True)
 
-        report.save(ignore_permissions=True)
         changed.append(name)
         print(f"  set   {name} <- {', '.join(missing)}")
 
     if created:
         print(f"created roles: {', '.join(created)}")
+
+    # bench execute does not commit on its own; without this the roles are rolled back
+    # when the command returns.
+    frappe.db.commit()
+
     print(f"{len(changed)} report(s) updated")
     return changed
