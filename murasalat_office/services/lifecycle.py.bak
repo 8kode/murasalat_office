@@ -53,10 +53,10 @@ def _get_open_referrals(correspondence_name):
     """
     return frappe.get_all(
         "Murasalat Referral",
-        filters=[
-            ["correspondence", "=", correspondence_name],
-            *OPEN_REFERRAL_FILTERS,
-        ],
+        filters={
+            "correspondence": correspondence_name,
+            **OPEN_REFERRAL_FILTERS,
+        },
         fields=["name"],
         order_by="due_date asc, modified desc",
         limit_page_length=0,
