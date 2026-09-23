@@ -163,6 +163,57 @@ def test_cancelling_twice_changes_nothing():
     assert HOLDER["parent"].appended == []
 
 
+def test_closing_reads_its_filters_as_a_list_not_a_mapping():
+    """Closing a correspondence failed with "'list' object is not a mapping".
+
+    OPEN_REFERRAL_FILTERS is a list of triples, so it must spread into a filter list. Any
+    attempt to unpack it as a mapping turns every Close into a TypeError.
+    """
+    lifecycle = _lifecycle()
+    captured = {}
+
+    def fake_get_all(doctype, **kwargs):
+        captured["doctype"] = doctype
+        captured.update(kwargs)
+        return []
+
+    lifecycle.frappe.get_all = fake_get_all
+
+    lifecycle._get_open_referrals("MO-00015")
+
+    filters = captured["filters"]
+    assert captured["doctype"] == "Murasalat Referral"
+    assert isinstance(filters, list), filters
+    assert ["correspondence", "=", "MO-00015"] == filters[0]
+    # every declared open-referral condition survives into the query
+    for condition in lifecycle.OPEN_REFERRAL_FILTERS:
+        assert condition in filters, condition
+
+
+def test_closing_a_correspondence_with_open_referrals_is_refused():
+    """The filter has to actually reach the query for the refusal to be meaningful."""
+    lifecycle = _lifecycle()
+    captured = {}
+
+    def fake_get_all(doctype, **kwargs):
+        captured.update(kwargs)
+        return [{"name": "MR-00019"}]
+
+    lifecycle.frappe.get_all = fake_get_all
+    doc = FakeDoc(
+        doctype="Murasalat Correspondence",
+        closed_on=None,
+        current_holder="ORG-1",
+        name="MO-00015",
+    )
+
+    with pytest.raises(MurasalatThrow):
+        lifecycle.close_correspondence(doc)
+
+    assert isinstance(captured["filters"], list)
+    assert doc.closed_on is None
+
+
 def test_a_cancelled_referral_is_no_longer_open_work():
     """Otherwise a called-off referral would block closing its correspondence forever."""
     lifecycle = _lifecycle()

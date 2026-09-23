@@ -53,10 +53,13 @@ def _get_open_referrals(correspondence_name):
     """
     return frappe.get_all(
         "Murasalat Referral",
-        filters={
-            "correspondence": correspondence_name,
-            **OPEN_REFERRAL_FILTERS,
-        },
+        # OPEN_REFERRAL_FILTERS is a list of [fieldname, operator, value] triples, so it
+        # spreads into the filter list. It is not a mapping: unpacking it with ** raised
+        # "'list' object is not a mapping" and closing a correspondence could never work.
+        filters=[
+            ["correspondence", "=", correspondence_name],
+            *OPEN_REFERRAL_FILTERS,
+        ],
         fields=["name"],
         order_by="due_date asc, modified desc",
         limit_page_length=0,
