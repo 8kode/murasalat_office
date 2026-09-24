@@ -6,7 +6,6 @@ from frappe.utils import now_datetime
 from murasalat_office.services.activity import append_activity
 from murasalat_office.services.records import (
     compute_integrity_hash,
-    validate_attachment_rows,
     validate_immutable_fields,
     validate_sealed_attachments,
     verify_integrity,
@@ -48,7 +47,6 @@ class MurasalatCorrespondence(Document):
         self._validate_numeric_fields()
         self._validate_links()
 
-        validate_attachment_rows(self)
         validate_immutable_fields(self)
         validate_sealed_attachments(self)
 

@@ -8,7 +8,7 @@
  "engine": "InnoDB",
  "field_order": [
   "attachment_type",
-  "folder",
+  "archive_location",
   "file",
   "is_secret",
   "file_hash"
@@ -17,19 +17,20 @@
   {
    "fieldname": "attachment_type",
    "label": "Attachment Type",
-   "fieldtype": "Select",
-   "options": "Main Letter\nAttachment\nReply",
+   "fieldtype": "Link",
+   "options": "Murasalat Attachment Type",
    "reqd": 1,
    "in_list_view": 1,
    "default": "Attachment",
-   "description": "Main Letter for the letter itself; Attachment for anything accompanying it; Reply for an answer."
+   "description": "What this paper is. The list is a table you can extend in Desk - no upgrade needed to add a type."
   },
   {
-   "fieldname": "folder",
-   "label": "Folder",
-   "fieldtype": "Data",
-   "description": "Where the paper original is filed. Optional: leave it empty rather than inventing a value.",
-   "in_list_view": 1
+   "fieldname": "archive_location",
+   "label": "Archive Location",
+   "fieldtype": "Link",
+   "options": "Murasalat Archive Location",
+   "in_list_view": 1,
+   "description": "Where the paper original is filed. Optional: leave it empty rather than inventing a value."
   },
   {
    "fieldname": "file",
@@ -42,7 +43,8 @@
   {
    "fieldname": "is_secret",
    "label": "Secret Attachment",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "description": "Withholds this file's name from the overview and the print formats. Access to the file itself is governed by Frappe's File permissions, which follow the record."
   },
   {
    "fieldname": "file_hash",

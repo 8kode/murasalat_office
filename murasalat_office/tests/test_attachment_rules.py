@@ -69,20 +69,8 @@ def _field(path, name):
 # ---------------------------------------------------------------- metadata policy
 
 
-def test_the_folder_is_optional_so_nobody_invents_a_value():
-    """The site carries a literal 'نن': a required free-text field gets filled with noise."""
-    folder = _field(ATTACHMENT_JSON, "folder")
-
-    assert not folder.get("reqd"), "a required free-text folder is what produced garbage values"
-    assert folder.get("description"), "the field must explain what belongs in it"
 
 
-def test_the_attachment_type_carries_a_default_and_explains_itself():
-    attachment_type = _field(ATTACHMENT_JSON, "attachment_type")
-
-    assert attachment_type.get("default")
-    assert attachment_type.get("options", "").split("\n") == ["Main Letter", "Attachment", "Reply"]
-    assert attachment_type.get("description")
 
 
 def test_the_file_hash_is_never_typed_by_a_user():
@@ -103,30 +91,10 @@ class _Doc:
         self.attachments = rows
 
 
-def test_the_same_file_twice_under_one_type_is_refused():
-    records = _records()
-
-    with pytest.raises(MurasalatThrow):
-        records.validate_attachment_rows(_Doc([_Row("/files/a.pdf"), _Row("/files/a.pdf")]))
 
 
-def test_the_same_file_under_two_types_is_allowed():
-    records = _records()
-    records.validate_attachment_rows(
-        _Doc([_Row("/files/a.pdf", "Main Letter"), _Row("/files/a.pdf", "Reply")])
-    )
 
 
-def test_a_doctype_without_an_attachment_table_is_not_an_error():
-    records = _records()
-
-    class Bare:
-        pass
-
-    records.validate_attachment_rows(Bare())
-
-
-# ---------------------------------------------------------------- the seal covers linked files
 
 
 def test_the_snapshot_includes_files_linked_outside_the_table():
@@ -224,14 +192,6 @@ def test_the_referral_has_an_attachment_table_not_just_an_empty_tab():
     assert order.index("attachments_tab") < order.index("attachments")
 
 
-def test_both_doctypes_validate_their_attachments():
-    for path, module in (
-        (CORRESPONDENCE_JSON, ROOT / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.py"),
-        (REFERRAL_JSON, ROOT / "murasalat_office/doctype/murasalat_referral/murasalat_referral.py"),
-    ):
-        source = module.read_text(encoding="utf-8")
-        assert "validate_attachment_rows(self)" in source, module.name
-        assert path.is_file()
 
 
 def test_the_referral_panel_shows_its_attachments():

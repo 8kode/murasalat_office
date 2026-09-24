@@ -1,10 +1,24 @@
-# Legacy migration patches are retained for upgrade compatibility; governance is native Desk configuration.
+# Patch sections are read by frappe.modules.patch_handler.parse_as_configfile.
+#
+# The section named pre_model_sync runs before the DocType schema sync - for a column rename,
+# which needs the old column to still be the only one of the two. The section named
+# post_model_sync runs after it: a patch that seeds a master table, or reads a newly added
+# column, only works once the schema is in place.
+#
+# A line prefixed with `execute:` is exec'd as raw Python in patch_handler's own namespace, which
+# holds no app name, so it works only for a simple command. An app module path is listed bare and
+# resolved with frappe.get_attr, which imports the module properly.
+#
+# The v0_2x lines keep their legacy `execute:` text deliberately: the line itself is the key in
+# the Patch Log, so rewriting them would make Frappe treat them as new patches and run them again.
+# The backfill is listed last and out of numeric order on purpose - it writes rows whose
+# attachment type is a Link, so the vocabulary has to exist first.
 
+[pre_model_sync]
 execute:murasalat_office.patches.v0_21_migrate_referrals.execute
 execute:murasalat_office.patches.v0_22_preserve_referral_history.execute
-# New patches are listed as a bare module path: Frappe resolves that with frappe.get_attr,
-# which imports the module properly. A line prefixed with `execute:` is exec'd as raw Python
-# in patch_handler's own namespace - which holds no app name - so it raises NameError for an
-# app module. The two v0_2x lines above keep the legacy text on purpose: the line itself is
-# the key in the Patch Log, so rewriting them would make Frappe treat them as new patches.
-murasalat_office.patches.v0_23_index_record_attachments
+murasalat_office.patches.v0_24_rename_attachment_folder
+
+[post_model_sync]
+murasalat_office.patches.v0_25_attachment_vocabulary
+murasalat_office.patches.v0_26_index_record_attachments

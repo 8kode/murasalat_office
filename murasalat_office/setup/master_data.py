@@ -14,6 +14,7 @@ Correspondence field         links to                                   default 
 ``confidentiality``          Murasalat Confidentiality Level            ``عام``
 ``importance``               Murasalat Importance Level                 ``متوسط``
 ``correspondence_direction`` Murasalat Correspondence Direction         ``Internal``
+attachments.``type``         Murasalat Attachment Type                  ``Attachment``
 ============================ ========================================== =============
 
 ``Murasalat Correspondence Direction`` must contain ``Incoming``, ``Outgoing`` and
@@ -73,6 +74,32 @@ EXTERNAL_PARTY_TYPES = [
     {"type": "فرد"},
 ]
 
+ATTACHMENT_TYPES = [
+    {"attachment_type": "Main Letter", "type_label": "الخطاب الأصلي",
+     "description": "الخطاب نفسه الذي تحمله المعاملة أو الإحالة."},
+    {"attachment_type": "Attachment", "type_label": "مرفق مساند",
+     "description": "أي ورقة تصاحب الخطاب: كشف، جدول، نموذج، صورة."},
+    {"attachment_type": "Reply", "type_label": "الرد",
+     "description": "الرد الوارد على الخطاب."},
+    {"attachment_type": "Copy for Information", "type_label": "صورة للعلم",
+     "description": "نسخة تُرسل للعلم لا للإجراء."},
+    {"attachment_type": "Translation", "type_label": "ترجمة",
+     "description": "ترجمة الخطاب أو مرفقه."},
+]
+
+# Where the paper original is filed. Four places cover a small correspondence office; the
+# list is reference data, so a site adds its own in Desk whenever its archive differs.
+ARCHIVE_LOCATIONS = [
+    {"location": "Correspondence Office", "location_label": "مكتب المراسلات",
+     "description": "الملف الجاري لدى مكتب المراسلات."},
+    {"location": "Central Archive", "location_label": "الأرشيف المركزي",
+     "description": "الملفات المنتهية المحفوظة في الأرشيف."},
+    {"location": "Department Shelf", "location_label": "رف القسم",
+     "description": "ورق محفوظ لدى القسم المعني."},
+    {"location": "Director Office", "location_label": "مكتب المدير",
+     "description": "ملفات محفوظة لدى مكتب المدير."},
+]
+
 # doctype -> (name field, records)
 MASTER_DATA = [
     ("Murasalat Transaction Type", "title", TRANSACTION_TYPES),
@@ -81,6 +108,8 @@ MASTER_DATA = [
     ("Murasalat Correspondence Direction", "correspondence_direction", CORRESPONDENCE_DIRECTIONS),
     ("Murasalat Referral Direction", "title", REFERRAL_DIRECTIONS),
     ("Murasalat External Party Type", "type", EXTERNAL_PARTY_TYPES),
+    ("Murasalat Attachment Type", "attachment_type", ATTACHMENT_TYPES),
+    ("Murasalat Archive Location", "location", ARCHIVE_LOCATIONS),
 ]
 
 # The lookup values the DocType field defaults point at. A first save needs these.
@@ -91,6 +120,7 @@ REQUIRED_BY_DEFAULTS = [
     ("Murasalat Correspondence Direction", "Internal"),
     ("Murasalat Correspondence Direction", "Incoming"),
     ("Murasalat Correspondence Direction", "Outgoing"),
+    ("Murasalat Attachment Type", "Attachment"),
 ]
 
 

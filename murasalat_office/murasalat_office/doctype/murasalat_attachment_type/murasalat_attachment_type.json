@@ -1,0 +1,56 @@
+{
+ "doctype": "DocType",
+ "name": "Murasalat Attachment Type",
+ "module": "Murasalat Office",
+ "custom": 0,
+ "engine": "InnoDB",
+ "autoname": "field:attachment_type",
+ "naming_rule": "By fieldname",
+ "title_field": "type_label",
+ "search_fields": "type_label",
+ "allow_rename": 0,
+ "quick_entry": 1,
+ "track_changes": 1,
+ "field_order": [
+  "attachment_type",
+  "type_label",
+  "description",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "attachment_type",
+   "label": "Code",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "The value stored on a record. Kept in English so values already recorded keep working."
+  },
+  {
+   "fieldname": "type_label",
+   "label": "Name",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "What a user reads in the attachment table and on a printed record."
+  },
+  {
+   "fieldname": "description",
+   "label": "When to use it",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check",
+   "default": "1",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "index_web_pages_for_search": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "description": "What a file is: the letter itself, an accompanying paper, a reply."
+}

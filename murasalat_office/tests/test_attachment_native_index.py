@@ -315,26 +315,26 @@ def test_the_backfill_is_declared_the_way_frappe_can_resolve_it():
     frappe.get_attr, which imports the module properly. So the module path is listed bare.
     """
     patches = PATCHES.read_text(encoding="utf-8")
-    line = "murasalat_office.patches.v0_23_index_record_attachments"
+    line = "murasalat_office.patches.v0_26_index_record_attachments"
 
     assert line in patches
     assert "execute:" + line not in patches, "this form aborts migrate with NameError"
 
-    module = ROOT / "patches/v0_23_index_record_attachments.py"
+    module = ROOT / "patches/v0_26_index_record_attachments.py"
     assert module.is_file()
     assert "def execute():" in module.read_text(encoding="utf-8")
 
 
 def test_the_patch_describes_itself_while_migrating():
     """Frappe prints the patch function's docstring, so it must say what the patch does."""
-    module = (ROOT / "patches/v0_23_index_record_attachments.py").read_text(encoding="utf-8")
+    module = (ROOT / "patches/v0_26_index_record_attachments.py").read_text(encoding="utf-8")
     after_def = module.split("def execute():", 1)[1].strip()
 
     assert after_def.startswith('"""'), "migrate would print an empty description"
 
 
 def test_the_patch_tells_the_operator_what_it_did():
-    source = (ROOT / "patches/v0_23_index_record_attachments.py").read_text(encoding="utf-8")
+    source = (ROOT / "patches/v0_26_index_record_attachments.py").read_text(encoding="utf-8")
 
     assert "plan_indexing()" in source, "the plan is printed before anything is written"
     assert "skipped_sealed" in source

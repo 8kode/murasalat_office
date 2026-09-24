@@ -59,7 +59,7 @@ def canonical_payload(doc):
                 "hash": row.file_hash,
                 "secret": row.is_secret,
                 "type": row.attachment_type,
-                "folder": row.folder,
+                "archive_location": getattr(row, "archive_location", None),
             }
             for row in (doc.attachments or [])
         ],
@@ -121,40 +121,12 @@ def _attachment_snapshot(doc):
                 row.file_hash,
                 row.is_secret,
                 row.attachment_type,
-                row.folder,
+                getattr(row, "archive_location", None),
             )
             for row in (doc.attachments or [])
         ],
         _linked_file_snapshot(doc),
     )
-
-
-def validate_attachment_rows(doc):
-    """Refuse the same file recorded twice under the same attachment type.
-
-    A duplicated row inflates the attachment count and makes two different integrity
-    snapshots describe the same paper, which is exactly the ambiguity an archive has to
-    avoid.
-    """
-    seen = set()
-
-    # A doctype that has no attachment table simply has nothing to check, and a partially
-    # built document must not raise here.
-    for row in (getattr(doc, "attachments", None) or []):
-        if not row.file:
-            continue
-
-        key = (row.file, row.attachment_type)
-
-        if key in seen:
-            frappe.throw(
-                _(
-                    "The same file is attached twice as {0}: {1}. "
-                    "Remove the duplicate row."
-                ).format(row.attachment_type, row.file)
-            )
-
-        seen.add(key)
 
 
 def validate_sealed_attachments(doc):

@@ -1,16 +1,34 @@
-# Attachments: one source of truth
+# Attachments
 
-A record's files live in the **Attachments table** (`Murasalat Attachment` child table) on both
+A record's files live in the **Attachments table** (`Murasalat Attachment`) on both
 `Murasalat Correspondence` and `Murasalat Referral`. It is the only list a reviewer reads, and
-the only one that says **what** a file is: its type, where the paper original is filed, whether
-it is secret.
+the only one that says **what** a file is and **where its paper original is filed**.
+
+## What the framework does, and what this app adds
+
+Frappe has exactly one way to attach a file to a document: a `File` row carrying
+`attached_to_doctype` and `attached_to_name`. The panel in the form sidebar, drag-and-drop, the
+REST endpoint and a row's own Attach control all go through it. Everything below is therefore
+Frappe's, not ours:
+
+| Concern | Frappe's own mechanism |
+| --- | --- |
+| Storage, public and private | `File.is_private` → `/files/` or `/private/files/` |
+| **Permissions** | `File.has_permission` defers to the attached record - and `get_permission_query_conditions` does the same for lists, so a user who cannot read a correspondence cannot read its attachments |
+| Duplicate detection | `content_hash` recorded on every upload; `File.validate_duplicate_entry` refuses the same content twice on the same document |
+| Folders | `File.folder`, `is_folder`, `is_home_folder` |
+| Change tracking | `track_changes` on `File` |
+| Deletion | `File.on_trash` |
+
+This app adds only the three things the framework cannot express:
+
+1. **What a file is** → `attachment_type`
+2. **Where the paper original is filed** → `archive_location`
+3. **Integrity** → `file_hash` per row, and the record's own seal
 
 ## How a file gets into the table
 
-Frappe has exactly one way to attach a file to a document: a `File` row carrying
-`attached_to_doctype` and `attached_to_name`. Every door goes through it - the form's sidebar
-panel, drag-and-drop, the REST upload endpoint, a row's own Attach control. So the app listens
-there instead of replacing any of it, through the framework's own `doc_events` extension point
+Two `File` events are registered through the framework's own `doc_events` hook
 (`hooks.py` → `services/attachment_index.py`):
 
 | `File` event | What it does |
@@ -20,87 +38,102 @@ there instead of replacing any of it, through the framework's own `doc_events` e
 
 One signal separates the two kinds of upload: **`attached_to_field`**.
 `frappe/client.py::attach_file` sets it from the `docfield` argument, so it is empty for an
-upload aimed at the record and carries the field name when the user uploaded into a specific
-field. A field upload is the user filling that row themselves; indexing it too would file the
-same file twice. So a field upload is left alone, and a record-level upload is filed.
+upload aimed at the record and holds the field name when the user uploaded into a specific
+field. A field upload is the user filling that row themselves, so it is left alone.
 
-The row is written through the DocType's **own controller** (`document.append(...)` then
-`save()`), so the duplicate check, the seal guard, the `file_hash`, and the uploading user's
-write permission all still apply. Nothing writes a child table directly.
+The row is written through the DocType's own controller (`append` then `save`), so the seal
+guard, the file hash and the uploading user's write permission all still apply. Nothing writes a
+child table directly.
 
-## What was tried first, and why it changed
-
-The first attempt deleted the `Attachment Gallery` field and **hid Frappe's sidebar panel**
-with a DOM selector, so the table would be the only visible list. The gallery deletion stands -
-that field is in Frappe's `no_value_fields` and `display_fieldtypes`, so it stores **no column
-at all** and removing it loses no data. The panel hiding was withdrawn:
-
-| Approach | Why |
-| --- | --- |
-| Gallery field - **removed** | A second list of the same files recording nothing about them |
-| Panel hidden by DOM selector - **withdrawn** | Reached into markup Frappe does not publish, and worked *against* the framework instead of with it |
-| Custom upload button - **removed** | A third upload affordance; the panel is the framework's own, and it now feeds the table |
-| Panel left intact - **kept** | Native, and no longer a second list: its uploads become table rows |
+An upload that cannot be filed does **not** abort the upload: the file is already stored and the
+seal covers it through the linked-file snapshot. The failure is logged and the backfill picks
+the file up on the next migrate.
 
 ## How the table and the panel stay in step
 
-The File event files the row server-side, so the form then has to learn about a row it never
-created. It does that by wrapping `frappe.ui.form.Attachments.attachment_uploaded` - the
-method the panel runs for every completed upload - and merging the server's rows into
-`frm.doc.attachments`.
+The File event files the row server-side, so the open form has to learn about a row it never
+created. It wraps `frappe.ui.form.Attachments.attachment_uploaded` - the method the panel runs
+for every completed upload - and merges the server's rows into `frm.doc.attachments`.
 
 Two framework facts decide that design, both read from the Frappe v16 source:
 
 | Fact | Consequence |
 | --- | --- |
-| `Document.update_child_table` **deletes every child row the submitted document does not contain** | A form that never learned about the row would erase it on the next save, so the refresh is a correctness requirement rather than a convenience |
-| The panel hands `frappe.ui.FileUploader` its own `on_success` and never reads one set on the control (`sidebar/attachments.js`) | A hook on `on_success` would never fire; the wrap delegates to the original method instead of replacing it |
+| `Document.update_child_table` **deletes every child row the submitted document does not contain** | A form that never learned about the row would erase it on the next save, so the refresh is a correctness requirement, not a convenience |
+| The panel hands `frappe.ui.FileUploader` its own `on_success` and never reads one set on the control (`sidebar/attachments.js`) | A hook on `on_success` would never fire; the wrap delegates to the original method |
 
-The merge is **additive**. A row the user added or edited and has not saved yet carries no
-server name, so it is kept exactly as it is. A row that came from the server is copied without
-`__islocal`, so saving the form does not insert it a second time. The form is never reloaded
-after an upload, so nothing the user had typed is discarded.
+The merge is **additive**: an unsaved row is kept as it is, and a row from the server is copied
+without `__islocal` so saving does not insert it twice. The form is never reloaded, so nothing
+typed is discarded.
 
-## The rules the table enforces
+## The vocabulary is master data
 
-* `attachment_type` is a controlled vocabulary - `Main Letter`, `Attachment`, `Reply` - and
-  defaults to `Attachment`.
-* `folder` is **optional**. It used to be required free text, which produced values like "نن"
-  typed by somebody who had to put something there. An empty folder is honest; an invented one
-  is not.
-* The same file cannot be recorded twice under the same type
-  (`services/records.py::validate_attachment_rows`, called from both controllers).
+| Table | Holds | Seeded codes |
+| --- | --- | --- |
+| `Murasalat Attachment Type` | what a file is | `Main Letter`, `Attachment`, `Reply`, `Copy for Information`, `Translation` |
+| `Murasalat Archive Location` | where the paper original is filed | `Correspondence Office`, `Central Archive`, `Department Shelf`, `Director Office` |
+
+Neither table ships permission rows - access is site configuration, as it is for every other
+table in this app. So a System Manager grants **read** on both tables from Desk
+(**Role Permission Manager**) once, before users can pick a value in the Link fields. Seeding
+does not need it: `master_data.seed` registers as an administrator.
+
+Both are ordinary DocTypes: a site adds a value, changes its display name, or disables it from
+Desk with **no code change and no upgrade**. The stored value is a short English code and the
+displayed name is Arabic, which is what `title_field` is for - so a Link reads
+*الخطاب الأصلي* while the record stores `Main Letter`.
+
+Codes are never renamed: `allow_rename` is off, because renaming a code would orphan every
+record that stored it.
+
+The three codes already recorded by the old `Select` field are among the seeded ones, so
+existing rows keep resolving without a data migration.
+
+## The rules the table keeps
+
+* `attachment_type` is required and defaults to `Attachment`.
+* `archive_location` is **optional**. It replaced a free-text field named `folder`, which
+  collided with Frappe's own folder concept and collected values like `dfs` and `نن`. An empty
+  location is honest; an invented one is not.
 * `file_hash` is read-only, written automatically.
 * A sealed record takes **no new attachments**, refused in `File.before_insert` - so the rule
-  also holds for the REST endpoint and drag-and-drop, not only for a button somebody might
-  have hidden. Reopen the record first.
+  holds for the REST endpoint and drag-and-drop too, not only for a button somebody might have
+  hidden. Reopen the record first.
+* The seal covers the attachment rows **and** every `File` linked to the record, so a file added
+  outside the table is still inside the seal.
 
-## Files uploaded before this existed
+## Files uploaded before indexing existed
 
-Files attached through the panel or the gallery carry no row. They are already covered by the
-integrity seal - the hash reads the linked `File` rows as well - but they are invisible in the
-table and carry no type. To see what the backfill would do, **read-only, before migrating**:
+Files attached through the panel or the old gallery carry no row. They are already covered by
+the seal, but they are invisible in the table and carry no type. Read-only plan first:
 
 ```bash
 bench --site <site> execute murasalat_office.services.attachment_index.plan_indexing
 ```
 
-It reports four groups: `create` (a row will be written), `already_indexed`, `sealed` (left
-alone - see below), and `orphaned` (a `File` whose record no longer exists). Then
-`bench --site <site> migrate` runs
-`patches/v0_23_index_record_attachments.py`, which prints exactly what it wrote. It is
-idempotent, so re-running after a partial failure is safe.
+It reports four groups: `create`, `already_indexed`, `sealed` (left alone - a sealed record's
+stored hash covers its rows, so writing one would fail the check on a record nobody touched), and
+`orphaned`. `bench migrate` then runs the backfill and prints exactly what it wrote.
 
-**Sealed records are deliberately skipped.** Their stored hash covers their rows, so writing
-one would fail the seal check on a record nobody tampered with. Their files stay covered by the
-linked-`File` snapshot.
+## Migrating to this vocabulary
+
+`bench migrate` runs two patches, in this order:
+
+1. **`v0_24_rename_attachment_folder`** (before the schema sync) renames the column
+   `folder` → `archive_location`, carrying the values across rather than dropping them.
+2. **`v0_25_attachment_vocabulary`** (after the schema sync) seeds both tables, then reconciles
+   what the records already hold:
+   * a value that is not a known location is **cleared and printed** with its parent record, and
+     is re-filed by hand. It is cleared rather than kept because a Link field is validated on
+     save, so a dangling value would block the next save of that correspondence;
+   * an unknown attachment type is **reset to `Attachment`** and printed, since the field is
+     mandatory and `Attachment` is the generic code for an accompanying paper.
+3. **`v0_26_index_record_attachments`** (also after the schema sync) runs *after* the vocabulary,
+   not in numeric order: it writes rows whose attachment type is a Link, so the types have to
+   exist first. It is idempotent and skips sealed records.
 
 ## Still open
 
-* `folder` is free text. Making it a controlled list would be better, but it needs the
-  archive's actual location names and a migration for existing values.
-* `is_secret` hides a file's **name** in the overview and the print formats. It does not restrict
-  access to the `File` document itself - that is governed by Frappe's own File permissions.
-* An upload through drag-and-drop or the REST endpoint is filed in the table server-side,
-  but the open form does not learn about that row until it is reloaded, so saving a form that
-  was already open can remove the row. The row is recreated on the next migrate.
+* Retention and disposal periods. They belong on the correspondence type, not on the attachment
+  row, and need the office's statutory periods.
+* No attachment versioning: replacing a file means a new row.

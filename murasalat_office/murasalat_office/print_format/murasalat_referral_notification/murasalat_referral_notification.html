@@ -5,7 +5,7 @@
    cannot open; a restricted parent prints as مقيّد.
 #}
 {% set DIRECTION_AR = {"Incoming": "وارد", "Outgoing": "صادر", "Internal": "داخلي"} %}
-{% set ATTACHMENT_TYPE_AR = {"Main Letter": "الخطاب الأصلي", "Attachment": "مرفق", "Reply": "الرد"} %}
+{% set ATTACHMENT_TYPE_AR = {"Main Letter": "الخطاب الأصلي", "Attachment": "مرفق مساند", "Reply": "الرد", "Copy for Information": "صورة للعلم", "Translation": "ترجمة"} %}
 {% set RECIPIENT_TYPE_AR = {"User": "مستخدم", "Department": "قسم"} %}
 {% set can_read_parent = frappe.has_permission("Murasalat Correspondence", doc=doc.correspondence, ptype="read") %}
 {% set parent_subject = frappe.db.get_value("Murasalat Correspondence", doc.correspondence, "subject") if (can_read_parent and doc.correspondence) else None %}

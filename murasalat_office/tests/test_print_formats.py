@@ -219,21 +219,7 @@ def test_attachment_types_print_in_arabic_on_both_formats():
         assert "ATTACHMENT_TYPE_AR.get(att.attachment_type" in source, entry["name"]
 
 
-def test_the_attachment_type_map_covers_every_stored_option():
-    """A value missing from the map would print as English on an Arabic document."""
-    options = {
-        line.strip()
-        for line in _doctype_fields("Murasalat Attachment")["attachment_type"]["options"].splitlines()
-        if line.strip()
-    }
-    assert options == {"Main Letter", "Attachment", "Reply"}
-    for entry in FORMATS:
-        source = _source(entry)
-        for option in options:
-            assert f'"{option}"' in source, (entry["name"], option)
 
-
-# --- a render pass, not just a parse -------------------------------------------
 
 import datetime as _dt
 
@@ -295,3 +281,21 @@ def test_both_templates_render_and_no_secret_file_name_reaches_the_page():
     assert "original-letter.pdf" in slip
     assert "secret-scan.pdf" not in slip
     assert WITHHELD in slip
+
+
+def _seeded_attachment_types():
+    """The codes the vocabulary seeds, read from the app that seeds them."""
+    source = (APP / "setup/master_data.py").read_text()
+    block = source.split("ATTACHMENT_TYPES = [", 1)[1].split("\n]", 1)[0]
+    return set(re.findall(r'"attachment_type": "([^"]+)"', block))
+
+
+def test_the_attachment_type_map_covers_every_seeded_type():
+    """A code missing from the map would print in English on an Arabic document."""
+    seeded = _seeded_attachment_types()
+    assert seeded, "no attachment types are seeded"
+
+    for entry in FORMATS:
+        source = _source(entry)
+        for code in seeded:
+            assert f'"{code}"' in source, (entry["name"], code)

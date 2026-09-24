@@ -2,7 +2,6 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from murasalat_office.services.records import validate_attachment_rows
 
 
 class MurasalatReferral(Document):
@@ -24,7 +23,6 @@ class MurasalatReferral(Document):
         self._validate_recipient()
         self._validate_dates()
         self._validate_correspondence()
-        validate_attachment_rows(self)
 
     def _validate_recipient(self):
         """Exactly one recipient, and it must match the recipient type."""

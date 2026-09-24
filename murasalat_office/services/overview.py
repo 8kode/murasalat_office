@@ -153,7 +153,7 @@ def _attachment_rows(doc):
         rows.append(
             {
                 "attachment_type": getattr(row, "attachment_type", None),
-                "folder": getattr(row, "folder", None),
+                "archive_location": getattr(row, "archive_location", None),
                 "is_secret": is_secret,
                 "label": (
                     "مرفق سرّي — يُطلب من الأرشيف"

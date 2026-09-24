@@ -165,7 +165,7 @@
         <tr>
           <td>{{ a.attachment_type or "—" }}</td>
           <td>{% if a.is_secret %}<span class="mo-muted">{{ a.label }}</span>{% else %}{{ a.label or "—" }}{% endif %}</td>
-          <td class="mo-muted">{{ a.folder or "—" }}</td>
+          <td class="mo-muted">{{ a.archive_location or "—" }}</td>
         </tr>
         {% endfor %}
       </tbody>
