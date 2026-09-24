@@ -74,7 +74,20 @@ def index_file_in_the_record(doc, method=None):
     if not frappe.db.exists(doc.attached_to_doctype, doc.attached_to_name):
         return
 
-    add_attachment_row(doc.attached_to_doctype, doc.attached_to_name, doc.file_url)
+    try:
+        add_attachment_row(doc.attached_to_doctype, doc.attached_to_name, doc.file_url)
+    except Exception:
+        # The file is already stored, and the seal still covers it through the linked-file
+        # snapshot, so a refusal to file it must not fail the upload the user asked for.
+        # Raising here would roll the whole request back and lose the file. The failure is
+        # logged, and ``plan_indexing`` will pick the file up on the next migrate.
+        frappe.log_error(
+            title="Attachment index failed",
+            message=(
+                f"{doc.attached_to_doctype} {doc.attached_to_name} {doc.file_url}\n"
+                f"{frappe.get_traceback()}"
+            ),
+        )
 
 
 def add_attachment_row(doctype, record, file_url, attachment_type=DEFAULT_TYPE):
@@ -107,13 +120,17 @@ def row_for(doctype, record, file_url):
 
 
 def _record_level_files(doctype):
-    """Every File attached to this DocType at record level, oldest first."""
+    """Every File attached to this DocType at record level, oldest first.
+
+    ``frappe.get_all`` is the unpaginated read (``get_list`` is the paginated one), so the
+    query is left without a limit argument rather than naming one the framework may have
+    renamed.
+    """
     rows = frappe.get_all(
         "File",
         filters={"attached_to_doctype": doctype},
         fields=["attached_to_name", "attached_to_field", "file_url", "file_name"],
         order_by="attached_to_name asc, creation asc",
-        limit_page_length=0,
     )
 
     return [

@@ -48,7 +48,7 @@ class Record:
 
 def load(**behaviour):
     """Import the service against a stubbed frappe, and return it with its call log."""
-    log = {"loaded": [], "queries": [], "thrown": []}
+    log = {"loaded": [], "queries": [], "thrown": [], "errors": []}
 
     frappe = types.ModuleType("frappe")
     frappe._ = lambda text, *args, **kwargs: text
@@ -80,7 +80,10 @@ def load(**behaviour):
     frappe.throw = throw
     frappe.get_doc = get_doc
     frappe.get_all = get_all
-    frappe.log_error = lambda *args, **kwargs: None
+    def log_error(*args, **kwargs):
+        log["errors"].append(kwargs.get("title") or (args[0] if args else None))
+
+    frappe.log_error = log_error
     frappe.get_traceback = lambda: ""
     frappe.db = types.SimpleNamespace(
         get_value=get_value,
@@ -289,6 +292,18 @@ def test_hooks_register_the_native_file_events():
     assert "murasalat_office.services.attachment_index.refuse_file_on_a_sealed_record" in hooks
     assert "murasalat_office.services.attachment_index.index_file_in_the_record" in hooks
     assert SERVICE.is_file()
+
+
+def test_an_indexing_failure_does_not_abort_the_upload():
+    """The file is already stored when this runs; losing it would be worse than a lost row."""
+    def refuses(doctype, name):
+        raise RuntimeError("the record refused the row")
+
+    module, log = load(get_doc=refuses)
+
+    module.index_file_in_the_record(upload(CORRESPONDENCE, "MC-1"))
+
+    assert log["errors"] == ["Attachment index failed"], "the failure is recorded, not swallowed"
 
 
 def test_the_backfill_ships_as_a_patch_and_says_so():

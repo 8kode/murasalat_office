@@ -75,30 +75,84 @@ frappe.ui.form.on("Murasalat Referral", {
 // Attachments.
 //
 // Frappe has one way to attach a file to a document - a File row carrying
-// attached_to_doctype and attached_to_name. This sidebar panel, drag-and-drop, the REST
-// endpoint and a row's own Attach control all go through it, and the app registers a File
-// event server-side that files a record-level upload in the attachments table. So the panel
-// is left exactly as the framework built it: it uploads natively, and the table describes
-// what was uploaded. Nothing here hides framework markup.
+// attached_to_doctype and attached_to_name. This panel, drag-and-drop, the REST endpoint and
+// a row's own Attach control all go through it, and the app registers a File event
+// server-side that files a record-level upload in the table. So the panel is left exactly as
+// the framework built it: nothing here hides or replaces framework markup.
 //
 // A sealed correspondence refuses the file in File.before_insert, not here. The indicator
 // below only says so before somebody picks a file and waits for an upload to fail.
 // ---------------------------------------------------------------------------
 
+// Pure: the rows the form should hold, given what it holds and what the server now has.
+//
+// Additive only. A row the user added or edited and has not saved yet carries no name from
+// the server, so it is kept exactly as it is.
+function murasalat_merge_attachment_rows(current, incoming) {
+	const rows = (current || []).slice();
+	const names = new Set(rows.map((row) => row.name).filter(Boolean));
+	const files = new Set(rows.map((row) => row.file).filter(Boolean));
+
+	(incoming || []).forEach((row) => {
+		if ((row.name && names.has(row.name)) || (row.file && files.has(row.file))) {
+			return;
+		}
+
+		// A row the server already holds must not look like a new one, or saving the form
+		// would insert it a second time.
+		const saved = Object.assign({}, row);
+		delete saved.__islocal;
+
+		rows.push(saved);
+		names.add(saved.name);
+		files.add(saved.file);
+	});
+
+	return rows;
+}
+
+// Bring the table in step with the server after an upload from the panel.
+//
+// This is not cosmetic. Frappe syncs a child table by deleting every row the submitted
+// document does not contain, so a form that never learned about the row the File event
+// created would erase it on the next save.
+function murasalat_pull_attachment_rows(frm) {
+	if (frm.is_new() || !frm.docname) {
+		return;
+	}
+
+	frappe.db.get_doc(frm.doctype, frm.docname).then((doc) => {
+		const merged = murasalat_merge_attachment_rows(frm.doc.attachments, doc.attachments);
+
+		if (merged.length === (frm.doc.attachments || []).length) {
+			return;
+		}
+
+		frm.doc.attachments = merged;
+		frm.refresh_field("attachments");
+
+		frappe.show_alert({
+			message: __("أُضيف المرفق إلى الجدول."),
+			indicator: "green",
+		});
+	});
+}
+
+// attachment_uploaded runs for every upload the panel completes. The upload widget is handed
+// the panel's own completion callback and never reads one set on the control, so hooking that
+// callback would never fire. This wraps the method instead, and delegates to it.
 function murasalat_attachment_rules(frm) {
-	// A file attached from the panel is filed in the table server-side, so the table has to
-	// be re-read for the new row to appear. on_success is delegated to, never replaced.
 	if (frm.attachments && !frm.__murasalat_attach_hooked) {
 		frm.__murasalat_attach_hooked = true;
 
-		const native_on_success = frm.attachments.on_success;
+		const native_attachment_uploaded = frm.attachments.attachment_uploaded;
 
-		frm.attachments.on_success = (...args) => {
-			if (native_on_success) {
-				native_on_success(...args);
-			}
+		frm.attachments.attachment_uploaded = function (attachment) {
+			const result = native_attachment_uploaded.call(this, attachment);
 
-			frm.reload_doc();
+			murasalat_pull_attachment_rows(frm);
+
+			return result;
 		};
 	}
 }

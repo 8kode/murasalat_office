@@ -42,6 +42,25 @@ at all** and removing it loses no data. The panel hiding was withdrawn:
 | Custom upload button - **removed** | A third upload affordance; the panel is the framework's own, and it now feeds the table |
 | Panel left intact - **kept** | Native, and no longer a second list: its uploads become table rows |
 
+## How the table and the panel stay in step
+
+The File event files the row server-side, so the form then has to learn about a row it never
+created. It does that by wrapping `frappe.ui.form.Attachments.attachment_uploaded` - the
+method the panel runs for every completed upload - and merging the server's rows into
+`frm.doc.attachments`.
+
+Two framework facts decide that design, both read from the Frappe v16 source:
+
+| Fact | Consequence |
+| --- | --- |
+| `Document.update_child_table` **deletes every child row the submitted document does not contain** | A form that never learned about the row would erase it on the next save, so the refresh is a correctness requirement rather than a convenience |
+| The panel hands `frappe.ui.FileUploader` its own `on_success` and never reads one set on the control (`sidebar/attachments.js`) | A hook on `on_success` would never fire; the wrap delegates to the original method instead of replacing it |
+
+The merge is **additive**. A row the user added or edited and has not saved yet carries no
+server name, so it is kept exactly as it is. A row that came from the server is copied without
+`__islocal`, so saving the form does not insert it a second time. The form is never reloaded
+after an upload, so nothing the user had typed is discarded.
+
 ## The rules the table enforces
 
 * `attachment_type` is a controlled vocabulary - `Main Letter`, `Attachment`, `Reply` - and
@@ -82,6 +101,6 @@ linked-`File` snapshot.
   archive's actual location names and a migration for existing values.
 * `is_secret` hides a file's **name** in the overview and the print formats. It does not restrict
   access to the `File` document itself - that is governed by Frappe's own File permissions.
-* The panel refresh relies on the native `Attachments` control accepting an `on_success`
-  callback. If it does not, the new row appears on the next form reload instead - a cosmetic
-  delay, not a lost row.
+* An upload through drag-and-drop or the REST endpoint is filed in the table server-side,
+  but the open form does not learn about that row until it is reloaded, so saving a form that
+  was already open can remove the row. The row is recreated on the next migrate.
