@@ -33,7 +33,9 @@ The official record of a correspondence. Bordered header with the document numbe
 - **Metadata**: subject, internal number, registration date, external letter number and
   date, due date, page count, current holder, concerned person.
 - **Body** (`notes`).
-- **Attachments** with type, file name and a secret marker. A secret attachment prints as
+- **Attachments** with the type printed in Arabic rather than its stored Select value
+  (`Main Letter` -> *الخطاب الأصلي*), the file name, and a secret marker. A secret
+  attachment prints as
   *مرفق سرّي — يُطلب من الأرشيف* rather than exposing its file path.
 - **Signature row**: editor, recipient, official seal.
 - **Integrity block**, printed only when the record is sealed: seal date and user, seal
@@ -55,6 +57,10 @@ The slip handed to the recipient, with a tear-off return strip.
   `frappe.has_permission("Murasalat Correspondence", doc=…, ptype="read")`. A user without
   access to the file sees *مقيّد — لا تملك صلاحية قراءة هذه المعاملة* instead of its
   content, the same discipline the permission-aware reports follow.
+- **Attachments** carried by the referral, in the same table the correspondence record
+  prints - number, type in Arabic, file name, secret marker - with a count of the
+  attachments withheld and a line telling the recipient to request them from the archive.
+  The slip is the paper that travels with the file, so it now states what is travelling.
 - **Signature row** and a **cut line** instructing the recipient to return the signed
   strip to the correspondence office.
 
@@ -81,3 +87,8 @@ The suite parses both templates with Jinja (a syntax error would otherwise surfa
 when somebody tries to print), and checks every `doc.<field>` and every child-table loop
 variable against the DocType metadata — a mistyped field name prints an empty cell, which
 this catches before it reaches paper.
+
+The suite also **renders** both templates against a stubbed `frappe` and a record carrying
+one ordinary and one secret attachment: a Jinja slip that would otherwise surface only on
+somebody's print is caught here, and the secret file name is asserted absent from the
+output so a redaction regression cannot ship silently.

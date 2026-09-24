@@ -186,3 +186,112 @@ def test_shipping_print_formats_introduces_no_governance():
     for entry in FORMATS:
         data = json.loads((PRINT_FORMAT_DIR / entry["folder"] / f"{entry['folder']}.json").read_text())
         assert "permissions" not in data
+
+
+# --- the attachment block the referral slip gained -----------------------------
+
+WITHHELD = "مرفق سرّي — يُطلب من الأرشيف"
+
+
+def test_the_referral_notification_lists_its_attachments():
+    """The slip a recipient signs for must say which papers travel with it.
+
+    The correspondence record printed its attachments; the referral notification did
+    not, so somebody signing for a referral had no written list of what came with it.
+    """
+    source = _source(FORMATS[1])
+    assert '{% for att in doc.attachments %}' in source
+    assert "المرفقات المرفوعة مع الإحالة" in source
+
+
+def test_both_formats_withhold_a_secret_attachment_name():
+    for entry in FORMATS:
+        source = _source(entry)
+        assert WITHHELD in source, entry["name"]
+        assert "{% if att.is_secret %}" in source, entry["name"]
+
+
+def test_attachment_types_print_in_arabic_on_both_formats():
+    """The stored values are English Select options; an Arabic page maps them."""
+    for entry in FORMATS:
+        source = _source(entry)
+        assert "{% set ATTACHMENT_TYPE_AR" in source, entry["name"]
+        assert "ATTACHMENT_TYPE_AR.get(att.attachment_type" in source, entry["name"]
+
+
+def test_the_attachment_type_map_covers_every_stored_option():
+    """A value missing from the map would print as English on an Arabic document."""
+    options = {
+        line.strip()
+        for line in _doctype_fields("Murasalat Attachment")["attachment_type"]["options"].splitlines()
+        if line.strip()
+    }
+    assert options == {"Main Letter", "Attachment", "Reply"}
+    for entry in FORMATS:
+        source = _source(entry)
+        for option in options:
+            assert f'"{option}"' in source, (entry["name"], option)
+
+
+# --- a render pass, not just a parse -------------------------------------------
+
+import datetime as _dt
+
+
+class _Stub:
+    """Yields None for any field a render touches that the test did not set."""
+
+    def __init__(self, **values):
+        self.__dict__.update(values)
+
+    def __getattr__(self, name):
+        return None
+
+
+def _frappe_stub():
+    utils = _Stub()
+    utils.getdate = lambda value=None: value if isinstance(value, _dt.date) else _dt.date(2026, 1, 1)
+    utils.get_datetime = lambda value=None: value if isinstance(value, _dt.datetime) else _dt.datetime(2026, 1, 1, 9, 0)
+    utils.today = lambda: _dt.date(2026, 1, 1)
+    utils.now = lambda: _dt.datetime(2026, 1, 1, 9, 0)
+    stub = _Stub()
+    stub.utils = utils
+    stub.db = _Stub(get_value=lambda *a, **kw: None)
+    stub.session = _Stub(user="Administrator")
+    stub.has_permission = lambda *a, **kw: True
+    return stub
+
+
+def _render(entry, doc):
+    template = jinja2.Environment().from_string(_source(entry))
+    return template.render(doc=doc, frappe=_frappe_stub())
+
+
+def test_both_templates_render_and_no_secret_file_name_reaches_the_page():
+    """Parsing is not rendering: this drives the loops and filters for real.
+
+    The record carries one ordinary and one secret attachment, so the assertion that the
+    secret file name is absent fails the moment the redaction is removed.
+    """
+    doc = _Stub(
+        name="MC-2026-0001",
+        referral_number="REF-2026-0001",
+        creation=_dt.datetime(2026, 1, 1, 9, 0),
+        attachments=[
+            _Stub(attachment_type="Main Letter", file="/files/original-letter.pdf", is_secret=0),
+            _Stub(attachment_type="Attachment", file="/files/secret-scan.pdf", is_secret=1),
+        ],
+    )
+
+    record = _render(FORMATS[0], doc)
+    assert "الخطاب الأصلي" in record
+    assert "original-letter.pdf" in record
+    assert "secret-scan.pdf" not in record
+
+    slip = _render(FORMATS[1], doc)
+    assert "المرفقات المرفوعة مع الإحالة (2)" in slip
+    assert "منها 1 سرّي" in slip
+    assert "الخطاب الأصلي" in slip
+    assert "original-letter.pdf" in slip
+    assert "secret-scan.pdf" not in slip
+    assert WITHHELD in slip

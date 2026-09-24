@@ -6,6 +6,7 @@
    below, with the stored value as the fallback.
 #}
 {% set DIRECTION_AR = {"Incoming": "وارد", "Outgoing": "صادر", "Internal": "داخلي"} %}
+{% set ATTACHMENT_TYPE_AR = {"Main Letter": "الخطاب الأصلي", "Attachment": "مرفق", "Reply": "الرد"} %}
 {% set ACTIVITY_AR = {
     "Created": "إنشاء",
     "Status Changed": "تغيير الحالة",
@@ -166,7 +167,7 @@
     {% for att in doc.attachments %}
     <tr>
       <td>{{ loop.index }}</td>
-      <td>{{ att.attachment_type or "—" }}</td>
+      <td>{{ ATTACHMENT_TYPE_AR.get(att.attachment_type, att.attachment_type) or "—" }}</td>
       <td>
         {% if att.is_secret %}
           <span class="muted">مرفق سرّي — يُطلب من الأرشيف</span>
