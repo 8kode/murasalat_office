@@ -1,7 +1,6 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now_datetime
 
 from murasalat_office.services.activity import append_activity
 from murasalat_office.services.records import (

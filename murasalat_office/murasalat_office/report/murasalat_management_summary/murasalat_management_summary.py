@@ -12,7 +12,6 @@ from frappe import _
 from murasalat_office.services.aging import summary_item
 from murasalat_office.services.management import (
     CORRESPONDENCE,
-    REFERRAL,
     average,
     days_between,
     direction_label,

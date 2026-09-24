@@ -4,7 +4,6 @@ These scripts cannot be imported here — they need frappe — so what is pinned
 of their source, against the two defects they were written to fix.
 """
 import ast
-import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
