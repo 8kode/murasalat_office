@@ -24,6 +24,8 @@
   "paper_copy",
   "follow_up",
   "attachments_tab",
+  "attachments_section",
+  "attachments",
   "attachments_gallery",
   "audit_security_tab",
   "section_break_kpmq",
@@ -251,6 +253,18 @@
    "fieldname": "attachments_tab",
    "fieldtype": "Tab Break",
    "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments",
+   "description": "What was handed over with this referral: the letter it carries and any paperwork the recipient needs."
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Murasalat Attachment"
   },
   {
    "fieldname": "attachments_gallery",

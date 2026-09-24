@@ -63,6 +63,7 @@ def canonical_payload(doc):
             }
             for row in (doc.attachments or [])
         ],
+        "linked_files": _linked_file_snapshot(doc),
     }
 
     return json.dumps(
@@ -73,6 +74,33 @@ def canonical_payload(doc):
     )
 
 
+def _linked_file_snapshot(doc):
+    """Files attached to the record outside the attachment table.
+
+    An upload lands as a ``File`` linked by ``attached_to_doctype``/``attached_to_name``,
+    and a gallery field stores its files the same way. Those files are not rows in
+    ``attachments``, so a snapshot built only from that table left them outside the seal:
+    a file could be added to or replaced on a sealed record and every integrity check
+    would still pass. Read them directly, so the seal covers whatever the record can
+    actually show.
+    """
+    name = getattr(doc, "name", None)
+    doctype = getattr(doc, "doctype", None)
+
+    if not name or not doctype:
+        return []
+
+    rows = frappe.get_all(
+        "File",
+        filters={"attached_to_doctype": doctype, "attached_to_name": name},
+        fields=["name", "file_url", "file_name"],
+        order_by="name asc",
+        limit_page_length=0,
+    )
+
+    return [[row.name, row.file_url, row.file_name] for row in rows]
+
+
 def compute_integrity_hash(doc):
     return hashlib.sha256(
         canonical_payload(doc).encode()
@@ -80,16 +108,53 @@ def compute_integrity_hash(doc):
 
 
 def _attachment_snapshot(doc):
-    return [
-        (
-            row.file,
-            row.file_hash,
-            row.is_secret,
-            row.attachment_type,
-            row.folder,
-        )
-        for row in (doc.attachments or [])
-    ]
+    """Everything that identifies the record's attachment set.
+
+    Covers both the attachment table and the files linked to the record natively, so
+    adding a file through the gallery or the standard uploader is caught just like adding
+    a row.
+    """
+    return (
+        [
+            (
+                row.file,
+                row.file_hash,
+                row.is_secret,
+                row.attachment_type,
+                row.folder,
+            )
+            for row in (doc.attachments or [])
+        ],
+        _linked_file_snapshot(doc),
+    )
+
+
+def validate_attachment_rows(doc):
+    """Refuse the same file recorded twice under the same attachment type.
+
+    A duplicated row inflates the attachment count and makes two different integrity
+    snapshots describe the same paper, which is exactly the ambiguity an archive has to
+    avoid.
+    """
+    seen = set()
+
+    # A doctype that has no attachment table simply has nothing to check, and a partially
+    # built document must not raise here.
+    for row in (getattr(doc, "attachments", None) or []):
+        if not row.file:
+            continue
+
+        key = (row.file, row.attachment_type)
+
+        if key in seen:
+            frappe.throw(
+                _(
+                    "The same file is attached twice as {0}: {1}. "
+                    "Remove the duplicate row."
+                ).format(row.attachment_type, row.file)
+            )
+
+        seen.add(key)
 
 
 def validate_sealed_attachments(doc):
@@ -139,18 +204,23 @@ def hash_file_url(file_url: str | None) -> str | None:
     if not file_url:
         return None
 
-    name = frappe.db.get_value(
+    # Two File rows can share a file_url (a private and a public copy, for instance), and
+    # the newest is the one the record is actually showing. An explicit ordered lookup
+    # keeps the hash tied to that copy instead of to whichever row came back first.
+    rows = frappe.get_all(
         "File",
-        {"file_url": file_url},
-        "name",
+        filters={"file_url": file_url},
+        fields=["name"],
+        order_by="creation desc",
+        limit_page_length=1,
     )
 
-    if not name:
+    if not rows:
         return None
 
     content = frappe.get_doc(
         "File",
-        name,
+        rows[0].name,
     ).get_content()
 
     if isinstance(content, str):

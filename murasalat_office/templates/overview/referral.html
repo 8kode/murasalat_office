@@ -155,6 +155,26 @@
     </div>
   </div>
 
+  <div class="mo-card">
+    <h5 class="mo-sec">مرفقات الإحالة{% if attachments %} ({{ attachments | length }}){% endif %}</h5>
+    {% if attachments %}
+    <table class="mo-tbl">
+      <thead><tr><th>النوع</th><th>الملف</th><th>الملف الورقي</th></tr></thead>
+      <tbody>
+        {% for a in attachments %}
+        <tr>
+          <td>{{ a.attachment_type or "—" }}</td>
+          <td>{% if a.is_secret %}<span class="mo-muted">{{ a.label }}</span>{% else %}{{ a.label or "—" }}{% endif %}</td>
+          <td class="mo-muted">{{ a.folder or "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="mo-empty">لا توجد مرفقات على هذه الإحالة.</div>
+    {% endif %}
+  </div>
+
   <div class="mo-grid" style="margin-top:10px">
     <div class="mo-card">
       <h5 class="mo-sec">مسار هذه الإحالة</h5>

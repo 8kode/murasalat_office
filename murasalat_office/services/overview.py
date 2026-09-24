@@ -136,6 +136,35 @@ def referral_kpis(rows: Iterable[dict], today_date: date) -> dict[str, int]:
     return kpis
 
 
+
+def _attachment_rows(doc):
+    """Attachments as the referral panel reads them, with secret files withheld.
+
+    The row exists so an operator can see that a secret attachment is on the record; the
+    file name is not printed, because the panel is readable by anyone who may read the
+    referral.
+    """
+    rows = []
+
+    for row in (getattr(doc, "attachments", None) or []):
+        is_secret = bool(getattr(row, "is_secret", None))
+        file_url = getattr(row, "file", None) or ""
+
+        rows.append(
+            {
+                "attachment_type": getattr(row, "attachment_type", None),
+                "folder": getattr(row, "folder", None),
+                "is_secret": is_secret,
+                "label": (
+                    "مرفق سرّي — يُطلب من الأرشيف"
+                    if is_secret
+                    else file_url.rsplit("/", 1)[-1]
+                ),
+            }
+        )
+
+    return rows
+
 def decorate_referrals(rows: Iterable[dict], today_date: date) -> list[dict]:
     """Add the presentation-only fields the template needs."""
     decorated = []
@@ -425,6 +454,14 @@ def referral_overview(referral: str) -> dict:
         indicators.append({"label": "خاصة", "color": "purple"})
     if parent is None and doc.correspondence:
         indicators.append({"label": "المعاملة مقيّدة", "color": "gray"})
+
+    # Attachment rows for the panel, assigned after the literal so the panel can grow
+    # without touching the context definition above.
+    context["attachments"] = _attachment_rows(doc)
+    context["attachments_total"] = len(getattr(doc, "attachments", None) or [])
+    context["attachments_secret"] = sum(
+        1 for r in (getattr(doc, "attachments", None) or []) if getattr(r, "is_secret", None)
+    )
 
     return {
         "html": render("referral.html", **context),
