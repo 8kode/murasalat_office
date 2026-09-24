@@ -2,3 +2,4 @@
 
 execute:murasalat_office.patches.v0_21_migrate_referrals.execute
 execute:murasalat_office.patches.v0_22_preserve_referral_history.execute
+execute:murasalat_office.patches.v0_23_index_record_attachments.execute

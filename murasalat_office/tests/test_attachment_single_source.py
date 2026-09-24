@@ -1,8 +1,10 @@
 """One source of truth for a record's attachments.
 
-The form used to offer three: the attachments table, an Attachment Gallery field, and
-Frappe's sidebar panel. Only the table carries classification and the integrity hash, so the
-other two are gone. These tests fail if either comes back.
+The form used to offer three lists of the same files: the attachments table, an Attachment
+Gallery field, and Frappe's sidebar panel. The gallery is gone - it recorded nothing but the
+file. The panel stays: it is the framework's own upload affordance, and the app now files its
+uploads in the table from the framework's File document instead of hiding the panel.
+See test_attachment_native_index.py for that half.
 """
 import json
 from pathlib import Path
@@ -21,6 +23,12 @@ FORM_SCRIPTS = {
     "Murasalat Correspondence": DOCTYPE_DIR / "murasalat_correspondence/murasalat_correspondence.js",
     "Murasalat Referral": DOCTYPE_DIR / "murasalat_referral/murasalat_referral.js",
 }
+
+
+def _attachment_block(doctype):
+    """The attachment code alone - the form has other buttons that are not upload paths."""
+    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
+    return script[script.index("function murasalat_attachment_rules"):]
 
 
 def _meta(doctype):
@@ -76,35 +84,43 @@ def test_the_attachments_section_explains_itself(doctype):
 
 
 @pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
-def test_the_form_hides_frappes_own_attachments_panel(doctype):
+def test_the_form_no_longer_reaches_into_frappes_own_panel(doctype):
+    """Hiding `.form-attachments` selected on markup the framework does not publish.
+
+    The panel uploads natively and the File event files the result in the table, so the form
+    script has no reason to touch the sidebar at all.
+    """
     script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
 
-    assert 'find(".form-attachments")' in script, doctype
-    assert "toggle(false)" in script, doctype
+    assert ".form-attachments" not in script, doctype
+    assert "toggle(false)" not in script, doctype
+    assert "sidebar" not in _attachment_block(doctype), doctype
 
 
 @pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
-def test_the_form_offers_one_upload_path_into_the_table(doctype):
-    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
+def test_the_form_offers_no_second_upload_path(doctype):
+    """One row per file means one upload affordance: the framework's own panel."""
+    block = _attachment_block(doctype)
 
-    assert "new frappe.ui.FileUploader(" in script
-    assert 'frm.add_child("attachments"' in script
-    assert 'attachment_type: "Attachment"' in script
-    assert "frm.refresh_field(\"attachments\")" in script
-    # uploaded through the same native widget the sidebar used
-    assert 'folder: "Home/Attachments"' in script
+    assert "FileUploader" not in block, doctype
+    assert 'frm.add_child("attachments"' not in block, doctype
+    assert "add_custom_button" not in block, doctype
 
 
-@pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
-def test_the_form_does_not_offer_uploads_on_a_sealed_record(doctype):
-    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
-    body = script[script.index("function murasalat_single_attachment_source"):]
+def test_the_correspondence_warns_before_a_sealed_upload():
+    """The refusal is server-side; this only saves the user from picking a file first."""
+    script = FORM_SCRIPTS["Murasalat Correspondence"].read_text(encoding="utf-8")
 
-    sealed_guard = body.index("record_sealed_on")
-    upload = body.index("new frappe.ui.FileUploader(")
+    assert "record_sealed_on" in script
+    assert "المرفقات مقفلة" in script
 
-    assert sealed_guard < upload, f"{doctype}: the seal check must run before the upload button"
-    assert "المرفقات مقفلة" in body, doctype
+
+def test_the_referral_carries_no_seal_warning():
+    """A referral has no seal fields, so there is nothing to warn about."""
+    script = FORM_SCRIPTS["Murasalat Referral"].read_text(encoding="utf-8")
+
+    assert "record_sealed_on" not in script
+    assert "المرفقات مقفلة" not in script
 
 
 @pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))

@@ -72,3 +72,21 @@ after_migrate = [
     "murasalat_office.patches.schema_repair.ensure_child_table_schema",
     "murasalat_office.patches.schema_repair.ensure_membership_unique_index",
 ]
+
+
+# Attachments are indexed from the framework's own File document.
+#
+# Frappe has one way to attach a file to a document - a File row carrying attached_to_doctype
+# and attached_to_name - and every path goes through it: the form's sidebar panel,
+# drag-and-drop, the REST upload endpoint, a row's own Attach control. Registering these two
+# events is what makes the attachments table the single list of a record's files without
+# hiding anything the framework put on the screen.
+#
+# The rule holds for a sealed correspondence at the framework level, so an upload through the
+# REST endpoint is refused exactly like one clicked in the Desk.
+doc_events = {
+    "File": {
+        "before_insert": "murasalat_office.services.attachment_index.refuse_file_on_a_sealed_record",
+        "after_insert": "murasalat_office.services.attachment_index.index_file_in_the_record",
+    },
+}

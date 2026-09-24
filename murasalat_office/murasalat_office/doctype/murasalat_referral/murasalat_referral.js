@@ -72,80 +72,39 @@ frappe.ui.form.on("Murasalat Referral", {
 });
 
 // ---------------------------------------------------------------------------
-// One place to manage attachments.
+// Attachments.
 //
-// This form used to offer three ways to attach a file: the attachments table, an
-// "Attachment Gallery" field, and Frappe's own attachments panel in the sidebar. Only the
-// table records what the file is - its type, where the paper original is filed, whether it
-// is secret - and only the table is covered by the integrity seal. The other two are gone:
-// the gallery field was removed from the DocType, and the sidebar panel is hidden below.
+// Frappe has one way to attach a file to a document - a File row carrying
+// attached_to_doctype and attached_to_name. This sidebar panel, drag-and-drop, the REST
+// endpoint and a row's own Attach control all go through it, and the app registers a File
+// event server-side that files a record-level upload in the attachments table. So the panel
+// is left exactly as the framework built it: it uploads natively, and the table describes
+// what was uploaded. Nothing here hides framework markup.
 //
-// Uploading stays native. The button opens frappe.ui.FileUploader, the same widget the
-// sidebar used, and the uploaded file becomes a row in the table.
+// A sealed correspondence refuses the file in File.before_insert, not here. The indicator
+// below only says so before somebody picks a file and waits for an upload to fail.
 // ---------------------------------------------------------------------------
 
-function murasalat_single_attachment_source(frm) {
-	// Hide Frappe's own attachments panel, so the table is the only list of files shown.
-	const sidebar = frm.sidebar && frm.sidebar.sidebar;
+function murasalat_attachment_rules(frm) {
+	// A file attached from the panel is filed in the table server-side, so the table has to
+	// be re-read for the new row to appear. on_success is delegated to, never replaced.
+	if (frm.attachments && !frm.__murasalat_attach_hooked) {
+		frm.__murasalat_attach_hooked = true;
 
-	if (sidebar && sidebar.length) {
-		const panel = sidebar.find(".form-attachments");
+		const native_on_success = frm.attachments.on_success;
 
-		if (panel.length) {
-			panel.toggle(false);
-
-			const section = panel.closest(".sidebar-section");
-
-			if (section.length) {
-				section.toggle(false);
+		frm.attachments.on_success = (...args) => {
+			if (native_on_success) {
+				native_on_success(...args);
 			}
-		}
+
+			frm.reload_doc();
+		};
 	}
-
-	// A sealed record cannot take new attachments. Say so instead of letting an upload fail
-	// validation after the user has already chosen a file.
-	if (frm.doc.record_sealed_on) {
-		if (!frm.__murasalat_seal_notice) {
-			frm.__murasalat_seal_notice = true;
-			frm.dashboard.add_indicator(__("مختومة - المرفقات مقفلة"), "green");
-		}
-
-		return;
-	}
-
-	if (frm.is_new() || !frm.has_perm("write")) {
-		return;
-	}
-
-	frm.add_custom_button(
-		__("رفع مرفق"),
-		() => {
-			new frappe.ui.FileUploader({
-				doctype: frm.doctype,
-				docname: frm.docname,
-				folder: "Home/Attachments",
-				frm: frm,
-				on_success: (file_doc) => {
-					frm.add_child("attachments", {
-						file: file_doc.file_url,
-						attachment_type: "Attachment",
-					});
-					frm.refresh_field("attachments");
-					frm.dirty();
-
-					frappe.show_alert({
-						message: __("أُضيف المرفق. حدّد نوعه ومجلّده في الجدول."),
-						indicator: "green",
-					});
-				},
-			});
-		},
-		__("المرفقات")
-	);
 }
 
 frappe.ui.form.on("Murasalat Referral", {
 	refresh(frm) {
-		murasalat_single_attachment_source(frm);
+		murasalat_attachment_rules(frm);
 	},
 });
