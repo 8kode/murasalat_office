@@ -205,6 +205,55 @@ def _ensure_task_group(spec, names):
     return group_name, "created"
 
 
+def _top_up_transition_tasks(spec, names):
+    """Add a task row for any transition that needs one and has none. Never edits a row.
+
+    ``_ensure_workflow`` returns early for a Workflow that already exists - on purpose, because an
+    administrator may have edited it. The cost of that promise is this hole: a site whose Workflow
+    was created before the transition-task feature, or by hand in Desk, keeps transitions that run
+    no lifecycle method. Frappe changes the state and writes nothing, so a referral is sent with no
+    ``sent_on``, is received with no ``received_on``, and every panel that reads those fields
+    contradicts the state shown beside it. Nothing reports it, because nothing is broken enough to
+    throw.
+
+    So the Workflow is still never overwritten, and the tasks are still completed: missing rows are
+    appended, existing ones are left exactly as they are.
+    """
+    group_name = _task_group_name(spec["name"])
+
+    if not frappe.db.exists("Workflow Transition Tasks", group_name):
+        _ensure_task_group(spec, names)
+        return {"group": group_name, "attached": [t["task"] for t in spec["transitions"]],
+                "outcome": "created"}
+
+    group_meta, task_meta = names["group_meta"], names["task_meta"]
+    tasks_field = _field(group_meta, "tasks")
+    task_field = _field(task_meta, "task")
+    enabled_field = _field(task_meta, "enabled")
+    async_field = _field(task_meta, "asynchronous")
+
+    document = frappe.get_doc("Workflow Transition Tasks", group_name)
+    present = {
+        row.get(task_field) for row in document.get(tasks_field) or [] if row.get(task_field)
+    }
+    missing = [t["task"] for t in spec["transitions"] if t["task"] not in present]
+
+    if not missing:
+        return {"group": group_name, "attached": [], "outcome": "complete"}
+
+    for task in missing:
+        row = document.append(tasks_field, {})
+        row.set(task_field, task)
+        row.set(enabled_field, 1)
+        # Asynchronous runs the method outside the transition's transaction, which turns every
+        # lifecycle method into a silent no-op - the failure WORKFLOW_GOVERNANCE.md documents.
+        row.set(async_field, 0)
+
+    document.save(ignore_permissions=True)
+
+    return {"group": group_name, "attached": missing, "outcome": "topped up"}
+
+
 def _ensure_workflow(spec, names):
     if frappe.db.exists("Workflow", spec["name"]):
         return "exists"
@@ -275,14 +324,42 @@ def apply(confirm=False):
 
     for spec in WORKFLOWS:
         try:
+            outcome = _ensure_workflow(spec, names)
+            # Then, and for a Workflow that already existed too: a transition with no task runs
+            # no application code and reports nothing at all.
+            tasks = _top_up_transition_tasks(spec, names)
             report["workflows"].append({
                 "workflow": spec["name"],
-                "outcome": _ensure_workflow(spec, names),
+                "outcome": outcome,
+                "transition_tasks": tasks,
             })
         except Exception as exc:
             report["errors"].append(f"{spec['name']}: {exc}")
 
     return report
+
+
+def _unattached_transitions(spec):
+    """Transition actions in a live Workflow that carry no task row of their own."""
+    group_name = _task_group_name(spec["name"])
+
+    if not frappe.db.exists("Workflow Transition Tasks", group_name):
+        return [t["action"] for t in spec["transitions"]]
+
+    try:
+        names = _workflow_fieldnames()
+        group_meta, task_meta = names["group_meta"], names["task_meta"]
+        tasks_field = _field(group_meta, "tasks")
+        task_field = _field(task_meta, "task")
+
+        document = frappe.get_doc("Workflow Transition Tasks", group_name)
+        present = {
+            row.get(task_field) for row in document.get(tasks_field) or [] if row.get(task_field)
+        }
+    except Exception:  # noqa: BLE001 - an unreadable group is reported, not thrown
+        return [t["action"] for t in spec["transitions"]]
+
+    return [t["action"] for t in spec["transitions"] if t["task"] not in present]
 
 
 def readiness():
@@ -302,6 +379,19 @@ def readiness():
     for spec in WORKFLOWS:
         exists = frappe.db.exists("Workflow", spec["name"])
         checks.append((f"workflow {spec['name']}", "ok" if exists else "not created", bool(exists)))
+
+        # A Workflow that exists is not the same as a Workflow that works: its transitions run
+        # nothing until each one carries its task. Reported separately, because the remedy is a
+        # command rather than a rebuild.
+        if not exists:
+            continue
+
+        missing = _unattached_transitions(spec)
+        checks.append((
+            f"transition tasks {spec['name']}",
+            "ok" if not missing else f"{len(missing)} transition(s) run no method: {missing}",
+            not missing,
+        ))
 
     plan = notifications.plan()
     for row in plan["notifications"]:

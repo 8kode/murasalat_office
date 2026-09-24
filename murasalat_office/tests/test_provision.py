@@ -163,3 +163,23 @@ def test_the_user_guide_exists_for_the_people_who_will_actually_use_it():
     assert len(text) > 2000, "a guide nobody can follow is not a guide"
     for step in ("تسجيل", "إحالة", "استلام", "إكمال", "إغلاق", "ختم", "طباعة"):
         assert step in text, step
+
+def test_a_workflow_that_already_exists_still_gets_its_missing_tasks():
+    """`_ensure_workflow` returns early for an existing Workflow, so a site whose Workflow
+    predates the transition-task feature kept transitions that run nothing - silently, since a
+    state-changing transition with no method throws no error. The tasks are topped up instead."""
+    assert "def _top_up_transition_tasks(" in SOURCE
+    assert "_top_up_transition_tasks(spec, names)" in SOURCE
+
+    top_up = SOURCE.split("def _top_up_transition_tasks(", 1)[1].split("\ndef ", 1)[0]
+    assert "document.append(" in top_up, "missing rows are appended"
+    assert "missing" in top_up
+    assert "remove(" not in top_up and "delete" not in top_up, "an existing task is never removed"
+    assert "Asynchronous" in top_up or "async_field" in top_up, "and async stays off"
+
+
+def test_readiness_reports_a_workflow_whose_transitions_run_nothing():
+    """A Workflow that exists is not a Workflow that works."""
+    assert "def _unattached_transitions(" in SOURCE
+    assert "_unattached_transitions(spec)" in SOURCE
+    assert "transition tasks" in SOURCE

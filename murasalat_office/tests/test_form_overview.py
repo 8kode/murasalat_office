@@ -429,12 +429,22 @@ def test_overview_reads_through_native_permission_aware_apis():
 
 
 def test_open_referral_state_is_derived_not_stored():
-    """The panel must not depend on a stored flag that could drift."""
-    overview = (APP / "services/overview.py").read_text()
+    """A referral's openness is derived, and stored nowhere.
 
-    assert "sent_on" in overview and "completed_on" in overview
-    for forbidden in ('"is_open": 1', "workflow_state =="):
-        assert forbidden not in overview
+    It used to be derived from `sent_on` alone. A row migrated from the child table carries the
+    workflow state and no timestamp, so that rule called a sent referral a draft - and the panel
+    contradicted the badge printed beside it. The two sources are now read together.
+    """
+    from pathlib import Path
+
+    source = (
+        Path(__file__).resolve().parents[1] / "services/overview.py"
+    ).read_text(encoding="utf-8")
+
+    assert "_is_sent(" in source and "_is_completed(" in source
+    assert "not row.get(\"sent_on\")" not in source
+    assert "bool(doc.sent_on)" not in source
+    assert "not doc.sent_on" not in source
 
 
 def test_both_forms_carry_an_overview_field_first_in_the_layout():

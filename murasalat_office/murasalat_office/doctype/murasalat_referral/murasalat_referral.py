@@ -43,8 +43,13 @@ class MurasalatReferral(Document):
                     )
                 )
         else:
+            # The value is printed with the refusal: a record carrying a vocabulary from an
+            # earlier version ("Organization", before the rename) is otherwise indistinguishable
+            # from one whose field was left empty, and the two need different remedies.
             frappe.throw(
-                _("Recipient Type must be User or Department.")
+                _("Recipient Type must be User or Department; this record has {0}.").format(
+                    repr(self.recipient_type)
+                )
             )
 
     def _validate_dates(self):

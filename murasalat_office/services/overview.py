@@ -64,6 +64,7 @@ REFERRAL_FIELDS = [
     "follow_up",
     "paper_copy",
     "cc_copy",
+    "cancelled_on",
 ]
 
 APPROVAL_FIELDS = [
@@ -115,11 +116,14 @@ def referral_kpis(rows: Iterable[dict], today_date: date) -> dict[str, int]:
     for row in rows:
         kpis["total"] += 1
 
-        if not row.get("sent_on"):
+        if not _is_sent(row):
             kpis["draft"] += 1
             continue
 
-        if row.get("completed_on"):
+        if _is_closed_referral(row):
+            continue
+
+        if _is_completed(row):
             kpis["completed"] += 1
             continue
 
@@ -165,6 +169,31 @@ def _attachment_rows(doc):
 
     return rows
 
+def _is_sent(row) -> bool:
+    """Whether a referral counts as sent.
+
+    Two sources, one answer. The lifecycle stamps ``sent_on``; a migrated row carries only the
+    workflow state, because the child table it came from had no timestamp to carry. Reading the
+    state as well is what keeps a panel from contradicting the badge printed beside it - the
+    symptom that made a sent referral read as "لم تُرسل".
+    """
+    return bool(row.get("sent_on")) or row.get("workflow_state") in (
+        "Sent",
+        "Received",
+        "Completed",
+    )
+
+
+def _is_completed(row) -> bool:
+    """Whether a referral counts as finished, by the same two sources."""
+    return bool(row.get("completed_on")) or row.get("workflow_state") == "Completed"
+
+
+def _is_closed_referral(row) -> bool:
+    """Cancelled work is closed work: it stops counting as open, and keeps its place in the log."""
+    return row.get("workflow_state") == "Cancelled" or bool(row.get("cancelled_on"))
+
+
 def decorate_referrals(rows: Iterable[dict], today_date: date) -> list[dict]:
     """Add the presentation-only fields the template needs."""
     decorated = []
@@ -172,9 +201,11 @@ def decorate_referrals(rows: Iterable[dict], today_date: date) -> list[dict]:
     for row in rows:
         item = dict(row)
         item["days_left"] = _days_left(row.get("due_date"), today_date)
-        item["is_draft"] = not row.get("sent_on")
-        item["is_completed"] = bool(row.get("completed_on"))
-        item["is_open"] = bool(row.get("sent_on")) and not row.get("completed_on")
+        item["is_draft"] = not _is_sent(row)
+        item["is_completed"] = _is_completed(row)
+        item["is_open"] = (
+            _is_sent(row) and not _is_completed(row) and not _is_closed_referral(row)
+        )
         item["is_overdue"] = bool(item["is_open"] and item["days_left"] is not None and item["days_left"] < 0)
         item["is_due_today"] = bool(item["is_open"] and item["days_left"] == 0)
         item["recipient_label"] = (
@@ -288,7 +319,9 @@ def correspondence_overview(correspondence: str) -> dict:
         "registered_on": doc.registered_on,
         "closed_on": doc.closed_on,
         "reopened_on": doc.reopened_on,
-        "sealed": bool(doc.record_sealed_on),
+        # Same two-source rule as a referral's sent state: the lifecycle stamps the field, and
+        # a migrated record may carry only the state.
+        "sealed": bool(doc.record_sealed_on) or doc.workflow_state == "Sealed",
         "sealed_on": doc.record_sealed_on,
         "sealed_by": doc.record_sealed_by,
         "integrity_hash": doc.integrity_hash,
@@ -400,7 +433,7 @@ def referral_overview(referral: str) -> dict:
             )
 
     days_left = _days_left(doc.due_date, today_date)
-    is_open = bool(doc.sent_on) and not doc.completed_on
+    is_open = _is_sent(doc) and not _is_completed(doc) and not _is_closed_referral(doc)
 
     context = {
         "name": doc.name,
@@ -416,7 +449,7 @@ def referral_overview(referral: str) -> dict:
         "is_open": is_open,
         "is_overdue": bool(is_open and days_left is not None and days_left < 0),
         "is_due_today": bool(is_open and days_left == 0),
-        "is_draft": not doc.sent_on,
+        "is_draft": not _is_sent(doc),
         "sent_on": doc.sent_on,
         "received_on": doc.received_on,
         "received_by": doc.received_by,
@@ -448,7 +481,9 @@ def referral_overview(referral: str) -> dict:
         indicators.append({"label": "تستحق اليوم", "color": "orange"})
     elif is_open and days_left is not None:
         indicators.append({"label": f"متبقٍ {days_left} يومًا", "color": "blue"})
-    if doc.completed_on:
+    if _is_closed_referral(doc):
+        indicators.append({"label": "ملغاة", "color": "gray"})
+    elif _is_completed(doc):
         indicators.append({"label": "مكتملة", "color": "green"})
     if doc.private_referral:
         indicators.append({"label": "خاصة", "color": "purple"})

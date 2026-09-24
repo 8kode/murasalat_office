@@ -22,3 +22,4 @@ murasalat_office.patches.v0_24_rename_attachment_folder
 [post_model_sync]
 murasalat_office.patches.v0_25_attachment_vocabulary
 murasalat_office.patches.v0_26_index_record_attachments
+murasalat_office.patches.v0_27_legacy_referral_vocabulary
