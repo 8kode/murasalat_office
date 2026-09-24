@@ -464,28 +464,39 @@ row is needed; the remainder are internal sentinels and report filter labels:
 This branch deleted only strings that nothing referenced, so it introduced no gap:
 0 regressions.
 
-## 3. Reviewed and deliberately retained
+## 3. Arabic coverage completed — 65 rows added
 
-| Item | Why it stays |
-|---|---|
-| `Murasalat External Party.entity_type` | `reqd` and `in_list_view` — a live form field (Link to `Murasalat External Party Type`) |
-| `Murasalat External Party.party_name` | the DocType `title_field` — the record's display name |
-| `Murasalat External Party.phone` | optional contact field, editable on the form; code never reads it, but dropping a column needs a schema patch and a decision |
-| `Murasalat Correspondence Link.link_order` | integer ordering field, default 1 — part of the child-table model |
-| `Murasalat Correspondence Activity.acting_for` | Link to `User` — records who acted on whose behalf |
+AST-based extraction (`.py`) plus strict literal scanning (`.js`, `.html`) showed 65
+strings that the code hands to `_()` / `__()` with **no row in `ar.csv`** — they would
+have rendered in English on the Arabic Desk: report column labels (`Age Band`,
+`Days Late`, `Worst Lateness (days)`, `Within Due Date`, `15+ Days Late`, `Past Due and
+Open`, `Completed Referrals`, `Draft Referrals`, `Open Overdue Referrals`,
+`Visible Open Referrals`, `Open Referral Work`, `Follow-up`, `Created On`, `Sealing`,
+`State`, `External Date`, `External No.`), Desk buttons (`Create`, `Open
+Correspondence`, `Related`, `Only Overdue`, `As Of Date`), correspondence field labels
+(`Incoming Sender`, `Incoming Receiving Department`, `Outgoing Sending Department`,
+`Outgoing External Recipient`, `Internal Source Department`, `Internal Target
+Department`, `Source Department`, `Target Department`) and refusal messages from
+`services/lifecycle.py`, `services/approvals.py`, `setup/provision.py` and the two
+DocType controllers.
 
-A first pass flagged all five as unused because no Python referenced them; reading the
-JSON proved two are structural. The other three are schema, not code: removing them
-means a patch that drops columns, which is not worth the risk without a decision.
+All 65 now have reviewed Arabic rows (placeholders `{0}`/`{1}`/`{2}` kept intact), and
+`murasalat_office/tests/test_arabic_coverage.py` locks this in: it extracts every
+literal the code passes to `_()` / `__()` and fails if any lacks a row.
 
-## 4. Cannot be verified here
+Verified after the fix: 0 live strings without a row; 0 regressions from the deletions
+in §2.2 (computed by diffing message coverage before and after the branch).
+
+## 4. Reviewed and deliberately retained
+
+## 5. Cannot be verified here
 
 * Anything the Desk renders: forms, sidebar, print and PDF output, the notification
   bell, Notification Type muting, scheduler runs.
 * Whether `provision.apply` tops up transition tasks on an existing site, and whether
   `readiness()` prints `Ready for users.` there.
 
-## 5. Open
+## 6. Open
 
 * **The `undefined` seen in the sidebar is still unreproduced.** The sidebar
   (`workspace_sidebar/murasalat_office.json`) has carried `name` and `title` =
