@@ -258,3 +258,52 @@ def test_the_vocabulary_patch_explains_the_clear_rule():
 
     assert "not a known location" in source
     assert "DEFAULT_TYPE" in source
+
+
+def test_every_role_can_read_the_vocabulary_it_has_to_pick_from():
+    """A Link field cannot resolve a record the user may not read.
+
+    Found by reviewing launch readiness end to end: the permission plan granted the transaction
+    DocTypes but not the two vocabulary tables, so a provisioned site would have shown a clerk
+    an empty attachment-type picker on a required field.
+
+    The plan is assembled at import time - the literal plus a merge of VOCABULARY_READ - so the
+    test replays that same merge against the shipped source and asserts the result, rather than
+    reading either half on its own.
+    """
+    import ast
+
+    tree = ast.parse((ROOT / "setup/governance_plan.py").read_text(encoding="utf-8"))
+
+    def literal(name):
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == name for target in node.targets
+            ):
+                return ast.literal_eval(node.value)
+        raise AssertionError(f"{name} is not declared in governance_plan.py")
+
+    plan = literal("PERMISSION_PLAN")
+    vocabulary = literal("VOCABULARY_READ")
+
+    assert plan, "the permission plan is empty"
+    assert set(vocabulary) == {"Murasalat Attachment Type", "Murasalat Archive Location"}
+
+    # the same merge the module performs on itself
+    for doctypes in plan.values():
+        for table, rights in vocabulary.items():
+            doctypes.setdefault(table, dict(rights))
+
+    for role, doctypes in plan.items():
+        for table in vocabulary:
+            assert table in doctypes, (role, table)
+            assert doctypes[table].get("read"), (role, table)
+
+
+def test_the_vocabulary_grant_is_merged_rather_than_repeated():
+    """One declaration, applied to every role - so a new role cannot forget it."""
+    source = (ROOT / "setup/governance_plan.py").read_text(encoding="utf-8")
+
+    assert "VOCABULARY_READ = {" in source
+    assert "for _role_plan in PERMISSION_PLAN.values():" in source
+    assert "_role_plan.setdefault(_vocabulary" in source

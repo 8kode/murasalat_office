@@ -74,9 +74,10 @@ typed is discarded.
 | `Murasalat Archive Location` | where the paper original is filed | `Correspondence Office`, `Central Archive`, `Department Shelf`, `Director Office` |
 
 Neither table ships permission rows - access is site configuration, as it is for every other
-table in this app. So a System Manager grants **read** on both tables from Desk
-(**Role Permission Manager**) once, before users can pick a value in the Link fields. Seeding
-does not need it: `master_data.seed` registers as an administrator.
+table in this app. `governance_plan.materialize` grants every role **read** on both, because a
+Link field cannot resolve a record the user may not read; a site that set its permissions up by
+hand grants the same two read rights from **Role Permission Manager**. Seeding needs neither:
+`master_data.seed` registers as an administrator.
 
 Both are ordinary DocTypes: a site adds a value, changes its display name, or disables it from
 Desk with **no code change and no upgrade**. The stored value is a short English code and the
