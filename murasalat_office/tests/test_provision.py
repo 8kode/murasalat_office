@@ -84,7 +84,7 @@ def test_every_attached_task_is_a_declared_hook():
     assert attached <= declared, sorted(attached - declared)
 
 
-def test_the_seven_lifecycle_tasks_are_all_attached():
+def test_every_lifecycle_task_is_attached():
     """A transition with no task runs no application code, and reports nothing."""
     declared = set(_hook_names())
     lifecycle = {name for name in declared if name not in ("Stamp Approval", "Clear Approval")}

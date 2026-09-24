@@ -1,6 +1,6 @@
 """Operational notifications, assembled from Frappe's own building blocks.
 
-Five questions a user has to be able to answer, and the native surface that answers each:
+What each question a user has gets, and the native surface that answers it:
 
 1. *what arrived* and 2. *what should I do*
        Native **Assignment**: an Assignment Rule assigns a sent, user-targeted referral to
@@ -11,8 +11,13 @@ Five questions a user has to be able to answer, and the native surface that answ
        Native **Notification** rows on the framework's Days Before / Days After mechanism,
        driven by the daily ``trigger_daily_alerts`` job and delivered to the in-app bell.
 5. *is a formal action waiting for me*
-       Nothing added. Frappe's own Workflow Action list already shows the transitions a
-       user's role may act on.
+       Nothing added. Frappe's own Workflow Action list shows the transitions a user's role
+       may act on - and ``provision`` now creates the Approval Workflow, so an approval
+       waiting for a supervisor appears in that list like any other pending transition.
+
+Plus one notice that closes the loop in the other direction: whoever sent a referral is told
+when it is received and when it is completed, through a native **Value Change** rule on
+``workflow_state`` whose recipient is the document's own ``owner`` field.
 
 There is no notification doctype, no inbox, no queue, no scheduler and no transport in this
 module. It creates native rows through Frappe's own models, exactly as clicking through Desk
@@ -20,9 +25,9 @@ would - the pattern ``provision.py`` and ``report_print_formats.py`` already use
 
 Four decisions worth the sentence:
 
-* **Recipients are the assignees, not ``recipient_user``.** A completed referral must stop
-  reminding anyone. ``send_to_all_assignees`` resolves the recipients from the Open ToDo rows,
-  so responsibility that ended takes its reminders with it - the Assignment Rule's close
+* **Reminder recipients are the assignees, not ``recipient_user``.** A completed referral must
+  stop reminding anyone. ``send_to_all_assignees`` resolves the recipients from the Open ToDo
+  rows, so responsibility that ended takes its reminders with it - the Assignment Rule's close
   condition is what ends it. ``recipient_user`` would keep reminding a user who is no longer
   responsible, and a role recipient would remind every holder of the role.
 * **The day before, the day itself, and the day after.** The framework matches the date field
@@ -31,8 +36,10 @@ Four decisions worth the sentence:
   edit, not a release. The middle one is not decoration: with only the outer two, the day a
   referral is actually due was the one day nothing reached the person who owes it.
 * **The duplicate guard is a condition, not code.** The date match already limits a reminder to
-  one day; the condition additionally refuses when a Notification Log of that kind already
-  exists for the document, so a second run of the same day's job writes nothing.
+  one day; the condition additionally refuses when a Notification Log of that kind - matched on
+  the rule's own type *and* its title - already exists for the document, so a second run of the
+  same day's job writes nothing. Both keys are stored so that neither a translated title nor a
+  missing Notification Type can open the door.
 * **The message carries the referral's own identity and nothing else.** Nothing checks that a
   recipient can read the record before a Notification Log is written for them - the framework
   scopes the log to its ``for_user``, not to the document. Keeping the parent correspondence's
@@ -52,7 +59,7 @@ REFERRAL = "Murasalat Referral"
 OPEN_STATES = ("Sent", "Received")
 DONE_STATES = ("Completed", "Cancelled")
 
-# The condition a reminder must satisfy. Spelled once and reused, so the two reminders cannot
+# The condition a reminder must satisfy. Spelled once and reused, so the three reminders cannot
 # drift apart.
 _OPEN = 'doc.workflow_state in {states} and not doc.cancelled_on'.format(states=OPEN_STATES)
 _DONE = 'doc.workflow_state in {states} or doc.cancelled_on'.format(states=DONE_STATES)
@@ -83,6 +90,27 @@ REMINDERS = [
         "title": "لديك إحالة متأخرة",
         "subject": "الإحالة {{ doc.name }} تجاوزت موعدها {{ doc.due_date }}",
         "message": "إحالة موكولة إليك تجاوزت موعدها. افتحها لإتمامها.",
+    },
+]
+
+# The loop in the other direction: whoever created the referral is the clerk who sent it, so the
+# document's own `owner` field names the person to tell. Value Change fires only when the state
+# actually changes, so each of these is written at most once per referral - no guard needed, and
+# no notice for the person who performed the action (the framework skips a self-notification).
+SENDER_NOTICES = [
+    {
+        "name": "Murasalat Referral Received",
+        "state": "Received",
+        "title": "تم استلام إحالتك",
+        "subject": "استُلمت الإحالة {{ doc.name }}",
+        "message": "أكّد المستلم استلام الإحالة. تابعها لمعرفة ما تم.",
+    },
+    {
+        "name": "Murasalat Referral Completed",
+        "state": "Completed",
+        "title": "تم إتمام إحالتك",
+        "subject": "أُتمَّت الإحالة {{ doc.name }}",
+        "message": "أُتمَّت الإحالة. راجع نتيجتها في سجل الإحالة.",
     },
 ]
 
@@ -118,6 +146,13 @@ and not frappe.db.exists(
     }},
 )"""
 
+REMINDER_FIELDS = ("condition", "notification_title", "notification_message", "subject",
+                   "days_in_advance", "event", "date_changed", "channel",
+                   "send_to_all_assignees", "notification_type")
+NOTICE_FIELDS = ("condition", "notification_title", "notification_message", "subject",
+                 "event", "value_changed", "channel", "send_to_all_assignees",
+                 "notification_type")
+
 
 def reminder_condition(reminder, notification_type):
     """The Python condition for one reminder, keyed on the type it will be logged under."""
@@ -129,13 +164,18 @@ def reminder_condition(reminder, notification_type):
     )
 
 
+def notice_condition(notice):
+    """The condition for a sender notice: the one state it exists to announce."""
+    return 'doc.workflow_state == {state}'.format(state=repr(notice["state"]))
+
+
 def _notification_type(name, create=True):
     """Use a dedicated Notification Type when the site can hold one.
 
-    It groups the two reminders apart in the bell, and gives the duplicate guard a stable key.
+    It groups the reminders apart in the bell, and gives the duplicate guard a stable key.
     A site whose Notification Type doctype refuses the row falls back to the framework's own
-    "Alert" type - the two reminders stay distinguishable by their static title, which the
-    guard also keys on, so nothing silently misconfigures.
+    "Alert" type - the reminders stay distinguishable by their static title, which the guard
+    keys on as well, so nothing silently misconfigures.
 
     ``plan`` calls this with ``create=False``: a read-only report must not write a row.
     """
@@ -158,39 +198,65 @@ def _notification_type(name, create=True):
     return name
 
 
-def _definition(reminder, notification_type):
+def _definition(spec, notification_type):
+    """One Notification row, for either kind: a dated reminder, or a state notice."""
+    if "days_in_advance" in spec:
+        return {
+            "doctype": "Notification",
+            "name": spec["name"],
+            "module": "Murasalat Office",
+            "is_standard": 0,
+            "enabled": 1,
+            "document_type": REFERRAL,
+            "event": spec["event"],
+            "date_changed": "due_date",
+            "days_in_advance": spec["days_in_advance"],
+            "condition_type": "Python",
+            "condition": reminder_condition(spec, notification_type),
+            "channel": "System Notification",
+            "notification_type": notification_type,
+            "notification_title": spec["title"],
+            "notification_message": spec["message"],
+            "subject": spec["subject"],
+            # No recipient rows on purpose: the assignees are the recipients, and they are
+            # resolved from the open ToDo rows at send time.
+            "recipients": [],
+            "send_to_all_assignees": 1,
+            "attach_print": 0,
+        }
+
     return {
         "doctype": "Notification",
-        "name": reminder["name"],
+        "name": spec["name"],
         "module": "Murasalat Office",
         "is_standard": 0,
         "enabled": 1,
         "document_type": REFERRAL,
-        "event": reminder["event"],
-        "date_changed": "due_date",
-        "days_in_advance": reminder["days_in_advance"],
+        "event": "Value Change",
+        "value_changed": "workflow_state",
         "condition_type": "Python",
-        "condition": reminder_condition(reminder, notification_type),
+        "condition": notice_condition(spec),
         "channel": "System Notification",
         "notification_type": notification_type,
-        "notification_title": reminder["title"],
-        "notification_message": reminder["message"],
-        "subject": reminder["subject"],
-        # No recipient rows on purpose: the assignees are the recipients, and they are resolved
-        # from the open ToDo rows at send time.
-        "recipients": [],
-        "send_to_all_assignees": 1,
+        "notification_title": spec["title"],
+        "notification_message": spec["message"],
+        "subject": spec["subject"],
+        # The document's own owner field is the framework's supported way to name a recipient
+        # from the record (`Notification.get_list_of_recipients` resolves it to a User).
+        "recipients": [{"receiver_by_document_field": "owner"}],
+        "send_to_all_assignees": 0,
         "attach_print": 0,
     }
 
 
-def _assignment_rule_definition():
-    return {"doctype": "Assignment Rule", **ASSIGNMENT_RULE}
+def _all_specs():
+    for spec in REMINDERS:
+        yield spec, REMINDER_FIELDS, "reminder"
+    for spec in SENDER_NOTICES:
+        yield spec, NOTICE_FIELDS, "notice"
 
 
-def _notification_is_current(name, definition):
-    fields = ("condition", "notification_title", "notification_message", "subject",
-              "days_in_advance", "event", "channel", "send_to_all_assignees")
+def _notification_is_current(name, definition, fields):
     return all(
         _same(frappe.db.get_value("Notification", name, field), definition.get(field))
         for field in fields
@@ -216,23 +282,23 @@ def plan():
 
     ``plan`` is what proves the definition reached a site. It also reports the workflow states
     the reminders are keyed on, so a renamed state is visible before a reminder silently stops
-    matching.
+    matching. It writes nothing: a report a person runs to check a site must not configure it.
     """
     rows = []
-    for reminder in REMINDERS:
-        name = reminder["name"]
+    for spec, fields, kind in _all_specs():
+        name = spec["name"]
         exists = bool(frappe.db.exists("Notification", name))
         rows.append(
             {
                 "notification": name,
-                "event": reminder["event"],
-                "days_in_advance": reminder["days_in_advance"],
+                "kind": kind,
+                "event": spec.get("event") or "Value Change",
+                "days_in_advance": spec.get("days_in_advance"),
                 "exists": exists,
                 "current": exists and _notification_is_current(
                     name,
-                    _definition(
-                        reminder, _notification_type(reminder["name"], create=False)
-                    ),
+                    _definition(spec, _notification_type(name, create=False)),
+                    fields,
                 ),
             }
         )
@@ -254,55 +320,56 @@ def plan():
 def install():
     """Create what is missing and refresh what went stale. Idempotent.
 
-    A reminder whose row differs from the definition is brought up to date: its condition is
-    what makes a second scheduler run produce nothing, and a site that installed the definition
-    earlier must receive a corrected one. The row is created through Frappe's model either way.
+    A row whose mechanism fields differ from the definition is brought up to date: a reminder's
+    condition is what makes a second scheduler run produce nothing, and a site that installed the
+    definition earlier must receive a corrected one. The row is created through Frappe's model
+    either way.
     """
     result = {"notifications": [], "assignment_rule": None, "errors": []}
 
-    for reminder in REMINDERS:
-        name = reminder["name"]
+    for spec, fields, kind in _all_specs():
+        name = spec["name"]
         try:
             notification_type = _notification_type(name)
-            definition = _definition(reminder, notification_type)
+            definition = _definition(spec, notification_type)
 
             if not frappe.db.exists("Notification", name):
                 frappe.get_doc(definition).insert(ignore_permissions=True)
-                result["notifications"].append({"notification": name, "outcome": "created",
+                result["notifications"].append({"notification": name, "kind": kind,
+                                                "outcome": "created",
                                                 "notification_type": notification_type})
                 continue
 
-            if _notification_is_current(name, definition):
-                result["notifications"].append({"notification": name, "outcome": "exists",
+            if _notification_is_current(name, definition, fields):
+                result["notifications"].append({"notification": name, "kind": kind,
+                                                "outcome": "exists",
                                                 "notification_type": notification_type})
                 continue
 
-            # The row is site configuration an administrator may have edited, so only the
-            # fields that carry the mechanism are written back.
+            # The row is site configuration an administrator may have edited, so only the fields
+            # that carry the mechanism are written back.
             frappe.db.set_value(
-                "Notification",
-                name,
-                {key: definition[key] for key in
-                 ("condition", "days_in_advance", "event", "date_changed", "channel",
-                  "notification_message", "notification_title", "subject",
-                  "send_to_all_assignees", "notification_type", "enabled")},
+                "Notification", name,
+                {key: definition[key] for key in fields if key in definition},
             )
-            result["notifications"].append({"notification": name, "outcome": "updated",
+            result["notifications"].append({"notification": name, "kind": kind,
+                                            "outcome": "updated",
                                             "notification_type": notification_type})
-        except Exception as exc:  # noqa: BLE001 - one bad row must not stop the other
+        except Exception as exc:  # noqa: BLE001 - one bad row must not stop the others
             result["errors"].append(f"{name}: {exc}")
 
     name = ASSIGNMENT_RULE["name"]
     try:
         if not frappe.db.exists("Assignment Rule", name):
-            frappe.get_doc(_assignment_rule_definition()).insert(ignore_permissions=True)
+            frappe.get_doc({"doctype": "Assignment Rule", **ASSIGNMENT_RULE}).insert(
+                ignore_permissions=True
+            )
             result["assignment_rule"] = {"rule": name, "outcome": "created"}
         elif _assignment_rule_is_current(name):
             result["assignment_rule"] = {"rule": name, "outcome": "exists"}
         else:
             frappe.db.set_value(
-                "Assignment Rule",
-                name,
+                "Assignment Rule", name,
                 {key: ASSIGNMENT_RULE[key] for key in
                  ("rule", "field", "assign_condition", "unassign_condition", "close_condition",
                   "due_date_based_on", "description", "priority")},

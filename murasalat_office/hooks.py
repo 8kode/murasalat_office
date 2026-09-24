@@ -51,6 +51,10 @@ workflow_methods = [
         "name": "Clear Approval",
         "method": "murasalat_office.services.approvals.clear_approval",
     },
+    {
+        "name": "Cancel Referral",
+        "method": "murasalat_office.services.lifecycle.cancel_referral",
+    },
 ]
 
 

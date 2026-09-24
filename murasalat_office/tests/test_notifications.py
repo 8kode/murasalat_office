@@ -323,3 +323,158 @@ def test_the_definitions_are_reachable_from_the_provisioner():
 
     assert "notifications.install()" in source
     assert "notifications.plan()" in source
+
+
+# --- the notices that close the loop to the sender --------------------------------
+
+
+NOTICES = notifications.SENDER_NOTICES
+
+
+def test_the_sender_is_told_when_the_referral_moves():
+    """Two milestones, one notice each. Value Change fires only when the state actually
+    changes, so nothing repeats and no guard is needed."""
+    assert {n["state"] for n in NOTICES} == {"Received", "Completed"}
+
+    for notice in NOTICES:
+        definition = notifications._definition(notice, notice["name"])
+        assert definition["event"] == "Value Change"
+        assert definition["value_changed"] == "workflow_state"
+        assert definition["document_type"] == "Murasalat Referral"
+        assert definition["enabled"] == 1
+
+
+def test_the_sender_notice_goes_to_the_records_own_owner_field():
+    """`owner` is the framework's supported way to name a recipient from the record - and the
+    clerk who sent the referral is the one who created it. No role row, so nobody who was not
+    involved is told."""
+    for notice in NOTICES:
+        definition = notifications._definition(notice, notice["name"])
+
+        assert definition["send_to_all_assignees"] == 0
+        assert definition["recipients"] == [{"receiver_by_document_field": "owner"}]
+        assert "receiver_by_role" not in definition["recipients"][0]
+
+
+@pytest.mark.parametrize("notice", NOTICES, ids=[n["name"] for n in NOTICES])
+def test_each_sender_notice_fires_on_its_own_state_only(notice):
+    condition = notifications.notice_condition(notice)
+    compile(condition, "<notice condition>", "eval")
+
+    assert _fires(condition, **{**OPEN, "workflow_state": notice["state"]}) is True
+
+    for other in {n["state"] for n in NOTICES} - {notice["state"]}:
+        assert _fires(condition, **{**OPEN, "workflow_state": other}) is False
+
+    assert _fires(condition, **{**OPEN, "workflow_state": "Sent"}) is False
+    assert _fires(condition, **{**OPEN, "workflow_state": "Cancelled"}) is False
+
+
+@pytest.mark.parametrize("reminder", REMINDERS, ids=[r["name"] for r in REMINDERS])
+def test_the_dedup_guard_keys_on_the_type_as_well_as_the_title(reminder):
+    """Both keys are stored in the log. A translated title cannot open the door, and neither can
+    a site where creating the Notification Type failed and the reminder fell back to "Alert"."""
+    guard = _condition(reminder)
+
+    assert '"type":' in guard
+    assert '"title":' in guard
+    assert reminder["name"] in guard or repr(reminder["name"]) in guard
+
+
+def test_plan_reports_every_row_of_both_kinds():
+    """plan is the proof a site can run; it must cover all five rows, not just the reminders."""
+    source = ast.parse(SOURCE)
+    plan = next(n for n in source.body if isinstance(n, ast.FunctionDef) and n.name == "plan")
+    body = ast.get_source_segment(SOURCE, plan)
+
+    assert "_all_specs()" in body, "plan iterates both kinds"
+    assert len(REMINDERS) + len(NOTICES) == 5
+
+
+# --- the workflow facts the notifications depend on -------------------------------
+
+
+def _module_constants(tree):
+    """Every module level name bound to a literal - CLERK, SUPERVISOR, and the DocType names."""
+    values = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+            if isinstance(target, ast.Name):
+                try:
+                    values[target.id] = ast.literal_eval(node.value)
+                except ValueError:
+                    pass
+    return values
+
+
+def _resolve(node, values):
+    """Read a literal that may name its parts by constant, which is how provision.py is written."""
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.Name):
+        return values[node.id]
+    if isinstance(node, ast.List):
+        return [_resolve(element, values) for element in node.elts]
+    if isinstance(node, ast.Tuple):
+        return tuple(_resolve(element, values) for element in node.elts)
+    if isinstance(node, ast.Dict):
+        return {
+            _resolve(key, values): _resolve(value, values)
+            for key, value in zip(node.keys, node.values)
+        }
+    raise AssertionError(ast.dump(node))
+
+
+def _workflow_spec(name):
+    provision = ast.parse((ROOT / "setup/provision.py").read_text(encoding="utf-8"))
+    values = _module_constants(provision)
+    for node in provision.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id == "WORKFLOWS" for t in node.targets
+        ):
+            for spec in _resolve(node.value, values):
+                if spec["name"] == name:
+                    return spec
+    raise AssertionError(f"{name} is not a shipped workflow")
+
+
+def test_the_referral_can_actually_be_cancelled():
+    """The reminders and the close condition both key on cancellation. Without the transition the
+    method, its mandatory reason and the Cancelled state had nothing to run them."""
+    spec = _workflow_spec("Murasalat Referral Lifecycle")
+    states = {row["state"] for row in spec["states"]}
+    cancels = [t for t in spec["transitions"] if t["action"] == "Cancel"]
+
+    assert "Cancelled" in states, "the state a cancellation lands in must exist"
+    assert cancels, "no Cancel transition means cancel_referral is unreachable"
+    assert {t["task"] for t in cancels} == {"Cancel Referral"}
+    assert {t["next_state"] for t in cancels} == {"Cancelled"}
+    assert {t["state"] for t in cancels} <= {"Draft", "Sent", "Received"}, (
+        "a completed referral cannot be cancelled - the method refuses it, so no transition "
+        "should offer it"
+    )
+
+
+def test_the_approval_workflow_makes_a_pending_decision_visible():
+    """Question 5 - is a formal action waiting for me - is answered by the native Workflow Action
+    list, which only lists something when a Workflow exists. The methods shipped before the
+    workflow did, so an approval had no state and no transition to run them."""
+    spec = _workflow_spec("Murasalat Approval Workflow")
+
+    assert spec["document_type"] == "Murasalat Approval Request"
+    transitions = {(t["state"], t["action"], t["next_state"], t["task"]) for t in spec["transitions"]}
+
+    assert ("Pending Approval", "Approve", "Approved", "Stamp Approval") in transitions
+    assert ("Approved", "Return for Amendment", "Pending Approval", "Clear Approval") in transitions
+    assert {row["state"] for row in spec["states"]} == {"Pending Approval", "Approved"}
+
+
+def test_every_shipped_transition_carries_its_task():
+    """The invariant the whole governance model rests on: a transition with no task completes
+    silently and writes nothing, so a guarded lifecycle step would be skipped without a word."""
+    for name in ("Murasalat Correspondence Lifecycle", "Murasalat Referral Lifecycle",
+                 "Murasalat Approval Workflow"):
+        spec = _workflow_spec(name)
+        missing = [t["action"] for t in spec["transitions"] if not t.get("task")]
+        assert not missing, (name, missing)

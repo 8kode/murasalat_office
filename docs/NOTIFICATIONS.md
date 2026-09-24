@@ -10,7 +10,8 @@ scheduler, no queue, no transport, no second assignment model.
 | What should I do? | The same ToDo, carrying the referral's due date | `due_date_based_on = due_date` |
 | When must I finish? | `Notification`, event **Days Before** | Two rules: `days_in_advance = 1` and `0` |
 | What is late? | `Notification`, event **Days After** | One rule, `days_in_advance = 1` |
-| Is a formal action waiting for me? | The framework's **Workflow Action** list | Nothing |
+| Is a formal action waiting for me? | The framework's **Workflow Action** list | The Approval Workflow, so an approval appears there |
+| What happened to the referral I sent? | `Notification`, event **Value Change** | Two rules, to the record's own `owner` |
 
 ## Why each question lands where it does
 
@@ -70,6 +71,15 @@ Two native details carry the rest:
   what makes this possible without a line of application code. So a second run of the same day's
   job - a re-run, or an administrator calling `trigger_daily_alerts` by hand - writes nothing.
 
+**The sender's loop closes the other way.** A referral moving to `Received` or `Completed` is a
+milestone the clerk who sent it needs, and `owner` - the framework's own field, naming whoever
+created the record - is the person to tell, resolved natively through
+`receiver_by_document_field`. `Value Change` on `workflow_state` fires only when the state
+actually changes, so each notice is written at most once per referral with no guard, and the
+framework already skips the notice when the person who acted is the person being told. That is
+the one place a site may want to mute something: the two rules are separate rows, so either can
+be disabled in Desk without touching the reminders.
+
 **Nothing was added for workflow actions.** Frappe already keeps a `Workflow Action` row per
 pending transition and shows it to the roles allowed to act. Turning on the Workflow's
 `send_email_alert` would additionally email **every** holder of the role, which is exactly the
@@ -82,6 +92,8 @@ Short, Arabic, and carrying the referral's own identity only:
 
 | Rule | Bell headline (`notification_title`) | Detail (`subject`, rendered) |
 |---|---|---|
+| Sent, and then received | `تم استلام إحالتك` | `استُلمت الإحالة {{ doc.name }}` |
+| Sent, and then completed | `تم إتمام إحالتك` | `أُتمَّت الإحالة {{ doc.name }}` |
 | Due soon, one day before | `موعد إحالة يقرب` | `الإحالة {{ doc.name }} موعدها {{ doc.due_date }}` |
 | Due today | `إحالة تستحق اليوم` | `الإحالة {{ doc.name }} موعدها اليوم` |
 | Overdue, one day after | `لديك إحالة متأخرة` | `الإحالة {{ doc.name }} تجاوزت موعدها {{ doc.due_date }}` |

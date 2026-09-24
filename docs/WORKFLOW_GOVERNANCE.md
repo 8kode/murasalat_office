@@ -232,10 +232,25 @@ Native‑First principle stated in the README: the site's governance is the site
 administrator's configuration, and the application only provides the lifecycle methods the
 configuration can call.
 
-The one thing the code base does own is the **contract**: the seven names in
+The one thing the code base does own is the **contract**: the names in
 `hooks.py`, the methods behind them in `services/lifecycle.py`, and a regression test
 (`tests/test_workflow_task_contract.py`) that fails if a hook name, its method, its DocType
 guard, or its entry in this document drifts apart.
+
+## Referral cancellation
+
+`Cancel Referral` runs `murasalat_office.services.lifecycle.cancel_referral` on
+`Murasalat Referral`. It is what makes cancellation reachable at all: the method shipped
+before the transition did, so the `Cancelled` state, the mandatory `Cancel Reason`, and the
+close condition that stops the reminders had nothing to run them.
+
+| Task | Method | Runs on | Attach to |
+| --- | --- | --- | --- |
+| `Cancel Referral` | `murasalat_office.services.lifecycle.cancel_referral` | `Murasalat Referral` | the `Cancel` transitions |
+
+Cancellation is terminal and attributable: it takes a mandatory reason, is refused on a
+referral that already completed, and removes the referral from the open set so it no longer
+blocks closing its correspondence.
 
 ## Approval decision tasks
 

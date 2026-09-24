@@ -69,6 +69,7 @@ WORKFLOWS = [
             {"state": "Sent", "allow_edit": CLERK},
             {"state": "Received", "allow_edit": CLERK},
             {"state": "Completed", "allow_edit": CLERK},
+            {"state": "Cancelled", "allow_edit": CLERK},
         ],
         "transitions": [
             {"state": "Draft", "action": "Send", "next_state": "Sent",
@@ -77,6 +78,33 @@ WORKFLOWS = [
              "allowed": CLERK, "task": "Receive Referral"},
             {"state": "Received", "action": "Complete", "next_state": "Completed",
              "allowed": CLERK, "task": "Complete Referral"},
+            # Cancellation is the terminal alternative to completion. `cancel_referral` shipped
+            # before the transition that calls it, so the method, its mandatory reason and the
+            # close condition that stops the reminders had nothing to run them.
+            {"state": "Draft", "action": "Cancel", "next_state": "Cancelled",
+             "allowed": CLERK, "task": "Cancel Referral"},
+            {"state": "Sent", "action": "Cancel", "next_state": "Cancelled",
+             "allowed": CLERK, "task": "Cancel Referral"},
+            {"state": "Received", "action": "Cancel", "next_state": "Cancelled",
+             "allowed": CLERK, "task": "Cancel Referral"},
+        ],
+    },
+    {
+        # Two states and two transitions, on purpose: every transition carries its task, which is
+        # the invariant this module holds everywhere else. A request is created to be decided, so
+        # it starts at the state where the decision is made - and the only way back is the
+        # documented one, returning an approved request for amendment.
+        "name": "Murasalat Approval Workflow",
+        "document_type": "Murasalat Approval Request",
+        "states": [
+            {"state": "Pending Approval", "allow_edit": SUPERVISOR},
+            {"state": "Approved", "allow_edit": SUPERVISOR},
+        ],
+        "transitions": [
+            {"state": "Pending Approval", "action": "Approve", "next_state": "Approved",
+             "allowed": SUPERVISOR, "task": "Stamp Approval"},
+            {"state": "Approved", "action": "Return for Amendment", "next_state": "Pending Approval",
+             "allowed": SUPERVISOR, "task": "Clear Approval"},
         ],
     },
 ]

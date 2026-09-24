@@ -1,7 +1,7 @@
 """Contract: every declared workflow_methods entry is a real, documented task.
 
 The application ships no Workflow configuration (Native-First). What it does own is
-the promise that the seven hook names in ``hooks.py`` resolve to guarded lifecycle
+the promise that the hook names in ``hooks.py`` resolve to guarded lifecycle
 methods and are documented for whoever configures the Desk Workflow.
 """
 import re
@@ -12,15 +12,16 @@ APP = ROOT
 DOC = ROOT.parent / "docs/WORKFLOW_GOVERNANCE.md"
 
 EXPECTED_TASKS = [
-    ("Register Correspondence", "register_correspondence", "Murasalat Correspondence"),
-    ("Close Correspondence", "close_correspondence", "Murasalat Correspondence"),
-    ("Seal Correspondence", "seal_correspondence", "Murasalat Correspondence"),
-    ("Reopen Correspondence", "reopen_correspondence", "Murasalat Correspondence"),
-    ("Send Referral", "send_referral", "Murasalat Referral"),
-    ("Receive Referral", "receive_referral", "Murasalat Referral"),
-    ("Complete Referral", "complete_referral", "Murasalat Referral"),
-    ("Stamp Approval", "stamp_approval", "Murasalat Approval Request"),
-    ("Clear Approval", "clear_approval", "Murasalat Approval Request"),
+    ('Register Correspondence', 'register_correspondence', 'Murasalat Correspondence'),
+    ('Close Correspondence', 'close_correspondence', 'Murasalat Correspondence'),
+    ('Seal Correspondence', 'seal_correspondence', 'Murasalat Correspondence'),
+    ('Reopen Correspondence', 'reopen_correspondence', 'Murasalat Correspondence'),
+    ('Send Referral', 'send_referral', 'Murasalat Referral'),
+    ('Receive Referral', 'receive_referral', 'Murasalat Referral'),
+    ('Complete Referral', 'complete_referral', 'Murasalat Referral'),
+    ('Stamp Approval', 'stamp_approval', 'Murasalat Approval Request'),
+    ('Clear Approval', 'clear_approval', 'Murasalat Approval Request'),
+    ('Cancel Referral', 'cancel_referral', 'Murasalat Referral'),
 ]
 
 
