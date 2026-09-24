@@ -2,4 +2,9 @@
 
 execute:murasalat_office.patches.v0_21_migrate_referrals.execute
 execute:murasalat_office.patches.v0_22_preserve_referral_history.execute
-execute:murasalat_office.patches.v0_23_index_record_attachments.execute
+# New patches are listed as a bare module path: Frappe resolves that with frappe.get_attr,
+# which imports the module properly. A line prefixed with `execute:` is exec'd as raw Python
+# in patch_handler's own namespace - which holds no app name - so it raises NameError for an
+# app module. The two v0_2x lines above keep the legacy text on purpose: the line itself is
+# the key in the Patch Log, so rewriting them would make Frappe treat them as new patches.
+murasalat_office.patches.v0_23_index_record_attachments
