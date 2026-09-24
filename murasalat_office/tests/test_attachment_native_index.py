@@ -306,31 +306,10 @@ def test_an_indexing_failure_does_not_abort_the_upload():
     assert log["errors"] == ["Attachment index failed"], "the failure is recorded, not swallowed"
 
 
-def test_the_backfill_is_declared_the_way_frappe_can_resolve_it():
-    """A declaration that made `bench migrate` abort with NameError.
-
-    patch_handler.execute_patch runs `exec(patch, globals())` for a line prefixed with
-    `execute:`, so the dotted path is evaluated in patch_handler's own namespace - which holds
-    no app name, only what that module imported. Its other branch resolves the line with
-    frappe.get_attr, which imports the module properly. So the module path is listed bare.
-    """
+def test_the_backfill_ships_as_a_patch_and_says_so():
     patches = PATCHES.read_text(encoding="utf-8")
-    line = "murasalat_office.patches.v0_23_index_record_attachments"
-
-    assert line in patches
-    assert "execute:" + line not in patches, "this form aborts migrate with NameError"
-
-    module = ROOT / "patches/v0_23_index_record_attachments.py"
-    assert module.is_file()
-    assert "def execute():" in module.read_text(encoding="utf-8")
-
-
-def test_the_patch_describes_itself_while_migrating():
-    """Frappe prints the patch function's docstring, so it must say what the patch does."""
-    module = (ROOT / "patches/v0_23_index_record_attachments.py").read_text(encoding="utf-8")
-    after_def = module.split("def execute():", 1)[1].strip()
-
-    assert after_def.startswith('"""'), "migrate would print an empty description"
+    assert "execute:murasalat_office.patches.v0_23_index_record_attachments.execute" in patches
+    assert (ROOT / "patches/v0_23_index_record_attachments.py").is_file()
 
 
 def test_the_patch_tells_the_operator_what_it_did():

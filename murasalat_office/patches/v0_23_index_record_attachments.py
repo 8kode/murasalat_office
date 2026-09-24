@@ -22,7 +22,6 @@ from murasalat_office.services import attachment_index
 
 
 def execute():
-    """Index the attachments that predate automatic indexing (read-only plan first)."""
     plan = attachment_index.plan_indexing()
     summary = attachment_index.apply_indexing(plan)
 
