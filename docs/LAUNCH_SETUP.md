@@ -36,6 +36,9 @@ an administrator may have edited it in Desk. It creates:
 - the three roles and their permission rows (step 4),
 - **the two Workflows with all seven transitions, each carrying its lifecycle task**
   (step 5) - the piece that had no command before, and whose absence fails silently.
+- **the Assignment Rule and the two due-date reminders** (step 6) - what puts a referral in
+  front of the person who owes it, and what reminds them. See
+  [NOTIFICATIONS.md](NOTIFICATIONS.md).
 
 Then confirm with `readiness` again: it must end with **Ready for users.**
 

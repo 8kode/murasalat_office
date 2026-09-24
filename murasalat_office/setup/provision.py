@@ -25,7 +25,12 @@ half-built Workflow.
 import frappe
 from frappe import _
 
-from murasalat_office.setup import governance_plan, master_data, report_print_formats
+from murasalat_office.setup import (
+    governance_plan,
+    master_data,
+    notifications,
+    report_print_formats,
+)
 
 CORRESPONDENCE = "Murasalat Correspondence"
 REFERRAL = "Murasalat Referral"
@@ -220,11 +225,19 @@ def apply(confirm=False):
             _("This writes roles, permissions and Workflows. Re-run with confirm=True.")
         )
 
-    report = {"master_data": None, "roles": [], "workflows": [], "print_formats": None, "errors": []}
+    report = {
+        "master_data": None,
+        "roles": [],
+        "workflows": [],
+        "print_formats": None,
+        "notifications": None,
+        "errors": [],
+    }
 
     report["master_data"] = master_data.seed()
     report["roles"] = governance_plan.materialize(confirm=True)
     report["print_formats"] = report_print_formats.install()
+    report["notifications"] = notifications.install()
 
     try:
         names = _workflow_fieldnames()
@@ -261,6 +274,17 @@ def readiness():
     for spec in WORKFLOWS:
         exists = frappe.db.exists("Workflow", spec["name"])
         checks.append((f"workflow {spec['name']}", "ok" if exists else "not created", bool(exists)))
+
+    plan = notifications.plan()
+    for row in plan["notifications"]:
+        ok = bool(row["exists"] and row["current"])
+        detail = "ok" if ok else ("not created" if not row["exists"] else "out of date")
+        checks.append((f"notification {row['notification']}", detail, ok))
+
+    rule = plan["assignment_rule"]
+    ok = bool(rule["exists"] and rule["current"])
+    detail = "ok" if ok else ("not created" if not rule["exists"] else "out of date")
+    checks.append((f"assignment rule {rule['rule']}", detail, ok))
 
     try:
         from murasalat_office.services.governance import workflow_task_readiness
