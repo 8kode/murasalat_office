@@ -1,0 +1,1097 @@
+From f078ddf4e8279c3007fca7b16cd316fd1b9d2ea4 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Thu, 24 Sep 2026 03:42:51 +0300
+Subject: [PATCH] Index attachments from the framework's File document, and
+ stop hiding its panel
+
+The previous commit hid Frappe's own attachments panel with a DOM selector so the table
+would be the only visible list. That reached into markup the framework does not publish and
+worked against it rather than with it.
+
+Frappe has one way to attach a file to a document - a File row carrying attached_to_doctype
+and attached_to_name - and every door goes through it: the sidebar panel, drag-and-drop, the
+REST upload endpoint, a row's own Attach control. So the app now listens there instead. Two
+File events, registered through the framework's own doc_events hook, refuse a file on a
+sealed record before it is stored and append a row for a record-level upload.
+
+attached_to_field is what separates the two kinds of upload: frappe/client.py::attach_file
+sets it from the docfield argument, so it is empty for an upload aimed at the record and
+holds the field name when the user uploaded into a specific field. A field upload is the
+user filling that row themselves, so it is left alone.
+
+The row is written through the DocType's own controller - append then save - so the
+duplicate check, the seal guard, the file hash and the uploading user's write permission all
+still apply. Nothing writes a child table directly.
+
+Consequences:
+
+* The panel is restored and the custom upload button is gone: one upload affordance, the
+  framework's own, and it now feeds the table instead of competing with it.
+* A sealed record refuses an attachment at the framework level, so the rule holds for the
+  REST endpoint too, not only for a button the interface had hidden.
+* Files uploaded before this existed are indexed by a patch. It plans first and prints what
+  it wrote, is idempotent, and deliberately leaves sealed records alone - their stored hash
+  covers their rows, so writing one would break the seal check on a record nobody touched.
+---
+ docs/ATTACHMENTS.md                           |  92 ++++--
+ murasalat_office/hooks.py                     |  20 +-
+ .../murasalat_correspondence.js               |  86 ++---
+ .../murasalat_referral/murasalat_referral.js  |  83 ++---
+ murasalat_office/patches.txt                  |   1 +
+ .../patches/v0_23_index_record_attachments.py |  45 +++
+ murasalat_office/services/attachment_index.py | 200 ++++++++++++
+ .../tests/test_attachment_native_index.py     | 304 ++++++++++++++++++
+ .../tests/test_attachment_single_source.py    |  60 ++--
+ murasalat_office/translations/ar.csv          |   2 +
+ 10 files changed, 720 insertions(+), 173 deletions(-)
+ create mode 100644 murasalat_office/patches/v0_23_index_record_attachments.py
+ create mode 100644 murasalat_office/services/attachment_index.py
+ create mode 100644 murasalat_office/tests/test_attachment_native_index.py
+
+diff --git a/docs/ATTACHMENTS.md b/docs/ATTACHMENTS.md
+index aac9d39..9ae3437 100644
+--- a/docs/ATTACHMENTS.md
++++ b/docs/ATTACHMENTS.md
+@@ -1,49 +1,87 @@
+ # Attachments: one source of truth
+ 
+-A record's files live in the **Attachments table** (`Murasalat Attachment` child table) on
+-both `Murasalat Correspondence` and `Murasalat Referral`. Nothing else lists them.
++A record's files live in the **Attachments table** (`Murasalat Attachment` child table) on both
++`Murasalat Correspondence` and `Murasalat Referral`. It is the only list a reviewer reads, and
++the only one that says **what** a file is: its type, where the paper original is filed, whether
++it is secret.
+ 
+-## Why the other two entry points were removed
++## How a file gets into the table
+ 
+-The form used to offer three ways to attach a file, and they disagreed with each other:
++Frappe has exactly one way to attach a file to a document: a `File` row carrying
++`attached_to_doctype` and `attached_to_name`. Every door goes through it - the form's sidebar
++panel, drag-and-drop, the REST upload endpoint, a row's own Attach control. So the app listens
++there instead of replacing any of it, through the framework's own `doc_events` extension point
++(`hooks.py` → `services/attachment_index.py`):
+ 
+-| Source | What it recorded | Covered by the seal |
+-| --- | --- | --- |
+-| Attachments table | type, folder, secret flag, file hash | yes — this is what `canonical_payload` hashes |
+-| `Attachment Gallery` field | nothing but the file | no metadata at all |
+-| Frappe's sidebar attachments panel | nothing but the file | only after linked files joined the snapshot |
++| `File` event | What it does |
++| --- | --- |
++| `before_insert` | Refuses the file when the record is sealed |
++| `after_insert` | Appends a row for a record-level upload, defaulting to type `Attachment` |
+ 
+-Only the table says **what** a file is and **where the paper original is filed**, and only
+-the table's rows feed `file_hash`. The gallery could not record a type, a folder or
+-secrecy; the sidebar panel showed the same files a second time with no classification. A
+-user who uploaded through either had no way to say which paper it was, and a reviewer had
+-no way to tell whether the file belonged to the record at all.
++One signal separates the two kinds of upload: **`attached_to_field`**.
++`frappe/client.py::attach_file` sets it from the `docfield` argument, so it is empty for an
++upload aimed at the record and carries the field name when the user uploaded into a specific
++field. A field upload is the user filling that row themselves; indexing it too would file the
++same file twice. So a field upload is left alone, and a record-level upload is filed.
+ 
+-So the gallery field was deleted from both DocTypes and the sidebar panel is hidden by each
+-form's script. Uploads happen through the table:
++The row is written through the DocType's **own controller** (`document.append(...)` then
++`save()`), so the duplicate check, the seal guard, the `file_hash`, and the uploading user's
++write permission all still apply. Nothing writes a child table directly.
+ 
+-* the native **Attach** control on a row, which uploads and fills the row, or
+-* the **رفع مرفق** button, which uploads through the same `frappe.ui.FileUploader` widget the
+-  sidebar used and appends a row defaulting to type `Attachment`.
++## What was tried first, and why it changed
+ 
+-Either way the result is one row in one table.
++The first attempt deleted the `Attachment Gallery` field and **hid Frappe's sidebar panel**
++with a DOM selector, so the table would be the only visible list. The gallery deletion stands -
++that field is in Frappe's `no_value_fields` and `display_fieldtypes`, so it stores **no column
++at all** and removing it loses no data. The panel hiding was withdrawn:
++
++| Approach | Why |
++| --- | --- |
++| Gallery field - **removed** | A second list of the same files recording nothing about them |
++| Panel hidden by DOM selector - **withdrawn** | Reached into markup Frappe does not publish, and worked *against* the framework instead of with it |
++| Custom upload button - **removed** | A third upload affordance; the panel is the framework's own, and it now feeds the table |
++| Panel left intact - **kept** | Native, and no longer a second list: its uploads become table rows |
+ 
+ ## The rules the table enforces
+ 
+ * `attachment_type` is a controlled vocabulary - `Main Letter`, `Attachment`, `Reply` - and
+   defaults to `Attachment`.
+-* `folder` is **optional**. It used to be required free text, which produced values like
+-  "نن" typed by someone who had to put something there. An empty folder is honest; an
+-  invented one is not.
++* `folder` is **optional**. It used to be required free text, which produced values like "نن"
++  typed by somebody who had to put something there. An empty folder is honest; an invented one
++  is not.
+ * The same file cannot be recorded twice under the same type
+   (`services/records.py::validate_attachment_rows`, called from both controllers).
+-* `file_hash` is read-only and written automatically.
+-* A sealed record refuses new or changed attachments, and the upload button is withheld with
+-  an indicator explaining why.
++* `file_hash` is read-only, written automatically.
++* A sealed record takes **no new attachments**, refused in `File.before_insert` - so the rule
++  also holds for the REST endpoint and drag-and-drop, not only for a button somebody might
++  have hidden. Reopen the record first.
++
++## Files uploaded before this existed
++
++Files attached through the panel or the gallery carry no row. They are already covered by the
++integrity seal - the hash reads the linked `File` rows as well - but they are invisible in the
++table and carry no type. To see what the backfill would do, **read-only, before migrating**:
++
++```bash
++bench --site <site> execute murasalat_office.services.attachment_index.plan_indexing
++```
++
++It reports four groups: `create` (a row will be written), `already_indexed`, `sealed` (left
++alone - see below), and `orphaned` (a `File` whose record no longer exists). Then
++`bench --site <site> migrate` runs
++`patches/v0_23_index_record_attachments.py`, which prints exactly what it wrote. It is
++idempotent, so re-running after a partial failure is safe.
++
++**Sealed records are deliberately skipped.** Their stored hash covers their rows, so writing
++one would fail the seal check on a record nobody tampered with. Their files stay covered by the
++linked-`File` snapshot.
+ 
+ ## Still open
+ 
+ * `folder` is free text. Making it a controlled list would be better, but it needs the
+   archive's actual location names and a migration for existing values.
+-* `is_secret` hides a file's **name** in the panel and the print format. It does not restrict
++* `is_secret` hides a file's **name** in the overview and the print formats. It does not restrict
+   access to the `File` document itself - that is governed by Frappe's own File permissions.
++* The panel refresh relies on the native `Attachments` control accepting an `on_success`
++  callback. If it does not, the new row appears on the next form reload instead - a cosmetic
++  delay, not a lost row.
+diff --git a/murasalat_office/hooks.py b/murasalat_office/hooks.py
+index e1b5ed9..2abd9a8 100644
+--- a/murasalat_office/hooks.py
++++ b/murasalat_office/hooks.py
+@@ -71,4 +71,22 @@ workflow_methods = [
+ after_migrate = [
+     "murasalat_office.patches.schema_repair.ensure_child_table_schema",
+     "murasalat_office.patches.schema_repair.ensure_membership_unique_index",
+-]
+\ No newline at end of file
++]
++
++
++# Attachments are indexed from the framework's own File document.
++#
++# Frappe has one way to attach a file to a document - a File row carrying attached_to_doctype
++# and attached_to_name - and every path goes through it: the form's sidebar panel,
++# drag-and-drop, the REST upload endpoint, a row's own Attach control. Registering these two
++# events is what makes the attachments table the single list of a record's files without
++# hiding anything the framework put on the screen.
++#
++# The rule holds for a sealed correspondence at the framework level, so an upload through the
++# REST endpoint is refused exactly like one clicked in the Desk.
++doc_events = {
++    "File": {
++        "before_insert": "murasalat_office.services.attachment_index.refuse_file_on_a_sealed_record",
++        "after_insert": "murasalat_office.services.attachment_index.index_file_in_the_record",
++    },
++}
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js
+index 050d42c..43b617b 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js
+@@ -73,80 +73,44 @@ frappe.ui.form.on("Murasalat Correspondence", {
+ });
+ 
+ // ---------------------------------------------------------------------------
+-// One place to manage attachments.
++// Attachments.
+ //
+-// This form used to offer three ways to attach a file: the attachments table, an
+-// "Attachment Gallery" field, and Frappe's own attachments panel in the sidebar. Only the
+-// table records what the file is - its type, where the paper original is filed, whether it
+-// is secret - and only the table is covered by the integrity seal. The other two are gone:
+-// the gallery field was removed from the DocType, and the sidebar panel is hidden below.
++// Frappe has one way to attach a file to a document - a File row carrying
++// attached_to_doctype and attached_to_name. This sidebar panel, drag-and-drop, the REST
++// endpoint and a row's own Attach control all go through it, and the app registers a File
++// event server-side that files a record-level upload in the attachments table. So the panel
++// is left exactly as the framework built it: it uploads natively, and the table describes
++// what was uploaded. Nothing here hides framework markup.
+ //
+-// Uploading stays native. The button opens frappe.ui.FileUploader, the same widget the
+-// sidebar used, and the uploaded file becomes a row in the table.
++// A sealed correspondence refuses the file in File.before_insert, not here. The indicator
++// below only says so before somebody picks a file and waits for an upload to fail.
+ // ---------------------------------------------------------------------------
+ 
+-function murasalat_single_attachment_source(frm) {
+-	// Hide Frappe's own attachments panel, so the table is the only list of files shown.
+-	const sidebar = frm.sidebar && frm.sidebar.sidebar;
+-
+-	if (sidebar && sidebar.length) {
+-		const panel = sidebar.find(".form-attachments");
++function murasalat_attachment_rules(frm) {
++	if (frm.doc.record_sealed_on && !frm.__murasalat_seal_notice) {
++		frm.__murasalat_seal_notice = true;
++		frm.dashboard.add_indicator(__("مختومة - المرفقات مقفلة"), "green");
++	}
+ 
+-		if (panel.length) {
+-			panel.toggle(false);
++	// A file attached from the panel is filed in the table server-side, so the table has to
++	// be re-read for the new row to appear. on_success is delegated to, never replaced.
++	if (frm.attachments && !frm.__murasalat_attach_hooked) {
++		frm.__murasalat_attach_hooked = true;
+ 
+-			const section = panel.closest(".sidebar-section");
++		const native_on_success = frm.attachments.on_success;
+ 
+-			if (section.length) {
+-				section.toggle(false);
++		frm.attachments.on_success = (...args) => {
++			if (native_on_success) {
++				native_on_success(...args);
+ 			}
+-		}
+-	}
+-
+-	// A sealed record cannot take new attachments. Say so instead of letting an upload fail
+-	// validation after the user has already chosen a file.
+-	if (frm.doc.record_sealed_on) {
+-		if (!frm.__murasalat_seal_notice) {
+-			frm.__murasalat_seal_notice = true;
+-			frm.dashboard.add_indicator(__("مختومة - المرفقات مقفلة"), "green");
+-		}
+ 
+-		return;
++			frm.reload_doc();
++		};
+ 	}
+-
+-	if (frm.is_new() || !frm.has_perm("write")) {
+-		return;
+-	}
+-
+-	frm.add_custom_button(
+-		__("رفع مرفق"),
+-		() => {
+-			new frappe.ui.FileUploader({
+-				doctype: frm.doctype,
+-				docname: frm.docname,
+-				folder: "Home/Attachments",
+-				frm: frm,
+-				on_success: (file_doc) => {
+-					frm.add_child("attachments", {
+-						file: file_doc.file_url,
+-						attachment_type: "Attachment",
+-					});
+-					frm.refresh_field("attachments");
+-					frm.dirty();
+-
+-					frappe.show_alert({
+-						message: __("أُضيف المرفق. حدّد نوعه ومجلّده في الجدول."),
+-						indicator: "green",
+-					});
+-				},
+-			});
+-		},
+-		__("المرفقات")
+-	);
+ }
+ 
+ frappe.ui.form.on("Murasalat Correspondence", {
+ 	refresh(frm) {
+-		murasalat_single_attachment_source(frm);
++		murasalat_attachment_rules(frm);
+ 	},
+ });
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js
+index 39340df..3e29b62 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js
++++ b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js
+@@ -72,80 +72,39 @@ frappe.ui.form.on("Murasalat Referral", {
+ });
+ 
+ // ---------------------------------------------------------------------------
+-// One place to manage attachments.
++// Attachments.
+ //
+-// This form used to offer three ways to attach a file: the attachments table, an
+-// "Attachment Gallery" field, and Frappe's own attachments panel in the sidebar. Only the
+-// table records what the file is - its type, where the paper original is filed, whether it
+-// is secret - and only the table is covered by the integrity seal. The other two are gone:
+-// the gallery field was removed from the DocType, and the sidebar panel is hidden below.
++// Frappe has one way to attach a file to a document - a File row carrying
++// attached_to_doctype and attached_to_name. This sidebar panel, drag-and-drop, the REST
++// endpoint and a row's own Attach control all go through it, and the app registers a File
++// event server-side that files a record-level upload in the attachments table. So the panel
++// is left exactly as the framework built it: it uploads natively, and the table describes
++// what was uploaded. Nothing here hides framework markup.
+ //
+-// Uploading stays native. The button opens frappe.ui.FileUploader, the same widget the
+-// sidebar used, and the uploaded file becomes a row in the table.
++// A sealed correspondence refuses the file in File.before_insert, not here. The indicator
++// below only says so before somebody picks a file and waits for an upload to fail.
+ // ---------------------------------------------------------------------------
+ 
+-function murasalat_single_attachment_source(frm) {
+-	// Hide Frappe's own attachments panel, so the table is the only list of files shown.
+-	const sidebar = frm.sidebar && frm.sidebar.sidebar;
++function murasalat_attachment_rules(frm) {
++	// A file attached from the panel is filed in the table server-side, so the table has to
++	// be re-read for the new row to appear. on_success is delegated to, never replaced.
++	if (frm.attachments && !frm.__murasalat_attach_hooked) {
++		frm.__murasalat_attach_hooked = true;
+ 
+-	if (sidebar && sidebar.length) {
+-		const panel = sidebar.find(".form-attachments");
++		const native_on_success = frm.attachments.on_success;
+ 
+-		if (panel.length) {
+-			panel.toggle(false);
+-
+-			const section = panel.closest(".sidebar-section");
+-
+-			if (section.length) {
+-				section.toggle(false);
++		frm.attachments.on_success = (...args) => {
++			if (native_on_success) {
++				native_on_success(...args);
+ 			}
+-		}
+-	}
+-
+-	// A sealed record cannot take new attachments. Say so instead of letting an upload fail
+-	// validation after the user has already chosen a file.
+-	if (frm.doc.record_sealed_on) {
+-		if (!frm.__murasalat_seal_notice) {
+-			frm.__murasalat_seal_notice = true;
+-			frm.dashboard.add_indicator(__("مختومة - المرفقات مقفلة"), "green");
+-		}
+ 
+-		return;
++			frm.reload_doc();
++		};
+ 	}
+-
+-	if (frm.is_new() || !frm.has_perm("write")) {
+-		return;
+-	}
+-
+-	frm.add_custom_button(
+-		__("رفع مرفق"),
+-		() => {
+-			new frappe.ui.FileUploader({
+-				doctype: frm.doctype,
+-				docname: frm.docname,
+-				folder: "Home/Attachments",
+-				frm: frm,
+-				on_success: (file_doc) => {
+-					frm.add_child("attachments", {
+-						file: file_doc.file_url,
+-						attachment_type: "Attachment",
+-					});
+-					frm.refresh_field("attachments");
+-					frm.dirty();
+-
+-					frappe.show_alert({
+-						message: __("أُضيف المرفق. حدّد نوعه ومجلّده في الجدول."),
+-						indicator: "green",
+-					});
+-				},
+-			});
+-		},
+-		__("المرفقات")
+-	);
+ }
+ 
+ frappe.ui.form.on("Murasalat Referral", {
+ 	refresh(frm) {
+-		murasalat_single_attachment_source(frm);
++		murasalat_attachment_rules(frm);
+ 	},
+ });
+diff --git a/murasalat_office/patches.txt b/murasalat_office/patches.txt
+index ec2aa28..21274e5 100644
+--- a/murasalat_office/patches.txt
++++ b/murasalat_office/patches.txt
+@@ -2,3 +2,4 @@
+ 
+ execute:murasalat_office.patches.v0_21_migrate_referrals.execute
+ execute:murasalat_office.patches.v0_22_preserve_referral_history.execute
++execute:murasalat_office.patches.v0_23_index_record_attachments.execute
+diff --git a/murasalat_office/patches/v0_23_index_record_attachments.py b/murasalat_office/patches/v0_23_index_record_attachments.py
+new file mode 100644
+index 0000000..593259f
+--- /dev/null
++++ b/murasalat_office/patches/v0_23_index_record_attachments.py
+@@ -0,0 +1,45 @@
++"""File the attachments that predate automatic indexing.
++
++Before ``doc_events`` on File existed, only the attachments table recorded a file, so anything
++uploaded through the sidebar panel or the gallery was attached to the record without a row.
++Those files are already covered by the integrity seal - the hash reads the linked File rows as
++well - but they are invisible in the table and carry no type.
++
++Sealed records are left alone on purpose: their stored hash covers their rows, so writing one
++would fail the seal check on a record nobody touched. Their files stay covered by the linked
++File snapshot.
++
++Run ``plan_indexing`` first to see the work without writing anything:
++
++    bench --site <site> execute murasalat_office.services.attachment_index.plan_indexing
++
++This patch is idempotent - a file that already has a row is skipped - so re-running it after a
++partial failure is safe.
++"""
++import frappe
++
++from murasalat_office.services import attachment_index
++
++
++def execute():
++    plan = attachment_index.plan_indexing()
++    summary = attachment_index.apply_indexing(plan)
++
++    print(
++        "attachment index: {created} row(s) written, {already_indexed} already indexed, "
++        "{skipped_sealed} skipped on sealed records, {orphaned} orphaned, {failed} failed".format(
++            **summary
++        )
++    )
++
++    for entry in plan["create"]:
++        print(f"  written: {entry['doctype']} {entry['record']} <- {entry['file_name'] or entry['file']}")
++
++    for entry in plan["sealed"]:
++        print(f"  skipped (sealed): {entry['doctype']} {entry['record']} <- {entry['file_name'] or entry['file']}")
++
++    for entry in plan["orphaned"]:
++        print(f"  skipped (no such record): {entry['doctype']} {entry['record']} <- {entry['file']}")
++
++    if summary["failed"]:
++        frappe.log_error(title="Attachment index backfill", message=str(summary))
+diff --git a/murasalat_office/services/attachment_index.py b/murasalat_office/services/attachment_index.py
+new file mode 100644
+index 0000000..2de55b9
+--- /dev/null
++++ b/murasalat_office/services/attachment_index.py
+@@ -0,0 +1,200 @@
++"""File every record-level attachment in the record's attachments table.
++
++Frappe has exactly one way to attach a file to a document: a ``File`` row carrying
++``attached_to_doctype`` and ``attached_to_name``. The sidebar panel, drag-and-drop, the REST
++upload endpoint and a row's own Attach control all go through it. The attachments table is a
++second thing, and it can only describe what a file *is* - its type, where the paper original
++is filed, whether it is secret.
++
++Previous approach hid Frappe's panel with a DOM selector so the table would be the only
++visible list. That worked against the framework and reached into markup it does not publish.
++This module does the opposite: it listens on the framework's own extension point and lets the
++panel feed the table. Whichever door a file comes through, it lands in the table, and the
++panel is left exactly as Frappe built it.
++
++``attached_to_field`` is what separates the two cases. ``frappe/client.py::attach_file`` sets
++it from the ``docfield`` argument, so it is empty for an upload aimed at the record and holds
++the field name when the user uploaded into a specific field. A field upload is the user
++filling that row themselves - indexing it too would file the same file twice.
++
++A sealed record refuses the file in ``File.before_insert``, before the framework stores it.
++That is a real refusal rather than a hidden button: the rule holds for the REST endpoint and
++drag-and-drop as well, not only for a user clicking in the Desk.
++"""
++import frappe
++from frappe import _
++
++# The DocTypes that own an attachments table fed by this module.
++INDEXED_DOCTYPES = ("Murasalat Correspondence", "Murasalat Referral")
++
++# Only a correspondence is sealed; a referral carries no seal fields. Mapping the DocType to
++# its own field keeps the guard honest on the second DocType instead of probing for a column
++# that is not there.
++SEALED_DOCTYPES = {"Murasalat Correspondence": "record_sealed_on"}
++
++TABLE_DOCTYPE = "Murasalat Attachment"
++TABLE_FIELD = "attachments"
++DEFAULT_TYPE = "Attachment"
++
++
++def should_index(attached_to_doctype, attached_to_field=None):
++    """True when a File row belongs in a record's attachments table.
++
++    Pure so the decision can be tested without a site: a file aimed at one of our records at
++    record level is ours to file; a file aimed at a field belongs to that field's row.
++    """
++    if attached_to_doctype not in INDEXED_DOCTYPES:
++        return False
++
++    return not attached_to_field
++
++
++def refuse_file_on_a_sealed_record(doc, method=None):
++    """``File.before_insert`` - a sealed record takes no new attachments.
++
++    Raising here stops the insert, so the file is never stored and no orphan is left behind.
++    """
++    seal_field = SEALED_DOCTYPES.get(doc.attached_to_doctype)
++
++    if not seal_field or not doc.attached_to_name:
++        return
++
++    if frappe.db.get_value(doc.attached_to_doctype, doc.attached_to_name, seal_field):
++        frappe.throw(
++            _("This record is sealed. Reopen it before attaching a file."),
++            title=_("Sealed record"),
++        )
++
++
++def index_file_in_the_record(doc, method=None):
++    """``File.after_insert`` - file a record-level upload in the attachments table."""
++    if not should_index(doc.attached_to_doctype, doc.attached_to_field):
++        return
++
++    if not frappe.db.exists(doc.attached_to_doctype, doc.attached_to_name):
++        return
++
++    add_attachment_row(doc.attached_to_doctype, doc.attached_to_name, doc.file_url)
++
++
++def add_attachment_row(doctype, record, file_url, attachment_type=DEFAULT_TYPE):
++    """Append one row through the DocType's own controller.
++
++    ``save()`` is the framework's write path, so the row still passes the controller's rules -
++    the duplicate check, the seal guard, the file hash - and the write permission of whoever
++    is uploading. Nothing here writes a table directly.
++    """
++    if not record or not file_url:
++        return None
++
++    if row_for(doctype, record, file_url):
++        return None
++
++    document = frappe.get_doc(doctype, record)
++    document.append(TABLE_FIELD, {"file": file_url, "attachment_type": attachment_type})
++    document.save()
++
++    return document.attachments[-1].name
++
++
++def row_for(doctype, record, file_url):
++    """The row already describing this file on this record, if there is one."""
++    return frappe.db.get_value(
++        TABLE_DOCTYPE,
++        {"parent": record, "parenttype": doctype, "file": file_url},
++        "name",
++    )
++
++
++def _record_level_files(doctype):
++    """Every File attached to this DocType at record level, oldest first."""
++    rows = frappe.get_all(
++        "File",
++        filters={"attached_to_doctype": doctype},
++        fields=["attached_to_name", "attached_to_field", "file_url", "file_name"],
++        order_by="attached_to_name asc, creation asc",
++        limit_page_length=0,
++    )
++
++    return [
++        row
++        for row in rows
++        if row["attached_to_name"]
++        and not row["attached_to_field"]
++        and row["file_url"]
++    ]
++
++
++def plan_indexing():
++    """Read-only: what the backfill would create, and what it would leave alone.
++
++    Run it before migrating to see the work:
++
++        bench --site <site> execute murasalat_office.services.attachment_index.plan_indexing
++
++    A sealed record is listed under ``sealed`` and never touched. Its integrity hash covers
++    its rows, so adding one would break the seal check on a record nobody tampered with.
++    Files uploaded through a field are left to the row the user filled.
++    """
++    plan = {"create": [], "sealed": [], "already_indexed": [], "orphaned": []}
++
++    for doctype in INDEXED_DOCTYPES:
++        seal_field = SEALED_DOCTYPES.get(doctype)
++
++        sealed = (
++            set(frappe.get_all(doctype, filters={seal_field: ["is", "set"]}, pluck="name"))
++            if seal_field
++            else set()
++        )
++
++        for row in _record_level_files(doctype):
++            record = row["attached_to_name"]
++            entry = {
++                "doctype": doctype,
++                "record": record,
++                "file": row["file_url"],
++                "file_name": row["file_name"],
++            }
++
++            if record in sealed:
++                plan["sealed"].append(entry)
++            elif not frappe.db.exists(doctype, record):
++                plan["orphaned"].append(entry)
++            elif row_for(doctype, record, row["file_url"]):
++                plan["already_indexed"].append(entry)
++            else:
++                plan["create"].append(entry)
++
++    return plan
++
++
++def apply_indexing(plan=None):
++    """Create the rows ``plan_indexing`` proposed. Idempotent - safe to run again."""
++    plan = plan or plan_indexing()
++    created, failed = [], []
++
++    for entry in plan["create"]:
++        try:
++            row = add_attachment_row(entry["doctype"], entry["record"], entry["file"])
++        except Exception:
++            failed.append(entry)
++            frappe.log_error(
++                title="Attachment index backfill",
++                message=f"{entry['doctype']} {entry['record']} {entry['file']}\n{frappe.get_traceback()}",
++            )
++            continue
++
++        if row:
++            created.append(entry)
++        else:
++            failed.append(entry)
++
++    frappe.db.commit()
++
++    return {
++        "created": len(created),
++        "failed": len(failed),
++        "skipped_sealed": len(plan["sealed"]),
++        "already_indexed": len(plan["already_indexed"]),
++        "orphaned": len(plan["orphaned"]),
++    }
+diff --git a/murasalat_office/tests/test_attachment_native_index.py b/murasalat_office/tests/test_attachment_native_index.py
+new file mode 100644
+index 0000000..84b3e02
+--- /dev/null
++++ b/murasalat_office/tests/test_attachment_native_index.py
+@@ -0,0 +1,304 @@
++"""Attachments are indexed from the framework's own File document.
++
++Frappe has exactly one way to attach a file to a document: a ``File`` row carrying
++``attached_to_doctype`` and ``attached_to_name``. The sidebar panel, drag-and-drop, the REST
++upload endpoint and a row's own Attach control all go through it. The app registers two
++``File`` events in ``hooks.py``, and these tests drive them against a stubbed ``frappe`` - so
++the decision they make, file this upload in the table or leave it to the row the user is
++filling, is executed rather than inspected.
++
++``attached_to_field`` is the signal. ``frappe/client.py::attach_file`` sets it from the
++``docfield`` argument, so it is empty for an upload aimed at the record and carries the field
++name when the user uploaded into a specific field.
++"""
++import importlib.util
++import sys
++import types
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++SERVICE = ROOT / "services/attachment_index.py"
++HOOKS = ROOT / "hooks.py"
++PATCHES = ROOT / "patches.txt"
++
++CORRESPONDENCE = "Murasalat Correspondence"
++REFERRAL = "Murasalat Referral"
++TABLE = "Murasalat Attachment"
++
++
++class Refused(Exception):
++    """Stands in for frappe.throw, which raises rather than returns."""
++
++
++class Record:
++    def __init__(self, name):
++        self.name = name
++        self.attachments = []
++        self.saved = 0
++
++    def append(self, fieldname, row):
++        assert fieldname == "attachments", fieldname
++        self.attachments.append(types.SimpleNamespace(name="att-row-%d" % len(self.attachments), **row))
++
++    def save(self):
++        self.saved += 1
++
++
++def load(**behaviour):
++    """Import the service against a stubbed frappe, and return it with its call log."""
++    log = {"loaded": [], "queries": [], "thrown": []}
++
++    frappe = types.ModuleType("frappe")
++    frappe._ = lambda text, *args, **kwargs: text
++
++    def throw(message, *args, **kwargs):
++        log["thrown"].append(message)
++        raise Refused(message)
++
++    def get_value(doctype, *args, **kwargs):
++        log["queries"].append(doctype)
++        if doctype == TABLE:  # the duplicate-row probe
++            return behaviour.get("row_exists")
++        return behaviour.get("sealed")  # the seal lookup
++
++    def get_all(*args, **kwargs):
++        target = args[0] if args else kwargs.get("doctype")
++        if target == "File":
++            wanted = (kwargs.get("filters") or {}).get("attached_to_doctype")
++            return [row for row in behaviour.get("files", []) if row["attached_to_doctype"] == wanted]
++        return behaviour.get("sealed_names", {}).get(target, [])
++
++    def get_doc(doctype, name=None):
++        log["loaded"].append((doctype, name))
++        factory = behaviour.get("get_doc")
++        if factory is None:
++            raise AssertionError("the service loaded %s %s when it should not have" % (doctype, name))
++        return factory(doctype, name)
++
++    frappe.throw = throw
++    frappe.get_doc = get_doc
++    frappe.get_all = get_all
++    frappe.log_error = lambda *args, **kwargs: None
++    frappe.get_traceback = lambda: ""
++    frappe.db = types.SimpleNamespace(
++        get_value=get_value,
++        exists=behaviour.get("exists", lambda *args, **kwargs: True),
++        commit=lambda: None,
++    )
++
++    sys.modules["frappe"] = frappe
++    spec = importlib.util.spec_from_file_location("murasalat_attachment_index", SERVICE)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module, log
++
++
++def upload(doctype, name, field=None, url="/files/a.pdf", file_name="a.pdf"):
++    return types.SimpleNamespace(
++        attached_to_doctype=doctype,
++        attached_to_name=name,
++        attached_to_field=field,
++        file_url=url,
++        file_name=file_name,
++    )
++
++
++# --- which uploads are ours to file --------------------------------------------
++
++
++def test_only_record_level_uploads_are_indexed():
++    module, _ = load()
++
++    assert module.should_index(CORRESPONDENCE, None) is True
++    assert module.should_index(REFERRAL, None) is True
++    assert module.should_index(CORRESPONDENCE, "") is True
++    assert module.should_index(CORRESPONDENCE, "file") is False, "a row's own Attach control"
++    assert module.should_index("File", None) is False
++    assert module.should_index("Sales Invoice", None) is False
++
++
++def test_a_field_scoped_upload_is_left_to_the_row_being_filled():
++    module, log = load()
++    module.index_file_in_the_record(upload(CORRESPONDENCE, "MC-1", field="file"))
++
++    assert log["loaded"] == [], "a field upload must not produce a second row"
++
++
++def test_a_record_level_upload_becomes_a_row():
++    record = Record("MC-2026-0001")
++    module, log = load(get_doc=lambda dtype, name: record)
++    module.index_file_in_the_record(upload(CORRESPONDENCE, "MC-2026-0001"))
++
++    assert record.saved == 1, "the row is written through the controller, not the table"
++    assert record.attachments[0].file == "/files/a.pdf"
++    assert record.attachments[0].attachment_type == "Attachment"
++    assert log["loaded"] == [(CORRESPONDENCE, "MC-2026-0001")]
++
++
++def test_a_file_already_in_the_table_is_not_filed_twice():
++    module, log = load(row_exists="att-row-1")
++    module.index_file_in_the_record(upload(CORRESPONDENCE, "MC-1"))
++
++    assert log["loaded"] == []
++
++
++def test_a_file_attached_to_a_record_that_is_gone_is_ignored():
++    module, log = load(exists=lambda *args, **kwargs: False)
++    module.index_file_in_the_record(upload(CORRESPONDENCE, "MC-gone"))
++
++    assert log["loaded"] == []
++
++
++def test_a_referral_upload_is_filed_too():
++    record = Record("REF-1")
++    module, _ = load(get_doc=lambda dtype, name: record)
++    module.index_file_in_the_record(upload(REFERRAL, "REF-1"))
++
++    assert record.saved == 1
++
++
++# --- the seal is enforced by the framework, not by hiding a button --------------
++
++
++def test_a_sealed_record_refuses_the_file_before_it_is_stored():
++    module, log = load(sealed="2026-01-01 10:00:00")
++
++    with pytest.raises(Refused):
++        module.refuse_file_on_a_sealed_record(upload(CORRESPONDENCE, "MC-1"))
++
++    assert log["thrown"], "the refusal has to carry a message"
++
++
++def test_an_unsealed_record_is_not_refused():
++    module, log = load(sealed=None)
++    module.refuse_file_on_a_sealed_record(upload(CORRESPONDENCE, "MC-1"))
++
++    assert log["thrown"] == []
++
++
++def test_only_the_correspondence_is_sealed_so_the_referral_guard_does_nothing():
++    module, log = load(sealed="2026-01-01 10:00:00")
++    module.refuse_file_on_a_sealed_record(upload(REFERRAL, "REF-1"))
++
++    assert REFERRAL not in module.SEALED_DOCTYPES
++    assert module.SEALED_DOCTYPES[CORRESPONDENCE] == "record_sealed_on"
++    assert log["thrown"] == [], "a DocType with no seal column is never probed"
++    assert log["queries"] == []
++
++
++def test_an_unrelated_doctype_is_never_probed():
++    module, log = load(sealed="2026-01-01 10:00:00")
++    module.refuse_file_on_a_sealed_record(upload("Sales Invoice", "SINV-1"))
++    module.index_file_in_the_record(upload("Sales Invoice", "SINV-1"))
++
++    assert log["queries"] == []
++    assert log["loaded"] == []
++
++
++# --- the backfill -----------------------------------------------------------------
++
++
++def files(*entries):
++    """File rows as the service queries them: one DocType at a time."""
++    return [
++        {
++            "attached_to_doctype": doctype,
++            "attached_to_name": record,
++            "attached_to_field": field,
++            "file_url": url,
++            "file_name": url.split("/")[-1],
++        }
++        for doctype, record, field, url in entries
++    ]
++
++
++def test_the_backfill_plans_a_row_for_a_file_that_has_none():
++    module, _ = load(
++        files=files(
++            (CORRESPONDENCE, "MC-1", None, "/files/a.pdf"),
++            (CORRESPONDENCE, "MC-1", "file", "/files/typed.pdf"),
++        ),
++    )
++    plan = module.plan_indexing()
++
++    assert [entry["file"] for entry in plan["create"]] == ["/files/a.pdf"]
++    assert [entry["file"] for entry in plan["sealed"]] == [], "nothing is sealed here"
++
++
++def test_the_backfill_leaves_a_sealed_record_alone():
++    """A sealed record's stored hash covers its rows - writing one would break its seal."""
++    module, _ = load(
++        files=files(
++            (CORRESPONDENCE, "MC-1", None, "/files/a.pdf"),
++            (CORRESPONDENCE, "MC-2", None, "/files/b.pdf"),
++        ),
++        sealed_names={CORRESPONDENCE: ["MC-1"]},
++    )
++    plan = module.plan_indexing()
++
++    assert [entry["record"] for entry in plan["create"]] == ["MC-2"]
++    assert [entry["record"] for entry in plan["sealed"]] == ["MC-1"]
++
++
++def test_the_backfill_skips_a_file_a_row_already_describes():
++    module, _ = load(files=files((CORRESPONDENCE, "MC-1", None, "/files/a.pdf")), row_exists="att-row-9")
++    plan = module.plan_indexing()
++
++    assert plan["create"] == []
++    assert len(plan["already_indexed"]) == 1
++
++
++def test_the_backfill_reports_a_file_whose_record_is_gone():
++    module, _ = load(files=files((CORRESPONDENCE, "MC-gone", None, "/files/a.pdf")),
++        exists=lambda *args, **kwargs: False,
++    )
++    plan = module.plan_indexing()
++
++    assert plan["create"] == []
++    assert len(plan["orphaned"]) == 1
++
++
++def test_a_plan_and_its_write_agree_on_what_to_create():
++    record_a, record_b = Record("MC-1"), Record("MC-2")
++    records = {"MC-1": record_a, "MC-2": record_b}
++    module, _ = load(
++        files=files(
++            (CORRESPONDENCE, "MC-1", None, "/files/a.pdf"),
++            (CORRESPONDENCE, "MC-2", None, "/files/b.pdf"),
++        ),
++        get_doc=lambda dtype, name: records[name],
++    )
++    plan = module.plan_indexing()
++    summary = module.apply_indexing(plan)
++
++    assert summary["created"] == 2
++    assert summary["failed"] == 0
++    assert [record.saved for record in records.values()] == [1, 1]
++
++
++# --- the wiring -------------------------------------------------------------------
++
++
++def test_hooks_register_the_native_file_events():
++    hooks = HOOKS.read_text(encoding="utf-8")
++
++    assert "doc_events = {" in hooks
++    assert '"File": {' in hooks
++    assert "murasalat_office.services.attachment_index.refuse_file_on_a_sealed_record" in hooks
++    assert "murasalat_office.services.attachment_index.index_file_in_the_record" in hooks
++    assert SERVICE.is_file()
++
++
++def test_the_backfill_ships_as_a_patch_and_says_so():
++    patches = PATCHES.read_text(encoding="utf-8")
++    assert "execute:murasalat_office.patches.v0_23_index_record_attachments.execute" in patches
++    assert (ROOT / "patches/v0_23_index_record_attachments.py").is_file()
++
++
++def test_the_patch_tells_the_operator_what_it_did():
++    source = (ROOT / "patches/v0_23_index_record_attachments.py").read_text(encoding="utf-8")
++
++    assert "plan_indexing()" in source, "the plan is printed before anything is written"
++    assert "skipped_sealed" in source
+diff --git a/murasalat_office/tests/test_attachment_single_source.py b/murasalat_office/tests/test_attachment_single_source.py
+index 704497d..0f21c39 100644
+--- a/murasalat_office/tests/test_attachment_single_source.py
++++ b/murasalat_office/tests/test_attachment_single_source.py
+@@ -1,8 +1,10 @@
+ """One source of truth for a record's attachments.
+ 
+-The form used to offer three: the attachments table, an Attachment Gallery field, and
+-Frappe's sidebar panel. Only the table carries classification and the integrity hash, so the
+-other two are gone. These tests fail if either comes back.
++The form used to offer three lists of the same files: the attachments table, an Attachment
++Gallery field, and Frappe's sidebar panel. The gallery is gone - it recorded nothing but the
++file. The panel stays: it is the framework's own upload affordance, and the app now files its
++uploads in the table from the framework's File document instead of hiding the panel.
++See test_attachment_native_index.py for that half.
+ """
+ import json
+ from pathlib import Path
+@@ -23,6 +25,12 @@ FORM_SCRIPTS = {
+ }
+ 
+ 
++def _attachment_block(doctype):
++    """The attachment code alone - the form has other buttons that are not upload paths."""
++    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
++    return script[script.index("function murasalat_attachment_rules"):]
++
++
+ def _meta(doctype):
+     return json.loads(DOCTYPE_FILES[doctype].read_text(encoding="utf-8"))
+ 
+@@ -76,35 +84,43 @@ def test_the_attachments_section_explains_itself(doctype):
+ 
+ 
+ @pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
+-def test_the_form_hides_frappes_own_attachments_panel(doctype):
++def test_the_form_no_longer_reaches_into_frappes_own_panel(doctype):
++    """Hiding `.form-attachments` selected on markup the framework does not publish.
++
++    The panel uploads natively and the File event files the result in the table, so the form
++    script has no reason to touch the sidebar at all.
++    """
+     script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
+ 
+-    assert 'find(".form-attachments")' in script, doctype
+-    assert "toggle(false)" in script, doctype
++    assert ".form-attachments" not in script, doctype
++    assert "toggle(false)" not in script, doctype
++    assert "sidebar" not in _attachment_block(doctype), doctype
+ 
+ 
+ @pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
+-def test_the_form_offers_one_upload_path_into_the_table(doctype):
+-    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
++def test_the_form_offers_no_second_upload_path(doctype):
++    """One row per file means one upload affordance: the framework's own panel."""
++    block = _attachment_block(doctype)
+ 
+-    assert "new frappe.ui.FileUploader(" in script
+-    assert 'frm.add_child("attachments"' in script
+-    assert 'attachment_type: "Attachment"' in script
+-    assert "frm.refresh_field(\"attachments\")" in script
+-    # uploaded through the same native widget the sidebar used
+-    assert 'folder: "Home/Attachments"' in script
++    assert "FileUploader" not in block, doctype
++    assert 'frm.add_child("attachments"' not in block, doctype
++    assert "add_custom_button" not in block, doctype
+ 
+ 
+-@pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
+-def test_the_form_does_not_offer_uploads_on_a_sealed_record(doctype):
+-    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
+-    body = script[script.index("function murasalat_single_attachment_source"):]
++def test_the_correspondence_warns_before_a_sealed_upload():
++    """The refusal is server-side; this only saves the user from picking a file first."""
++    script = FORM_SCRIPTS["Murasalat Correspondence"].read_text(encoding="utf-8")
++
++    assert "record_sealed_on" in script
++    assert "المرفقات مقفلة" in script
++
+ 
+-    sealed_guard = body.index("record_sealed_on")
+-    upload = body.index("new frappe.ui.FileUploader(")
++def test_the_referral_carries_no_seal_warning():
++    """A referral has no seal fields, so there is nothing to warn about."""
++    script = FORM_SCRIPTS["Murasalat Referral"].read_text(encoding="utf-8")
+ 
+-    assert sealed_guard < upload, f"{doctype}: the seal check must run before the upload button"
+-    assert "المرفقات مقفلة" in body, doctype
++    assert "record_sealed_on" not in script
++    assert "المرفقات مقفلة" not in script
+ 
+ 
+ @pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
+diff --git a/murasalat_office/translations/ar.csv b/murasalat_office/translations/ar.csv
+index 335956d..930b99a 100644
+--- a/murasalat_office/translations/ar.csv
++++ b/murasalat_office/translations/ar.csv
+@@ -415,3 +415,5 @@ Stamp Approval,تسجيل الاعتماد,
+ Clear Approval,سحب الاعتماد,
+ رفع مرفق,رفع مرفق,
+ مختومة - المرفقات مقفلة,مختومة - المرفقات مقفلة,
++This record is sealed. Reopen it before attaching a file.,هذا السجل مختوم. أعد فتحه قبل إرفاق ملف.,
++Sealed record,سجل مختوم,
+-- 
+2.43.0
+

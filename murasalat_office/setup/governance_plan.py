@@ -212,19 +212,3 @@ def materialize(confirm=False):
         "workflows_created": [],
         "manual_steps_remaining": list(MANUAL_STEPS),
     }
-
-
-# ---------------------------------------------------------------- reference data
-#
-# A Link field cannot resolve a record the user may not read, so every role that picks an
-# attachment type or an archive location needs read on those two tables. Both hold nothing
-# confidential - a type name and a shelf name - and leaving them out is the kind of gap that
-# only shows up when a clerk opens a form and finds an empty picker.
-VOCABULARY_READ = {
-    "Murasalat Attachment Type": {"read": 1},
-    "Murasalat Archive Location": {"read": 1},
-}
-
-for _role_plan in PERMISSION_PLAN.values():
-    for _vocabulary, _rights in VOCABULARY_READ.items():
-        _role_plan.setdefault(_vocabulary, dict(_rights))

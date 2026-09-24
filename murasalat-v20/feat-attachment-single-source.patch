@@ -1,0 +1,458 @@
+From 3d86540b7eeca7700f3699f6adc25ac5702c968b Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Thu, 24 Sep 2026 03:24:07 +0300
+Subject: [PATCH] Give the attachments one source instead of three
+
+The form offered three ways to attach a file and they disagreed with each other: the
+attachments table, an Attachment Gallery field, and Frappe's own attachments panel in the
+sidebar. Only the table records what a file is - its type, where the paper original is
+filed, whether it is secret - and only the table's rows feed the hash the seal covers. A
+user who uploaded through the gallery or the sidebar had nowhere to say which paper it was,
+and a reviewer could not tell whether the file belonged to the record.
+
+Delete the gallery field from both DocTypes and hide the sidebar panel from each form's
+script. Uploading stays native: the row's own Attach control, or a button that opens the
+same frappe.ui.FileUploader widget the sidebar used and appends a row defaulting to
+type Attachment.
+
+A sealed record withholds the button and says why, rather than letting an upload fail
+validation after the user has already picked a file.
+---
+ docs/ATTACHMENTS.md                           |  49 ++++++++
+ .../murasalat_correspondence.js               |  79 ++++++++++++
+ .../murasalat_correspondence.json             |  14 +--
+ .../murasalat_referral/murasalat_referral.js  |  79 ++++++++++++
+ .../murasalat_referral.json                   |   6 -
+ .../tests/test_attachment_single_source.py    | 116 ++++++++++++++++++
+ murasalat_office/translations/ar.csv          |   2 +
+ 7 files changed, 327 insertions(+), 18 deletions(-)
+ create mode 100644 docs/ATTACHMENTS.md
+ create mode 100644 murasalat_office/tests/test_attachment_single_source.py
+
+diff --git a/docs/ATTACHMENTS.md b/docs/ATTACHMENTS.md
+new file mode 100644
+index 0000000..aac9d39
+--- /dev/null
++++ b/docs/ATTACHMENTS.md
+@@ -0,0 +1,49 @@
++# Attachments: one source of truth
++
++A record's files live in the **Attachments table** (`Murasalat Attachment` child table) on
++both `Murasalat Correspondence` and `Murasalat Referral`. Nothing else lists them.
++
++## Why the other two entry points were removed
++
++The form used to offer three ways to attach a file, and they disagreed with each other:
++
++| Source | What it recorded | Covered by the seal |
++| --- | --- | --- |
++| Attachments table | type, folder, secret flag, file hash | yes — this is what `canonical_payload` hashes |
++| `Attachment Gallery` field | nothing but the file | no metadata at all |
++| Frappe's sidebar attachments panel | nothing but the file | only after linked files joined the snapshot |
++
++Only the table says **what** a file is and **where the paper original is filed**, and only
++the table's rows feed `file_hash`. The gallery could not record a type, a folder or
++secrecy; the sidebar panel showed the same files a second time with no classification. A
++user who uploaded through either had no way to say which paper it was, and a reviewer had
++no way to tell whether the file belonged to the record at all.
++
++So the gallery field was deleted from both DocTypes and the sidebar panel is hidden by each
++form's script. Uploads happen through the table:
++
++* the native **Attach** control on a row, which uploads and fills the row, or
++* the **رفع مرفق** button, which uploads through the same `frappe.ui.FileUploader` widget the
++  sidebar used and appends a row defaulting to type `Attachment`.
++
++Either way the result is one row in one table.
++
++## The rules the table enforces
++
++* `attachment_type` is a controlled vocabulary - `Main Letter`, `Attachment`, `Reply` - and
++  defaults to `Attachment`.
++* `folder` is **optional**. It used to be required free text, which produced values like
++  "نن" typed by someone who had to put something there. An empty folder is honest; an
++  invented one is not.
++* The same file cannot be recorded twice under the same type
++  (`services/records.py::validate_attachment_rows`, called from both controllers).
++* `file_hash` is read-only and written automatically.
++* A sealed record refuses new or changed attachments, and the upload button is withheld with
++  an indicator explaining why.
++
++## Still open
++
++* `folder` is free text. Making it a controlled list would be better, but it needs the
++  archive's actual location names and a migration for existing values.
++* `is_secret` hides a file's **name** in the panel and the print format. It does not restrict
++  access to the `File` document itself - that is governed by Frappe's own File permissions.
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js
+index 79b75a7..050d42c 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.js
+@@ -71,3 +71,82 @@ frappe.ui.form.on("Murasalat Correspondence", {
+         }
+     },
+ });
++
++// ---------------------------------------------------------------------------
++// One place to manage attachments.
++//
++// This form used to offer three ways to attach a file: the attachments table, an
++// "Attachment Gallery" field, and Frappe's own attachments panel in the sidebar. Only the
++// table records what the file is - its type, where the paper original is filed, whether it
++// is secret - and only the table is covered by the integrity seal. The other two are gone:
++// the gallery field was removed from the DocType, and the sidebar panel is hidden below.
++//
++// Uploading stays native. The button opens frappe.ui.FileUploader, the same widget the
++// sidebar used, and the uploaded file becomes a row in the table.
++// ---------------------------------------------------------------------------
++
++function murasalat_single_attachment_source(frm) {
++	// Hide Frappe's own attachments panel, so the table is the only list of files shown.
++	const sidebar = frm.sidebar && frm.sidebar.sidebar;
++
++	if (sidebar && sidebar.length) {
++		const panel = sidebar.find(".form-attachments");
++
++		if (panel.length) {
++			panel.toggle(false);
++
++			const section = panel.closest(".sidebar-section");
++
++			if (section.length) {
++				section.toggle(false);
++			}
++		}
++	}
++
++	// A sealed record cannot take new attachments. Say so instead of letting an upload fail
++	// validation after the user has already chosen a file.
++	if (frm.doc.record_sealed_on) {
++		if (!frm.__murasalat_seal_notice) {
++			frm.__murasalat_seal_notice = true;
++			frm.dashboard.add_indicator(__("مختومة - المرفقات مقفلة"), "green");
++		}
++
++		return;
++	}
++
++	if (frm.is_new() || !frm.has_perm("write")) {
++		return;
++	}
++
++	frm.add_custom_button(
++		__("رفع مرفق"),
++		() => {
++			new frappe.ui.FileUploader({
++				doctype: frm.doctype,
++				docname: frm.docname,
++				folder: "Home/Attachments",
++				frm: frm,
++				on_success: (file_doc) => {
++					frm.add_child("attachments", {
++						file: file_doc.file_url,
++						attachment_type: "Attachment",
++					});
++					frm.refresh_field("attachments");
++					frm.dirty();
++
++					frappe.show_alert({
++						message: __("أُضيف المرفق. حدّد نوعه ومجلّده في الجدول."),
++						indicator: "green",
++					});
++				},
++			});
++		},
++		__("المرفقات")
++	);
++}
++
++frappe.ui.form.on("Murasalat Correspondence", {
++	refresh(frm) {
++		murasalat_single_attachment_source(frm);
++	},
++});
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
+index cb708d0..360def5 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence.json
+@@ -44,8 +44,6 @@
+   "links_section",
+   "links",
+   "attachments_tab",
+-  "attachments_gallery_section",
+-  "attachments_gallery",
+   "attachments_section",
+   "attachments",
+   "audit_security_tab",
+@@ -244,7 +242,8 @@
+    "collapsible": 1,
+    "fieldname": "attachments_section",
+    "fieldtype": "Section Break",
+-   "label": "Attachments"
++   "label": "Attachments",
++   "description": "The record's files, in one place. Upload here; the file's SHA-256 is recorded automatically and checked whenever the record is verified."
+   },
+   {
+    "fieldname": "attachments",
+@@ -416,15 +415,6 @@
+   {
+    "fieldname": "column_break_tmju",
+    "fieldtype": "Column Break"
+-  },
+-  {
+-   "fieldname": "attachments_gallery",
+-   "fieldtype": "Attachment Gallery",
+-   "label": "Attachments Gallery"
+-  },
+-  {
+-   "fieldname": "attachments_gallery_section",
+-   "fieldtype": "Section Break"
+   }
+  ],
+  "links": [],
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js
+index 7046067..39340df 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js
++++ b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.js
+@@ -70,3 +70,82 @@ frappe.ui.form.on("Murasalat Referral", {
+         }
+     },
+ });
++
++// ---------------------------------------------------------------------------
++// One place to manage attachments.
++//
++// This form used to offer three ways to attach a file: the attachments table, an
++// "Attachment Gallery" field, and Frappe's own attachments panel in the sidebar. Only the
++// table records what the file is - its type, where the paper original is filed, whether it
++// is secret - and only the table is covered by the integrity seal. The other two are gone:
++// the gallery field was removed from the DocType, and the sidebar panel is hidden below.
++//
++// Uploading stays native. The button opens frappe.ui.FileUploader, the same widget the
++// sidebar used, and the uploaded file becomes a row in the table.
++// ---------------------------------------------------------------------------
++
++function murasalat_single_attachment_source(frm) {
++	// Hide Frappe's own attachments panel, so the table is the only list of files shown.
++	const sidebar = frm.sidebar && frm.sidebar.sidebar;
++
++	if (sidebar && sidebar.length) {
++		const panel = sidebar.find(".form-attachments");
++
++		if (panel.length) {
++			panel.toggle(false);
++
++			const section = panel.closest(".sidebar-section");
++
++			if (section.length) {
++				section.toggle(false);
++			}
++		}
++	}
++
++	// A sealed record cannot take new attachments. Say so instead of letting an upload fail
++	// validation after the user has already chosen a file.
++	if (frm.doc.record_sealed_on) {
++		if (!frm.__murasalat_seal_notice) {
++			frm.__murasalat_seal_notice = true;
++			frm.dashboard.add_indicator(__("مختومة - المرفقات مقفلة"), "green");
++		}
++
++		return;
++	}
++
++	if (frm.is_new() || !frm.has_perm("write")) {
++		return;
++	}
++
++	frm.add_custom_button(
++		__("رفع مرفق"),
++		() => {
++			new frappe.ui.FileUploader({
++				doctype: frm.doctype,
++				docname: frm.docname,
++				folder: "Home/Attachments",
++				frm: frm,
++				on_success: (file_doc) => {
++					frm.add_child("attachments", {
++						file: file_doc.file_url,
++						attachment_type: "Attachment",
++					});
++					frm.refresh_field("attachments");
++					frm.dirty();
++
++					frappe.show_alert({
++						message: __("أُضيف المرفق. حدّد نوعه ومجلّده في الجدول."),
++						indicator: "green",
++					});
++				},
++			});
++		},
++		__("المرفقات")
++	);
++}
++
++frappe.ui.form.on("Murasalat Referral", {
++	refresh(frm) {
++		murasalat_single_attachment_source(frm);
++	},
++});
+diff --git a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json
+index 240dca1..d6e57f1 100644
+--- a/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json
++++ b/murasalat_office/murasalat_office/doctype/murasalat_referral/murasalat_referral.json
+@@ -26,7 +26,6 @@
+   "attachments_tab",
+   "attachments_section",
+   "attachments",
+-  "attachments_gallery",
+   "audit_security_tab",
+   "section_break_kpmq",
+   "workflow_state",
+@@ -265,11 +264,6 @@
+    "fieldtype": "Table",
+    "label": "Attachments",
+    "options": "Murasalat Attachment"
+-  },
+-  {
+-   "fieldname": "attachments_gallery",
+-   "fieldtype": "Attachment Gallery",
+-   "label": "Attachments Gallery"
+   }
+  ],
+  "links": [],
+diff --git a/murasalat_office/tests/test_attachment_single_source.py b/murasalat_office/tests/test_attachment_single_source.py
+new file mode 100644
+index 0000000..704497d
+--- /dev/null
++++ b/murasalat_office/tests/test_attachment_single_source.py
+@@ -0,0 +1,116 @@
++"""One source of truth for a record's attachments.
++
++The form used to offer three: the attachments table, an Attachment Gallery field, and
++Frappe's sidebar panel. Only the table carries classification and the integrity hash, so the
++other two are gone. These tests fail if either comes back.
++"""
++import json
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++DOCTYPE_DIR = ROOT / "murasalat_office/doctype"
++
++DOCTYPE_FILES = {
++    "Murasalat Correspondence": DOCTYPE_DIR / "murasalat_correspondence/murasalat_correspondence.json",
++    "Murasalat Referral": DOCTYPE_DIR / "murasalat_referral/murasalat_referral.json",
++}
++
++FORM_SCRIPTS = {
++    "Murasalat Correspondence": DOCTYPE_DIR / "murasalat_correspondence/murasalat_correspondence.js",
++    "Murasalat Referral": DOCTYPE_DIR / "murasalat_referral/murasalat_referral.js",
++}
++
++
++def _meta(doctype):
++    return json.loads(DOCTYPE_FILES[doctype].read_text(encoding="utf-8"))
++
++
++@pytest.mark.parametrize("doctype", list(DOCTYPE_FILES))
++def test_the_gallery_field_is_gone(doctype):
++    """A second list of the same files, with no type, folder or secrecy to record."""
++    meta = _meta(doctype)
++    fieldnames = [field["fieldname"] for field in meta["fields"]]
++
++    assert "attachments_gallery" not in fieldnames, doctype
++    assert "attachments_gallery" not in meta["field_order"], doctype
++
++
++@pytest.mark.parametrize("doctype", list(DOCTYPE_FILES))
++def test_no_leftover_gallery_section_break(doctype):
++    meta = _meta(doctype)
++    orphaned = [
++        field["fieldname"]
++        for field in meta["fields"]
++        if field["fieldname"].endswith("_gallery_section")
++    ]
++
++    assert orphaned == [], f"{doctype}: an empty section break is left behind: {orphaned}"
++
++
++@pytest.mark.parametrize("doctype", list(DOCTYPE_FILES))
++def test_the_attachment_table_is_the_one_source(doctype):
++    meta = _meta(doctype)
++    table = next(field for field in meta["fields"] if field["fieldname"] == "attachments")
++
++    assert table["fieldtype"] == "Table"
++    assert table["options"] == "Murasalat Attachment"
++
++    # a plain Attach/Attach Image field would be a second, unclassified source
++    stray = [
++        field["fieldname"]
++        for field in meta["fields"]
++        if field.get("fieldtype") in ("Attach", "Attach Image")
++        and field["fieldname"] != "attachments"
++    ]
++    assert stray == [], f"{doctype}: a second file field remains: {stray}"
++
++
++@pytest.mark.parametrize("doctype", list(DOCTYPE_FILES))
++def test_the_attachments_section_explains_itself(doctype):
++    meta = _meta(doctype)
++    section = next(field for field in meta["fields"] if field["fieldname"] == "attachments_section")
++
++    assert section.get("description"), f"{doctype}: the section says nothing about what goes in it"
++
++
++@pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
++def test_the_form_hides_frappes_own_attachments_panel(doctype):
++    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
++
++    assert 'find(".form-attachments")' in script, doctype
++    assert "toggle(false)" in script, doctype
++
++
++@pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
++def test_the_form_offers_one_upload_path_into_the_table(doctype):
++    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
++
++    assert "new frappe.ui.FileUploader(" in script
++    assert 'frm.add_child("attachments"' in script
++    assert 'attachment_type: "Attachment"' in script
++    assert "frm.refresh_field(\"attachments\")" in script
++    # uploaded through the same native widget the sidebar used
++    assert 'folder: "Home/Attachments"' in script
++
++
++@pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
++def test_the_form_does_not_offer_uploads_on_a_sealed_record(doctype):
++    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
++    body = script[script.index("function murasalat_single_attachment_source"):]
++
++    sealed_guard = body.index("record_sealed_on")
++    upload = body.index("new frappe.ui.FileUploader(")
++
++    assert sealed_guard < upload, f"{doctype}: the seal check must run before the upload button"
++    assert "المرفقات مقفلة" in body, doctype
++
++
++@pytest.mark.parametrize("doctype", list(FORM_SCRIPTS))
++def test_the_form_script_registers_a_refresh_handler(doctype):
++    script = FORM_SCRIPTS[doctype].read_text(encoding="utf-8")
++
++    assert f'frappe.ui.form.on("{doctype}"' in script, doctype
++    assert "murasarat_single_attachment_source" not in script, "the helper name is misspelled"
++    assert "murasarat_single_attachment_source" not in script.replace("murasarat", "murasalat")
+diff --git a/murasalat_office/translations/ar.csv b/murasalat_office/translations/ar.csv
+index 316d34f..335956d 100644
+--- a/murasalat_office/translations/ar.csv
++++ b/murasalat_office/translations/ar.csv
+@@ -413,3 +413,5 @@ Cancelled On,تاريخ الإلغاء,
+ Referral Cancelled,أُلغيت الإحالة,
+ Stamp Approval,تسجيل الاعتماد,
+ Clear Approval,سحب الاعتماد,
++رفع مرفق,رفع مرفق,
++مختومة - المرفقات مقفلة,مختومة - المرفقات مقفلة,
+-- 
+2.43.0
+

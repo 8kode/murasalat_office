@@ -1,0 +1,947 @@
+From ec3f0aa62c73200060249394ebfae7710ad00722 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Wed, 23 Sep 2026 02:10:46 +0300
+Subject: [PATCH] Fix the verification script against what the site actually
+ reported
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Running it on a real bench exposed four defects, three of them in the script itself.
+
+Report names were guessed with a like filter, so '%queue%' matched Work Queue and
+Follow Up Queue and the same report was reported three times while another was never
+checked. Resolve each name from its own definition on disk instead.
+
+The hook entries carry 'name' and 'method'; the script read 'workflow_action', so
+every lifecycle-hook line printed '?'.
+
+Arabic was reported as missing because the check demanded Translation rows. App
+translations load from the app's own CSV; a site with a full Arabic file and no
+Translation rows is correctly translated. Check the catalogue and the ar language.
+
+And the role script saved the Report document, which wrote the definitions back into
+the app tree — configuring a site edited tracked source. Write the Has Role rows
+directly, and commit explicitly, because bench execute does not.
+
+Add the transition-task setup: a workflow_methods hook only fires through a task
+attached to a transition, and plan/apply make that mapping explicit.
+---
+ docs/VERIFICATION.md                          |  23 +-
+ murasalat_office/setup/report_access.py       | 102 ++++--
+ murasalat_office/setup/workflow_tasks.py      | 188 +++++++++++
+ .../tests/test_verification_contracts.py      | 110 +++++++
+ murasalat_office/verification/site_smoke.py   | 299 ++++++++++++------
+ 5 files changed, 600 insertions(+), 122 deletions(-)
+ create mode 100644 murasalat_office/setup/workflow_tasks.py
+ create mode 100644 murasalat_office/tests/test_verification_contracts.py
+
+diff --git a/docs/VERIFICATION.md b/docs/VERIFICATION.md
+index 4d389d6..dc6edda 100644
+--- a/docs/VERIFICATION.md
++++ b/docs/VERIFICATION.md
+@@ -27,11 +27,24 @@ bench migrate
+ bench --site <site> execute murasalat_office.verification.site_smoke.run
+ ```
+ 
+-It checks that the doctypes migrated, that each workflow has active transitions **and**
+-transition tasks with `Enabled` on and `Asynchronous` off (an asynchronous task silently
+-never fires the lifecycle method), that every report exists with roles attached, that the
+-print formats are present, that every lifecycle hook resolves to a real function, and that
+-Arabic translations loaded. Every line prints PASS or FAIL.
++It prints PASS / WARN / FAIL for: the migrated doctypes; each active workflow and whether
++every transition whose action matches a `workflow_methods` name actually has a task
++attached, with `Enabled` on and `Asynchronous` off; each report with the roles attached to
++it; the print formats; that every lifecycle hook resolves to a real function; and that the
++Arabic catalogue and the `ar` language are in place.
++
++Two things to know before reading its output:
++
++* **A lifecycle method needs a transition task.** The `workflow_methods` hook does not fire
++  by itself — `apply_workflow` only runs the hooks reachable through a
++  `Workflow Transition Task`. Until those rows exist a transition changes the state and
++  nothing else. `bench --site <site> execute murasalat_office.setup.workflow_tasks.plan`
++  prints the mapping read-only; `... .apply` creates it.
++* **Transition tasks are a Frappe develop (v16) feature.** On version-15 `apply_workflow`
++  contains no transition-task handling, so these hooks cannot fire from a transition at
++  all; the script reports that as a WARN rather than a fixable failure. Attach the lifecycle
++  methods another way on v15 (a Server Script or a `doc_events` hook), or run the app on the
++  version that implements them.
+ 
+ ## 3. Still needs human eyes
+ 
+diff --git a/murasalat_office/setup/report_access.py b/murasalat_office/setup/report_access.py
+index 51c1b8e..adea2db 100644
+--- a/murasalat_office/setup/report_access.py
++++ b/murasalat_office/setup/report_access.py
+@@ -1,16 +1,22 @@
+ """Attach access roles to the operational reports, after migrate.
+ 
+-The report definitions deliberately ship without roles. A Report's roles are Link fields
+-to Role documents, and ``bench migrate`` syncs the JSON **before** the correspondence roles
+-exist on a fresh site, so a role named in the JSON can fail the sync. Running this after
+-migrate avoids that ordering trap while still making report access explicit rather than
+-implicit.
++The report definitions deliberately ship without roles. A Report's roles are Link fields to
++Role documents, and ``bench migrate`` syncs a report's JSON **before** the correspondence
++roles exist on a fresh site, so a role named in the JSON can fail the sync. Running this
++after migrate avoids that ordering trap while still making report access explicit.
+ 
+     bench --site <site> execute murasalat_office.setup.report_access.apply_report_roles
+ 
+-It is idempotent: roles that are already attached are left alone.
++It is idempotent: roles already attached are left alone.
++
++**Why this writes child rows directly instead of appending to the Report:** saving a Report
++document writes its definition back out to the app tree. Doing that from a setup script
++silently edits tracked source files as a side effect of configuring a site — which is
++exactly what happened the first time this ran. The roles now go straight into the ``Has
++Role`` table, so configuring a site no longer modifies the repository.
+ """
+-from pathlib import Path
++import json
++import os
+ 
+ CORRESPONDENCE_ROLES = (
+     "Correspondence Clerk",
+@@ -21,21 +27,52 @@ CORRESPONDENCE_ROLES = (
+ ALWAYS = ("System Manager",)
+ 
+ 
++def report_dir():
++    """The report folder inside the app, resolved without importing frappe."""
++    here = os.path.dirname(os.path.abspath(__file__))
++    return os.path.join(os.path.dirname(here), "murasalat_office", "report")
++
++
+ def report_slugs():
+-    """Every shipped report, read from the app tree.
++    """Every shipped report, read from the app tree."""
++    base = report_dir()
+ 
+-    Kept free of ``frappe`` on purpose so it can be asserted without a bench.
+-    """
+-    root = Path(__file__).resolve().parents[1] / "murasalat_office/report"
+-    if not root.is_dir():
++    if not os.path.isdir(base):
+         return []
++
+     return sorted(
+-        folder.name
+-        for folder in root.iterdir()
+-        if folder.is_dir() and folder.name != "__pycache__"
++        folder
++        for folder in os.listdir(base)
++        if os.path.isdir(os.path.join(base, folder)) and folder != "__pycache__"
+     )
+ 
+ 
++def report_names():
++    """The Report document name for each shipped report, read from its own definition.
++
++    Resolved from disk rather than guessed with a ``like`` filter: a guess matches the
++    wrong document when one report name contains another.
++    """
++    base = report_dir()
++    names = []
++
++    for slug in report_slugs():
++        meta_path = os.path.join(base, slug, f"{slug}.json")
++
++        if not os.path.isfile(meta_path):
++            continue
++
++        with open(meta_path) as handle:
++            definition = json.load(handle)
++
++        name = definition.get("report_name") or definition.get("name")
++
++        if name:
++            names.append((slug, name))
++
++    return names
++
++
+ def desired_roles():
+     return tuple(sorted(set(ALWAYS) | set(CORRESPONDENCE_ROLES)))
+ 
+@@ -52,17 +89,23 @@ def apply_report_roles():
+             ).insert(ignore_permissions=True)
+             created.append(role)
+ 
+-    changed = []
+     wanted = desired_roles()
++    changed = []
+ 
+-    for slug in report_slugs():
+-        name = frappe.db.get_value("Report", {"name": ("like", f"%{slug}%")}, "name")
+-        if not name:
++    for slug, name in report_names():
++        if not frappe.db.exists("Report", name):
+             print(f"  skip  {slug}: no Report document (run bench migrate first)")
+             continue
+ 
+-        report = frappe.get_doc("Report", name)
+-        attached = {row.role for row in report.roles}
++        attached = {
++            row.role
++            for row in frappe.get_all(
++                "Has Role",
++                filters={"parent": name, "parenttype": "Report", "parentfield": "roles"},
++                fields=["role"],
++                limit_page_length=0,
++            )
++        }
+         missing = [role for role in wanted if role not in attached]
+ 
+         if not missing:
+@@ -70,13 +113,26 @@ def apply_report_roles():
+             continue
+ 
+         for role in missing:
+-            report.append("roles", {"role": role})
++            # A direct child insert, so the Report definition on disk is left untouched.
++            frappe.get_doc(
++                {
++                    "doctype": "Has Role",
++                    "parent": name,
++                    "parenttype": "Report",
++                    "parentfield": "roles",
++                    "role": role,
++                }
++            ).insert(ignore_permissions=True)
+ 
+-        report.save(ignore_permissions=True)
+         changed.append(name)
+         print(f"  set   {name} <- {', '.join(missing)}")
+ 
+     if created:
+         print(f"created roles: {', '.join(created)}")
++
++    # bench execute does not commit on its own; without this the roles are rolled back
++    # when the command returns.
++    frappe.db.commit()
++
+     print(f"{len(changed)} report(s) updated")
+     return changed
+diff --git a/murasalat_office/setup/workflow_tasks.py b/murasalat_office/setup/workflow_tasks.py
+new file mode 100644
+index 0000000..0b52da3
+--- /dev/null
++++ b/murasalat_office/setup/workflow_tasks.py
+@@ -0,0 +1,188 @@
++"""Attach the lifecycle methods to workflow transitions.
++
++A ``workflow_methods`` hook does not fire on its own. ``apply_workflow`` runs the hooks it
++finds through a *transition task*: a ``Workflow Transition Task`` row whose ``task`` names
++an entry in ``workflow_methods``, attached to a transition through the transition's
++``transition_tasks`` link. Until those rows exist, the transition moves the workflow state
++and nothing else happens — no registration, no sealing, no referral stamping.
++
++Two entry points, both idempotent and safe to re-run:
++
++    bench --site <site> execute murasalat_office.setup.workflow_tasks.plan    # read-only
++    bench --site <site> execute murasalat_office.setup.workflow_tasks.apply
++
++``plan`` prints exactly what ``apply`` would create, so the change can be reviewed before
++it is made.
++
++**Frappe version note.** Transition tasks are implemented in Frappe develop (v16) and are
++absent from version-15, where ``apply_workflow`` contains no transition-task handling at
++all. On version-15 no amount of configuration makes these hooks fire from a transition;
++``plan`` reports that plainly instead of producing a configuration that cannot work.
++"""
++GROUP_DOCTYPE = "Workflow Transition Tasks"
++CHILD_DOCTYPE = "Workflow Transition Task"
++LINK_FIELD = "transition_tasks"
++
++
++def hook_names():
++    """The names of the app's registered workflow_methods, in declaration order."""
++    import frappe
++
++    entries = frappe.get_hooks("workflow_methods") or []
++    return [entry.get("name") for entry in entries if entry.get("name")]
++
++
++def supports_transition_tasks():
++    import frappe
++
++    return frappe.get_meta("Workflow Transition").has_field(LINK_FIELD)
++
++
++def _child_fieldname():
++    """The Table field on the group doctype that holds the transition-task rows."""
++    import frappe
++
++    for field in frappe.get_meta(GROUP_DOCTYPE).fields:
++        if field.fieldtype == "Table" and field.options == CHILD_DOCTYPE:
++            return field.fieldname
++
++    return None
++
++
++def collect():
++    """Every (workflow, transition, hook) that needs a task row.
++
++    Pure read: returns a list of dicts, creates nothing.
++    """
++    import frappe
++
++    wanted = set(hook_names())
++    plan = []
++
++    for workflow in frappe.get_all(
++        "Workflow", filters={"is_active": 1}, fields=["name", "document_type"], limit_page_length=0
++    ):
++        transitions = frappe.get_all(
++            "Workflow Transition",
++            filters={"parent": workflow.name},
++            fields=["name", "action", "state", "next_state"],
++            order_by="idx",
++            limit_page_length=0,
++        )
++
++        for transition in transitions:
++            if transition.action not in wanted:
++                continue
++
++            existing = None
++
++            if supports_transition_tasks():
++                existing = frappe.db.get_value("Workflow Transition", transition.name, LINK_FIELD)
++
++            plan.append(
++                {
++                    "workflow": workflow.name,
++                    "doctype": workflow.document_type,
++                    "transition": transition.name,
++                    "action": transition.action,
++                    "from": transition.state,
++                    "to": transition.next_state,
++                    "hook": transition.action,
++                    "attached": bool(existing),
++                }
++            )
++
++    return plan
++
++
++def plan():
++    """Print what apply would do. Changes nothing."""
++    print("Murasalat Office transition tasks")
++    print("=" * 40)
++
++    if not supports_transition_tasks():
++        print(
++            "This Frappe version does not implement transition tasks, so a workflow_methods\n"
++            "hook cannot be attached to a transition here. Options:\n"
++            "  1. run this app on a Frappe version that implements transition tasks; or\n"
++            "  2. call the lifecycle methods from a Server Script or a doc_events hook."
++        )
++        return []
++
++    rows = collect()
++
++    if not rows:
++        print("No transition matches a registered workflow_methods name.")
++        return rows
++
++    for row in rows:
++        state = "attached" if row["attached"] else "needs a task"
++        print(
++            f"  {row['action']:<24} {row['from']} -> {row['to']:<24} "
++            f"hook={row['hook']:<24} {state}"
++        )
++
++    pending = [row for row in rows if not row["attached"]]
++    print("=" * 40)
++    print(f"{len(rows)} transition(s) map to a hook, {len(pending)} still need a task")
++
++    return rows
++
++
++def apply():
++    """Create the missing transition-task groups and attach them. Idempotent."""
++    import frappe
++
++    if not supports_transition_tasks():
++        print("This Frappe version does not implement transition tasks; nothing to do.")
++        return []
++
++    if not frappe.db.exists("DocType", GROUP_DOCTYPE):
++        print(f"{GROUP_DOCTYPE} does not exist on this site; nothing to do.")
++        return []
++
++    child_field = _child_fieldname()
++
++    if not child_field:
++        print(f"{GROUP_DOCTYPE} has no table field pointing at {CHILD_DOCTYPE}; nothing to do.")
++        return []
++
++    hooks = {entry.get("name"): entry.get("method") for entry in (frappe.get_hooks("workflow_methods") or [])}
++    attached = []
++
++    for row in collect():
++        if row["attached"]:
++            print(f"  ok    {row['action']}")
++            continue
++
++        group = frappe.get_doc(
++            {
++                "doctype": GROUP_DOCTYPE,
++                child_field: [
++                    {
++                        "doctype": CHILD_DOCTYPE,
++                        "task": row["hook"],
++                        "enabled": 1,
++                        # Inline, in the transition's own transaction. An asynchronous task
++                        # would run after the transition, outside its save.
++                        "asynchronous": 0,
++                    }
++                ],
++            }
++        ).insert(ignore_permissions=True)
++
++        workflow = frappe.get_doc("Workflow", row["workflow"])
++
++        for transition in workflow.transitions:
++            if transition.name == row["transition"]:
++                transition.set(LINK_FIELD, group.name)
++
++        workflow.save(ignore_permissions=True)
++
++        attached.append(row["action"])
++        print(f"  set   {row['action']} -> {hooks.get(row['hook'], row['hook'])} ({group.name})")
++
++    frappe.db.commit()
++
++    print(f"{len(attached)} transition task(s) created")
++    return attached
+diff --git a/murasalat_office/tests/test_verification_contracts.py b/murasalat_office/tests/test_verification_contracts.py
+new file mode 100644
+index 0000000..6aa58e5
+--- /dev/null
++++ b/murasalat_office/tests/test_verification_contracts.py
+@@ -0,0 +1,110 @@
++"""Contracts for the bench-side tooling.
++
++These scripts cannot be imported here — they need frappe — so what is pinned is the shape
++of their source, against the two defects they were written to fix.
++"""
++import ast
++import json
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++SMOKE = ROOT / "verification/site_smoke.py"
++ACCESS = ROOT / "setup/report_access.py"
++TASKS = ROOT / "setup/workflow_tasks.py"
++
++
++def _source(path):
++    return path.read_text(encoding="utf-8")
++
++
++def test_smoke_reports_are_resolved_from_disk_not_by_a_like_filter():
++    """A like filter matches the wrong report when one name contains another."""
++    source = _source(SMOKE)
++
++    assert '"like"' not in source
++    assert "_shipped_reports" in source
++    assert "report_name" in source
++
++
++def test_smoke_uses_the_hook_name_key_that_frappe_actually_reads():
++    """The hook entries carry 'name'/'method'; reading 'workflow_action' printed '?'."""
++    source = _source(SMOKE)
++
++    assert 'entry.get("name")' in source
++    assert "workflow_action" not in source
++
++
++def test_smoke_checks_verse_support_before_demanding_transition_tasks():
++    source = _source(SMOKE)
++
++    assert "_transition_task_field" in source
++    assert "transition_tasks" in source
++
++
++def test_smoke_does_not_require_translation_rows_for_app_csv():
++    """App translations load from the CSV, so zero Translation rows is correct."""
++    source = _source(SMOKE)
++
++    assert 'frappe.get_all(\n            "Translation"' not in source
++    assert "translations/ar.csv" in source
++    assert 'frappe.db.exists("Language", "ar")' in source
++
++
++def test_setup_never_writes_a_report_definition_back_to_the_app_tree():
++    """Configuring a site must not edit tracked source files."""
++    source = _source(ACCESS)
++
++    assert "report.save(" not in source
++    assert 'report.append("roles"' not in source
++    assert '"doctype": "Has Role"' in source
++
++
++def test_setup_commits_because_bench_execute_does_not():
++    assert "frappe.db.commit()" in _source(ACCESS)
++    assert "frappe.db.commit()" in _source(TASKS)
++
++
++def test_setup_resolves_report_names_the_same_way_the_smoke_check_does():
++    source = _source(ACCESS)
++
++    assert "_shipped_reports" not in source
++    assert "report_names()" in source
++    assert '"like"' not in source
++    assert "report_name" in source
++
++
++def test_the_task_setup_keeps_tasks_synchronous_and_idempotent():
++    source = _source(TASKS)
++
++    assert '"asynchronous": 0' in source
++    assert "if row[\"attached\"]" in source
++    assert "supports_transition_tasks()" in source
++
++
++def test_every_hook_declared_in_hooks_py_is_a_real_function():
++    hooks_source = _source(ROOT / "hooks.py")
++
++    tree = ast.parse(hooks_source)
++    entries = []
++
++    for node in ast.walk(tree):
++        if isinstance(node, ast.Assign) and any(
++            getattr(target, "id", None) == "workflow_methods" for target in node.targets
++        ):
++            entries = ast.literal_eval(node.value)
++
++    assert entries, "workflow_methods was not found in hooks.py"
++
++    for entry in entries:
++        module_path, _, function_name = entry["method"].rpartition(".")
++        module_file = ROOT / (module_path.replace("murasalat_office.", "", 1).replace(".", "/") + ".py")
++
++        if not module_file.is_file():
++            module_file = ROOT / "murasalat_office" / (
++                module_path.replace("murasalat_office.", "", 1).replace(".", "/") + ".py"
++            )
++
++        assert module_file.is_file(), entry["method"]
++        module_source = module_file.read_text(encoding="utf-8")
++        assert f"def {function_name}(" in module_source, entry["method"]
++        assert entry["name"], "a hook entry without a name can never be attached"
+diff --git a/murasalat_office/verification/site_smoke.py b/murasalat_office/verification/site_smoke.py
+index c8845a0..dbb4c8f 100644
+--- a/murasalat_office/verification/site_smoke.py
++++ b/murasalat_office/verification/site_smoke.py
+@@ -1,31 +1,89 @@
+ """Configuration checks that need a running site.
+ 
+ The framework-light suite cannot see a migrated database, so a handful of things can only
+-be confirmed on a bench. Run them after ``bench migrate``:
++be confirmed on a bench:
+ 
+     bench --site <site> execute murasalat_office.verification.site_smoke.run
+ 
+-Every check is read-only and reports a pass/fail line. This covers *configuration*; it does
+-not judge how anything looks. The rendering checklist lives in docs/VERIFICATION.md.
++Every check is read-only. Each line prints PASS, WARN or FAIL. A WARN is something that is
++not wrong but leaves a capability unused; a FAIL is something that will not work.
++
++Two things this script learned the hard way, both kept as comments where they bite:
++
++* Report names must be resolved from the report definition on disk, not guessed by a
++  ``like`` filter. ``%queue%`` matches Work Queue *and* Follow Up Queue, so a guess
++  reports the wrong document and can report the same one several times.
++* A ``workflow_methods`` hook only fires through a transition task, and **only on the
++  Frappe versions that implement transition tasks at all**. The script checks for that
++  support rather than reporting a failure the site cannot fix.
+ """
++import json
++import os
++
+ import frappe
+ 
++CORRESPONDENCE = "Murasalat Correspondence"
++REFERRAL = "Murasalat Referral"
++
++STATUS = {"pass": 0, "warn": 0, "fail": 0}
+ 
+-def _ok(label, detail=""):
++
++def _pass(label, detail=""):
++    STATUS["pass"] += 1
+     print(f"  PASS  {label}" + (f"  [{detail}]" if detail else ""))
+ 
+ 
++def _warn(label, detail=""):
++    STATUS["warn"] += 1
++    print(f"  WARN  {label}" + (f"  [{detail}]" if detail else ""))
++
++
+ def _fail(label, detail=""):
++    STATUS["fail"] += 1
+     print(f"  FAIL  {label}" + (f"  [{detail}]" if detail else ""))
+-    return 1
++
++
++def _report_dir():
++    return frappe.get_app_path("murasalat_office", "murasalat_office", "report")
++
++
++def _shipped_reports():
++    """Yield (slug, report_name) for every report definition on disk."""
++    base = _report_dir()
++
++    for slug in sorted(os.listdir(base)):
++        meta_path = os.path.join(base, slug, f"{slug}.json")
++
++        if not os.path.isfile(meta_path):
++            continue
++
++        with open(meta_path) as handle:
++            definition = json.load(handle)
++
++        yield slug, definition.get("report_name") or definition.get("name")
++
++
++def _hook_map():
++    """The app's workflow_methods, keyed by the name a transition task refers to."""
++    entries = frappe.get_hooks("workflow_methods") or []
++    return {entry.get("name"): entry.get("method") for entry in entries if entry.get("name")}
++
++
++def _workflow_transitions(workflow_name):
++    return frappe.get_all(
++        "Workflow Transition",
++        filters={"parent": workflow_name},
++        fields=["name", "action", "state", "next_state"],
++        order_by="idx",
++        limit_page_length=0,
++    )
+ 
+ 
+ def _check_doctypes():
+-    failures = 0
+     print("doctypes")
+ 
+     for doctype in (
+-        "Murasalat Correspondence",
++        CORRESPONDENCE,
+         "Murasalat Referral",
+         "Murasalat Approval Request",
+         "Murasalat Correspondence Activity",
+@@ -34,152 +92,208 @@ def _check_doctypes():
+         "Murasalat User Organization Membership",
+     ):
+         if frappe.db.exists("DocType", doctype):
+-            _ok(doctype)
++            _pass(doctype)
+         else:
+-            failures += _fail(doctype, "not migrated")
++            _fail(doctype, "not migrated")
+ 
+-    return failures
++
++def _transition_task_field():
++    """The Link field on Workflow Transition that points at a transition-task group.
++
++    Returns None on Frappe versions that do not implement transition tasks, in which case
++    no transition can run a workflow_methods hook no matter how the site is configured.
++    """
++    meta = frappe.get_meta("Workflow Transition")
++    return "transition_tasks" if meta.has_field("transition_tasks") else None
+ 
+ 
+ def _check_workflow():
+     print("workflow")
+-    failures = 0
+ 
+-    for doctype in ("Murasalat Correspondence", "Murasalat Referral"):
++    field = _transition_task_field()
++    hooks = _hook_map()
++
++    if not field:
++        _warn(
++            "transition tasks are not implemented by this Frappe version",
++            "a workflow_methods hook cannot be attached to a transition here; "
++            "the lifecycle methods have to be called another way",
++        )
++
++    for doctype in (CORRESPONDENCE, REFERRAL):
+         workflows = frappe.get_all(
+             "Workflow",
+             filters={"document_type": doctype, "is_active": 1},
+             fields=["name"],
+             limit_page_length=0,
+         )
++
+         if not workflows:
+-            failures += _fail(f"{doctype}: active workflow")
++            _fail(f"{doctype}: active workflow", "no is_active Workflow for this DocType")
+             continue
+ 
+         for workflow in workflows:
+-            transitions = frappe.get_all(
+-                "Workflow Transition",
+-                filters={"parent": workflow.name},
+-                fields=["name", "action", "state", "next_state"],
+-                limit_page_length=0,
+-            )
+-            _ok(f"{doctype}: workflow {workflow.name}", f"{len(transitions)} transitions")
+-
+-            tasks = frappe.get_all(
+-                "Workflow Transition Task",
+-                filters={"parenttype": "Workflow Transition", "parent": ("in", [t.name for t in transitions])},
+-                fields=["name", "enabled", "asynchronous", "task"],
+-                limit_page_length=0,
+-            )
+-            for task in tasks:
+-                if not task.enabled:
+-                    failures += _fail(f"transition task {task.name}", "not enabled")
+-                elif task.asynchronous:
+-                    failures += _fail(
+-                        f"transition task {task.name}",
+-                        "'Asynchronous' is on, so the lifecycle method will not run inline",
++            transitions = _workflow_transitions(workflow.name)
++            _pass(f"{doctype}: workflow {workflow.name}", f"{len(transitions)} transitions")
++
++            for transition in transitions:
++                action = transition.action
++                expected = hooks.get(action)
++
++                if not field:
++                    continue
++
++                group = frappe.db.get_value(
++                    "Workflow Transition", transition.name, field
++                ) if frappe.db.has_column("Workflow Transition", field) else None
++
++                rows = []
++                if group:
++                    rows = frappe.get_all(
++                        "Workflow Transition Task",
++                        filters={"parent": group, "enabled": 1},
++                        fields=["task", "link", "asynchronous"],
++                        order_by="idx",
++                        limit_page_length=0,
+                     )
+-                else:
+-                    _ok(f"transition task {task.name}", task.task)
+-
+-            if transitions and not tasks:
+-                failures += _fail(
+-                    f"{doctype}: transition tasks",
+-                    "no Workflow Transition Task rows, so no lifecycle method fires",
+-                )
+ 
+-    return failures
++                if not rows:
++                    if expected:
++                        _fail(
++                            f"{action} ({transition.state} -> {transition.next_state})",
++                            f"no transition task, so {expected.split('.')[-1]} never runs",
++                        )
++                    else:
++                        _warn(
++                            f"{action} ({transition.state} -> {transition.next_state})",
++                            "no transition task; no hook of this name is registered",
++                        )
++                    continue
++
++                for row in rows:
++                    method = hooks.get(row.task)
++
++                    if not method:
++                        _fail(
++                            f"{action}: task {row.task}",
++                            "no workflow_methods entry with this name",
++                        )
++                    elif row.asynchronous:
++                        _fail(
++                            f"{action}: task {row.task}",
++                            "'Asynchronous' is on, so the lifecycle method runs outside the "
++                            "transition's transaction instead of inline",
++                        )
++                    else:
++                        _pass(f"{action}: task {row.task}", method.split(".")[-1])
++
++                if expected:
++                    covered = {row.task for row in rows}
++                    if expected != next((hooks.get(task) for task in covered), None):
++                        _warn(
++                            f"{action}: hook coverage",
++                            f"expected {expected.split('.')[-1]} to be attached",
++                        )
+ 
+ 
+ def _check_reports():
+     print("reports")
+-    failures = 0
+-
+-    report_dir = frappe.get_app_path("murasalat_office", "murasalat_office", "report")
+-    import os
+-
+-    slugs = sorted(
+-        name
+-        for name in os.listdir(report_dir)
+-        if os.path.isdir(os.path.join(report_dir, name)) and name != "__pycache__"
+-    )
+ 
+-    for slug in slugs:
+-        name = frappe.db.get_value("Report", {"name": ("like", f"%{slug.split('_')[-1]}%")}, "name")
++    for slug, name in _shipped_reports():
+         if not name:
+-            failures += _fail(slug, "Report document not found after migrate")
++            _fail(slug, "the report definition has no report_name")
++            continue
++
++        if not frappe.db.exists("Report", name):
++            _fail(name, "Report document not found after migrate")
+             continue
+ 
+         roles = frappe.get_all(
+-            "Has Role", filters={"parent": name, "parenttype": "Report"}, fields=["role"], limit_page_length=0
++            "Has Role",
++            filters={"parent": name, "parenttype": "Report", "parentfield": "roles"},
++            fields=["role"],
++            order_by="idx",
++            limit_page_length=0,
+         )
++
+         if not roles:
+-            failures += _fail(
++            _fail(
+                 name,
+                 "no roles attached, so report access is not explicitly governed "
+                 "(run murasalat_office.setup.report_access.apply_report_roles)",
+             )
+         else:
+-            _ok(name, ", ".join(sorted(row.role for row in roles)))
+-
+-    return failures
++            _pass(name, ", ".join(sorted(row.role for row in roles)))
+ 
+ 
+ def _check_print_formats():
+     print("print formats")
+-    failures = 0
+ 
+-    for doctype, expected in (
+-        ("Murasalat Correspondence", "Murasalat Correspondence Print"),
+-        ("Murasalat Referral", "Murasalat Referral Notification"),
+-    ):
++    for doctype in (CORRESPONDENCE, REFERRAL):
+         names = frappe.get_all(
+-            "Print Format", filters={"doc_type": doctype}, fields=["name"], limit_page_length=0
++            "Print Format",
++            filters={"doc_type": doctype},
++            fields=["name"],
++            limit_page_length=0,
+         )
+-        if not names:
+-            failures += _fail(f"{doctype}: print format")
+-        else:
+-            _ok(f"{doctype}: {expected}", ", ".join(sorted(row.name for row in names)))
+ 
+-    return failures
++        if names:
++            _pass(f"{doctype}: {', '.join(sorted(row.name for row in names))}")
++        else:
++            _fail(f"{doctype}: print format")
+ 
+ 
+ def _check_lifecycle_hooks():
+     print("lifecycle hooks")
+-    failures = 0
+ 
+     import importlib
+ 
+-    from murasalat_office import hooks
+-
+-    for entry in getattr(hooks, "workflow_methods", []) or []:
+-        target = entry.get("method")
++    for name, method in sorted(_hook_map().items()):
+         try:
+-            module_path, function_name = target.rsplit(".", 1)
++            module_path, function_name = method.rsplit(".", 1)
+             getattr(importlib.import_module(module_path), function_name)
+         except Exception as error:  # noqa: BLE001 - the message is the point
+-            failures += _fail(f"{entry.get('workflow_action') or '?'}: {target}", str(error))
++            _fail(f"{name}: {method}", str(error))
+         else:
+-            _ok(f"{entry.get('workflow_action') or '?'}: {target}")
+-
+-    return failures
++            _pass(f"{name}: {method}")
+ 
+ 
+ def _check_translations():
++    """App translations come from the app's own CSV, not from the Translation doctype.
++
++    Frappe loads ``{app}/translations/{lang}.csv`` on every request and layers the
++    ``Translation`` doctype on top for user overrides. A site with a full Arabic CSV and
++    zero Translation rows is translated correctly, so reporting that as a failure would
++    send someone chasing a problem that does not exist.
++    """
+     print("translations")
+ 
+-    rows = frappe.get_all("Translation", filters={"language": "ar"}, limit_page_length=0)
+-    if not rows:
+-        return _fail("Arabic translations", "no Translation rows for 'ar'")
++    path = frappe.get_app_path("murasalat_office", "translations", "ar.csv")
+ 
+-    _ok("Arabic translations", f"{len(rows)} rows")
+-    return 0
++    if not os.path.isfile(path):
++        _fail("translations/ar.csv", "missing from the app")
++    else:
++        with open(path, encoding="utf-8") as handle:
++            rows = [line for line in handle.read().splitlines() if line.strip()]
++
++        if len(rows) < 2:
++            _fail("translations/ar.csv", "no translation rows")
++        else:
++            _pass("translations/ar.csv", f"{len(rows) - 1} rows")
++
++    if not frappe.db.exists("Language", "ar"):
++        _fail("Language: ar", "not registered; the app cannot switch to Arabic")
++        return
++
++    if frappe.db.get_value("Language", "ar", "enabled"):
++        _pass("Language: ar", "enabled")
++    else:
++        _fail("Language: ar", "registered but not enabled")
+ 
+ 
+ def run():
+     print("Murasalat Office site verification")
+     print("=" * 40)
+-    failures = 0
+ 
+     for check in (
+         _check_doctypes,
+@@ -189,13 +303,10 @@ def run():
+         _check_lifecycle_hooks,
+         _check_translations,
+     ):
+-        failures += check()
++        check()
+ 
+     print("=" * 40)
+-    if failures:
+-        print(f"{failures} check(s) failed")
+-    else:
+-        print("all configuration checks passed")
++    print(f"{STATUS['pass']} passed, {STATUS['warn']} warned, {STATUS['fail']} failed")
+     print("Rendering still has to be eyeballed: see docs/VERIFICATION.md")
+ 
+-    return failures
++    return STATUS["fail"]
+-- 
+2.43.0
+

@@ -1,0 +1,126 @@
+From d58ecdf243c97d1cf775d207a7631a01c0958e02 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Thu, 24 Sep 2026 04:39:27 +0300
+Subject: [PATCH] Grant every role read on the attachment vocabulary
+
+Found by reviewing launch readiness end to end: the permission plan granted the transaction
+DocTypes but not the two vocabulary tables added a moment earlier. A Link field cannot resolve a
+record the user may not read, so a provisioned site would have shown a clerk an empty
+attachment-type picker on a field that is required - a silent hole, because the form would look
+complete.
+
+governance_plan now folds VOCABULARY_READ into every role's plan once, so a role added later
+cannot forget it. The test replays that same merge against the shipped source and asserts the
+result per role, instead of reading either half on its own, and a second test holds the merge
+mechanism in place.
+
+ATTACHMENTS.md says which mechanism makes the grant: materialize for a provisioned site, Role
+Permission Manager for a hand-built one.
+---
+ docs/ATTACHMENTS.md                           |  7 +--
+ murasalat_office/setup/governance_plan.py     | 16 ++++++
+ .../tests/test_attachment_vocabulary.py       | 49 +++++++++++++++++++
+ 3 files changed, 69 insertions(+), 3 deletions(-)
+
+diff --git a/docs/ATTACHMENTS.md b/docs/ATTACHMENTS.md
+index cd40828..c1e165f 100644
+--- a/docs/ATTACHMENTS.md
++++ b/docs/ATTACHMENTS.md
+@@ -74,9 +74,10 @@ typed is discarded.
+ | `Murasalat Archive Location` | where the paper original is filed | `Correspondence Office`, `Central Archive`, `Department Shelf`, `Director Office` |
+ 
+ Neither table ships permission rows - access is site configuration, as it is for every other
+-table in this app. So a System Manager grants **read** on both tables from Desk
+-(**Role Permission Manager**) once, before users can pick a value in the Link fields. Seeding
+-does not need it: `master_data.seed` registers as an administrator.
++table in this app. `governance_plan.materialize` grants every role **read** on both, because a
++Link field cannot resolve a record the user may not read; a site that set its permissions up by
++hand grants the same two read rights from **Role Permission Manager**. Seeding needs neither:
++`master_data.seed` registers as an administrator.
+ 
+ Both are ordinary DocTypes: a site adds a value, changes its display name, or disables it from
+ Desk with **no code change and no upgrade**. The stored value is a short English code and the
+diff --git a/murasalat_office/setup/governance_plan.py b/murasalat_office/setup/governance_plan.py
+index afa9689..6a78e2d 100644
+--- a/murasalat_office/setup/governance_plan.py
++++ b/murasalat_office/setup/governance_plan.py
+@@ -212,3 +212,19 @@ def materialize(confirm=False):
+         "workflows_created": [],
+         "manual_steps_remaining": list(MANUAL_STEPS),
+     }
++
++
++# ---------------------------------------------------------------- reference data
++#
++# A Link field cannot resolve a record the user may not read, so every role that picks an
++# attachment type or an archive location needs read on those two tables. Both hold nothing
++# confidential - a type name and a shelf name - and leaving them out is the kind of gap that
++# only shows up when a clerk opens a form and finds an empty picker.
++VOCABULARY_READ = {
++    "Murasalat Attachment Type": {"read": 1},
++    "Murasalat Archive Location": {"read": 1},
++}
++
++for _role_plan in PERMISSION_PLAN.values():
++    for _vocabulary, _rights in VOCABULARY_READ.items():
++        _role_plan.setdefault(_vocabulary, dict(_rights))
+diff --git a/murasalat_office/tests/test_attachment_vocabulary.py b/murasalat_office/tests/test_attachment_vocabulary.py
+index 8b7c2c0..c8f3ae0 100644
+--- a/murasalat_office/tests/test_attachment_vocabulary.py
++++ b/murasalat_office/tests/test_attachment_vocabulary.py
+@@ -258,3 +258,52 @@ def test_the_vocabulary_patch_explains_the_clear_rule():
+ 
+     assert "not a known location" in source
+     assert "DEFAULT_TYPE" in source
++
++
++def test_every_role_can_read_the_vocabulary_it_has_to_pick_from():
++    """A Link field cannot resolve a record the user may not read.
++
++    Found by reviewing launch readiness end to end: the permission plan granted the transaction
++    DocTypes but not the two vocabulary tables, so a provisioned site would have shown a clerk
++    an empty attachment-type picker on a required field.
++
++    The plan is assembled at import time - the literal plus a merge of VOCABULARY_READ - so the
++    test replays that same merge against the shipped source and asserts the result, rather than
++    reading either half on its own.
++    """
++    import ast
++
++    tree = ast.parse((ROOT / "setup/governance_plan.py").read_text(encoding="utf-8"))
++
++    def literal(name):
++        for node in tree.body:
++            if isinstance(node, ast.Assign) and any(
++                isinstance(target, ast.Name) and target.id == name for target in node.targets
++            ):
++                return ast.literal_eval(node.value)
++        raise AssertionError(f"{name} is not declared in governance_plan.py")
++
++    plan = literal("PERMISSION_PLAN")
++    vocabulary = literal("VOCABULARY_READ")
++
++    assert plan, "the permission plan is empty"
++    assert set(vocabulary) == {"Murasalat Attachment Type", "Murasalat Archive Location"}
++
++    # the same merge the module performs on itself
++    for doctypes in plan.values():
++        for table, rights in vocabulary.items():
++            doctypes.setdefault(table, dict(rights))
++
++    for role, doctypes in plan.items():
++        for table in vocabulary:
++            assert table in doctypes, (role, table)
++            assert doctypes[table].get("read"), (role, table)
++
++
++def test_the_vocabulary_grant_is_merged_rather_than_repeated():
++    """One declaration, applied to every role - so a new role cannot forget it."""
++    source = (ROOT / "setup/governance_plan.py").read_text(encoding="utf-8")
++
++    assert "VOCABULARY_READ = {" in source
++    assert "for _role_plan in PERMISSION_PLAN.values():" in source
++    assert "_role_plan.setdefault(_vocabulary" in source
+-- 
+2.43.0
+

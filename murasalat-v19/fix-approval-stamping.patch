@@ -1,0 +1,122 @@
+From caf0321e5f33e8a3fb9bb28571302ca950596575 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Wed, 23 Sep 2026 02:38:17 +0300
+Subject: [PATCH] Name the transition-task group instead of letting the doctype
+ prompt for it
+
+Workflow Transition Tasks uses autoname 'prompt', so an insert has to carry a name.
+attach omitted it and every call failed with 'Please set the document name'.
+
+Follow the naming already in use on the site - the workflow name without its
+'Workflow' suffix, then the action, then Task - and fall back to a numbered variant
+if that name is taken.
+---
+ murasalat_office/setup/workflow_tasks.py      | 44 +++++++++++++++++--
+ .../tests/test_verification_contracts.py      | 11 +++++
+ 2 files changed, 51 insertions(+), 4 deletions(-)
+
+diff --git a/murasalat_office/setup/workflow_tasks.py b/murasalat_office/setup/workflow_tasks.py
+index 1329fab..85485d0 100644
+--- a/murasalat_office/setup/workflow_tasks.py
++++ b/murasalat_office/setup/workflow_tasks.py
+@@ -58,6 +58,35 @@ def _child_fieldname():
+     return None
+ 
+ 
++def suggest_group_name(workflow_name, action):
++    """A readable group name, following the convention already used on the site.
++
++    The site's existing groups read "Murasalat Referral Send Task", "Murasalat
++    Correspondence Seal Task" and so on: the workflow name without its "Workflow" suffix,
++    then the action, then "Task".
++    """
++    prefix = workflow_name.replace(" Workflow", "").strip()
++    return f"{prefix} {action} Task"
++
++
++def unique_group_name(base):
++    """The base name, or the first free numbered variant of it.
++
++    ``Workflow Transition Tasks`` names its documents by prompting, so the name has to be
++    supplied on insert and must not collide with an existing group.
++    """
++    import frappe
++
++    name = base
++    counter = 1
++
++    while frappe.db.exists(GROUP_DOCTYPE, name):
++        counter += 1
++        name = f"{base} {counter}"
++
++    return name
++
++
+ def collect():
+     """Every active transition, with the tasks attached to it and the hook behind each.
+ 
+@@ -241,13 +270,13 @@ def attach(workflow, transition, hook, group=None):
+     # action label the user sees ("Approve") as well as the row name.
+     if frappe.db.exists("Workflow Transition", transition):
+         transition_doc = frappe.db.get_value(
+-            "Workflow Transition", transition, ["name", "parent"], as_dict=True
++            "Workflow Transition", transition, ["name", "parent", "action"], as_dict=True
+         )
+     elif workflow:
+         transition_doc = frappe.db.get_value(
+             "Workflow Transition",
+             {"parent": workflow, "action": transition},
+-            ["name", "parent"],
++            ["name", "parent", "action"],
+             as_dict=True,
+         )
+     else:
+@@ -269,14 +298,21 @@ def attach(workflow, transition, hook, group=None):
+         group = frappe.db.get_value("Workflow Transition", transition, LINK_FIELD)
+ 
+     if not group:
+-        group = frappe.get_doc(
++        # The doctype prompts for its name, so one has to be supplied here. Without it the
++        # insert fails with "Please set the document name".
++        group = unique_group_name(
++            suggest_group_name(transition_doc.parent, transition_doc.get("action") or hook)
++        )
++
++        frappe.get_doc(
+             {
+                 "doctype": GROUP_DOCTYPE,
++                "name": group,
+                 child_field: [
+                     {"doctype": CHILD_DOCTYPE, "task": hook, "enabled": 1, "asynchronous": 0}
+                 ],
+             }
+-        ).insert(ignore_permissions=True).name
++        ).insert(ignore_permissions=True)
+ 
+     else:
+         existing = frappe.get_all(
+diff --git a/murasalat_office/tests/test_verification_contracts.py b/murasalat_office/tests/test_verification_contracts.py
+index 74b25d6..c5d3d74 100644
+--- a/murasalat_office/tests/test_verification_contracts.py
++++ b/murasalat_office/tests/test_verification_contracts.py
+@@ -98,6 +98,17 @@ def test_the_task_setup_separates_state_only_transitions_from_problems():
+     assert "no transition task" not in problems_body
+ 
+ 
++def test_attach_supplies_a_group_name_because_the_doctype_prompts_for_one():
++    """autoname 'prompt' means the name must be given on insert, not derived."""
++    source = _source(TASKS)
++
++    assert "def suggest_group_name(" in source
++    assert "def unique_group_name(" in source
++    assert '"name": group' in source
++    # the convention already used on the site
++    assert 'replace(" Workflow", "")' in source
++
++
+ def test_attach_accepts_the_action_label_a_user_can_see():
+     """Transition rows are named by a generated hash, which nobody can guess."""
+     source = _source(TASKS)
+-- 
+2.43.0
+

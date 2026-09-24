@@ -1,0 +1,1249 @@
+From 08eba7a63abc1b49b94466be533a0c9407917397 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Thu, 24 Sep 2026 04:59:23 +0300
+Subject: [PATCH] Give management three reports that answer management's
+ questions
+
+Every report the app shipped indexed records: what is due, what is late, what is waiting for me.
+None answered how the office performed over a period, or where the work was sitting across
+departments. Those are the questions a general manager and a department head ask, and the data to
+answer them was already in the records.
+
+Murasalat Management Summary - office-wide totals per direction for a period: received,
+registered, closed, sealed, open now, overdue and average days to close, with a total row and a
+two-series chart. Its header summarises closed-of-received as a percentage.
+
+Murasalat Department Workload - one row per organizational unit: what it holds now, the referrals
+it owes, how many are overdue, what it completed in the period, the age of its oldest open file and
+its average days to complete. Sorted worst-first, so the table is itself a worklist.
+
+Murasalat Response Times - average days at each stage separately, because one cycle average cannot
+locate a delay: a file that waited a week to be registered and one answered in a month produce the
+same number and have different problems. The header names the slowest stage.
+
+All three read through get_list(ignore_permissions=False), so a manager never sees a number built
+from records they may not read, and all three carry period filters with native export and print.
+
+One rule holds the arithmetic honest: work that is not finished is not counted as zero. A file that
+has not been closed has no closing time, so days_between returns None and the average skips it -
+counting it as zero would report a faster office the more work was left open.
+
+No print format ships for the reports. Frappe 16 supports report print formats, but
+PrintFormat.before_save forces custom_format=1 and standard="No" for them, so the framework itself
+treats one as a site customisation rather than a document an app may ship. MANAGEMENT_REPORTS.md
+gives the one-minute Desk steps for a site that wants an A4 layout.
+
+Tests execute all three reports against stubbed rows. That is what caught the accumulator helper
+carrying a record parameter it was called without - an undefined name in all three reports, which
+reading the code had not shown.
+---
+ README.md                                     |   1 +
+ docs/MANAGEMENT_REPORTS.md                    |  96 +++++
+ .../murasalat_department_workload/__init__.py |   0
+ .../murasalat_department_workload.js          |   2 +
+ .../murasalat_department_workload.json        |  44 +++
+ .../murasalat_department_workload.py          | 127 ++++++
+ .../murasalat_management_summary/__init__.py  |   0
+ .../murasalat_management_summary.js           |   2 +
+ .../murasalat_management_summary.json         |  37 ++
+ .../murasalat_management_summary.py           | 148 +++++++
+ .../murasalat_response_times/__init__.py      |   0
+ .../murasalat_response_times.js               |   2 +
+ .../murasalat_response_times.json             |  44 +++
+ .../murasalat_response_times.py               | 130 ++++++
+ murasalat_office/services/management.py       |  76 ++++
+ .../tests/test_management_reports.py          | 373 ++++++++++++++++++
+ 16 files changed, 1082 insertions(+)
+ create mode 100644 docs/MANAGEMENT_REPORTS.md
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_department_workload/__init__.py
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.js
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.json
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.py
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_management_summary/__init__.py
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.js
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.json
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.py
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_response_times/__init__.py
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.js
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.json
+ create mode 100644 murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.py
+ create mode 100644 murasalat_office/services/management.py
+ create mode 100644 murasalat_office/tests/test_management_reports.py
+
+diff --git a/README.md b/README.md
+index 90d08f6..0e4d4c2 100644
+--- a/README.md
++++ b/README.md
+@@ -56,6 +56,7 @@ The app exposes standard Frappe views and navigation:
+ | [`docs/PRINT_FORMATS.md`](docs/PRINT_FORMATS.md) | the two shipped print formats |
+ | [`docs/SEAL_INTEGRITY.md`](docs/SEAL_INTEGRITY.md) | the auditor - how the seal is computed and checked |
+ | [`docs/WORKFLOW_GOVERNANCE.md`](docs/WORKFLOW_GOVERNANCE.md) | the administrator - workflows and transition tasks |
++| [`docs/MANAGEMENT_REPORTS.md`](docs/MANAGEMENT_REPORTS.md) | the general manager and department heads - the three reports, in Arabic |
+ 
+ ## Version
+ 
+diff --git a/docs/MANAGEMENT_REPORTS.md b/docs/MANAGEMENT_REPORTS.md
+new file mode 100644
+index 0000000..b6711f7
+--- /dev/null
++++ b/docs/MANAGEMENT_REPORTS.md
+@@ -0,0 +1,96 @@
++# تقارير الإدارة
++
++التقارير التي تجيب الإدارة العامة ورؤساء الأقسام، لا التي تُفهرس السجلات. الثلاثة تقرأ بـ
++`get_list(..., ignore_permissions=False)` مثل كل تقرير في هذا التطبيق: **لا يرى المدير ما لا
++يحق له قراءته**، ولا يتجاوز التقرير الصلاحيات ليعرض رقمًا أعلى.
++
++كل تقرير له **فلاتر** وزر **تصدير** أصليان، ويظهر في **Desk → التقارير** وفي البحث العلوي.
++
++---
++
++## ١. ملخص الإدارة — `Murasalat Management Summary`
++
++**السؤال:** كيف حال المكتب في هذه الفترة؟
++
++| العمود | معناه |
++|---|---|
++| الاتجاه | وارد / صادر / داخلي — كل اتجاه صفّ |
++| المستلم | ما أُنشئ في الفترة |
++| المسجّل | ما مُرّ بخطوة التسجيل في الفترة |
++| المغلق | ما أُغلق في الفترة |
++| المختوم | ما خُتم في الفترة |
++| المفتوح الآن | ما لم يُغلق (غير مرتبط بتاريخ الفلتر) |
++| المتأخر | من المفتوح ما تجاوز موعده |
++| متوسط أيام الإغلاق | من الإنشاء إلى الإغلاق، للمغلق فقط |
++
++**الفلاتر:** من تاريخ، إلى تاريخ (الافتراضي: من أول الشهر إلى اليوم).
++
++**ملخص الرأس:** المغلق من المستلم بنسبة مئوية، وعدد المتأخر، ومتوسط أيام الإغلاق.
++**المخطط:** أعمدة مزدوجة — المستلم مقابل المغلق، لكل اتجاه.
++
++> **قاعدة الاتساق:** العمل غير المكتمل **لا يُحتسب بصفر**. ملف لم يُغلق ليس له مدة إغلاق،
++> ومتوسط يحتسبه صفرًا يرسم مكتبًا أسرع كلما زاد العمل المعلّق. لذلك `days_between` تُعيد
++> `None`، والمتوسط يتجاهل ما لا يُقاس.
++
++## ٢. عبء الأقسام — `Murasalat Department Workload`
++
++**السؤال:** أين يقع العمل، وأي قسم متأخر؟
++
++| العمود | معناه |
++|---|---|
++| القسم | الوحدة التنظيمية (Link إلى `Department`) |
++| المحتفظ به الآن | معاملات مفتوحة حائزها هذا القسم |
++| إحالات مفتوحة | إحالات موجَّهة إليه ولم تكتمل |
++| إحالات متأخرة | منها ما تجاوز موعده |
++| منجز في الفترة | إحالات أكملها في الفترة |
++| أقدم ملف مفتوح (يومًا) | عمر أطول ملف معلّق عنده |
++| متوسط أيام الإنجاز | من الإرسال إلى الإكمال، للمكتمل فقط |
++
++**الفلاتر:** من تاريخ، إلى تاريخ، القسم.
++**الترتيب:** المتأخر أولًا، ثم الأكثر احتفاظًا — فالجدول نفسه قائمة عمل.
++**المخطط:** أعمدة لأكثر ثمانية أقسام.
++
++## ٣. أزمنة الاستجابة — `Murasalat Response Times`
++
++**السؤال:** **أين التأخير بالتحديد؟**
++
++متوسط عام للدورة كلها لا يجيب: ملف تأخر أسبوعًا في التسجيل ويومًا في الرد، وآخر سُجّل فورًا
++وردّ بعد شهر، لهما متوسط واحد **ومشكلتان مختلفتان**. لذلك كل مرحلة تُقاس وحدها:
++
++| العمود | ما يقيسه |
++|---|---|
++| أيام التسجيل | من الإنشاء إلى `registered_on` |
++| أيام إرسال الإحالة | من إنشاء الإحالة إلى `sent_on` |
++| أيام من الإرسال إلى الاستلام | `sent_on` ← `received_on` |
++| أيام من الاستلام إلى الإكمال | `received_on` ← `completed_on` |
++| أيام الإغلاق | من الإنشاء إلى `closed_on` |
++
++**الفلاتر:** من تاريخ، إلى تاريخ، الاتجاه.
++**ملخص الرأس:** **أبطأ مرحلة بالاسم** — السطر الواحد الذي يحتاجه المدير العام.
++
++---
++
++## طريقة القراءة
++
++1. ابدأ بـ **ملخص الإدارة** على الشهر الجاري: هل المفتوح يتضخّم؟ هل المغلق يتبع المستلم؟
++2. انتقل إلى **عبء الأقسام**: أي صف في أعلاه يحتاج تدخّلًا؟
++3. أنهِ بـ **أزمنة الاستجابة**: أي مرحلة تُنتج التأخير — التسجيل، الإرسال، الاستلام، الإكمال،
++   أم الإغلاق؟ هذا ما يجب تغييره إجراءً.
++
++## الطباعة والتصدير
++
++الزران في أعلى كل تقرير أصليان في Frappe:
++
++* **تصدير** → CSV / Excel.
++* **طباعة** → جدول التقرير مع فلتره وملخصه.
++
++> **ملاحظة صريحة:** Frappe 16 يدعم **قوالب طباعة للتقارير** (`print_format_for = "Report"`)،
++> لكن `PrintFormat.before_save` تجبر قالب التقرير على `custom_format = 1` و`standard = "No"`،
++> أي أن الإطار نفسه يعامله كتخصيص موقع لا كمستند قابل للشحن مع تطبيق. لذلك **لم يُشحن أي قالب
++> طباعة للتقرير**؛ يُنشأ من Desk في دقيقة واحدة: **Print Format جديد → `Print Format For = Report`
++> → اختر التقرير**، ثم الصق التنسيق. أضفه إن أردت مخرجات A4 مُنسّقة بالألوان.
++
++## أين تجدها بعد الترحيل
++
++**Desk → التقارير (Reports)** أو ابحث بالاسم في الشريط العلوي. ولمن يريدها في الشريط الجانبي:
++**Workspace → Edit → Add Link → Report**.
+diff --git a/murasalat_office/murasalat_office/report/murasalat_department_workload/__init__.py b/murasalat_office/murasalat_office/report/murasalat_department_workload/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.js b/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.js
+new file mode 100644
+index 0000000..efb975d
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.js
+@@ -0,0 +1,2 @@
++// Murasalat Department Workload: filters are declared in the report definition.
++frappe.query_reports["Murasalat Department Workload"] = {};
+diff --git a/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.json b/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.json
+new file mode 100644
+index 0000000..39a124f
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.json
+@@ -0,0 +1,44 @@
++{
++ "add_total_row": 0,
++ "columns": [],
++ "creation": "2026-09-24 00:00:00.000000",
++ "disable_prepared_report": 0,
++ "disabled": 0,
++ "docstatus": 0,
++ "doctype": "Report",
++ "idx": 0,
++ "is_standard": "Yes",
++ "json": "{}",
++ "letter_head": null,
++ "modified": "2026-09-24 00:00:00.000000",
++ "module": "Murasalat Office",
++ "name": "Murasalat Department Workload",
++ "owner": "Administrator",
++ "prepared_report": 0,
++ "query": null,
++ "ref_doctype": "Murasalat Correspondence",
++ "report_name": "Murasalat Department Workload",
++ "report_type": "Script Report",
++ "description": "One row per department: what it holds, what it owes, and how long it takes.",
++ "filters": [
++  {
++   "fieldname": "from_date",
++   "label": "From Date",
++   "fieldtype": "Date",
++   "width": 120
++  },
++  {
++   "fieldname": "to_date",
++   "label": "To Date",
++   "fieldtype": "Date",
++   "width": 120
++  },
++  {
++   "fieldname": "organization",
++   "label": "Department",
++   "fieldtype": "Link",
++   "options": "Department",
++   "width": 160
++  }
++ ]
++}
+diff --git a/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.py b/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.py
+new file mode 100644
+index 0000000..1bb0422
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_department_workload/murasalat_department_workload.py
+@@ -0,0 +1,127 @@
++"""عبء الأقسام — where the work is sitting, and which department is behind.
++
++A status column cannot answer this: ten open files held by one department and ten spread over
++ten departments are the same count and a different problem. One row per organizational unit.
++
++Filters: date range, and optionally one unit.
++"""
++import frappe
++from frappe import _
++
++from murasalat_office.services.aging import summary_item
++from murasalat_office.services.management import (
++    CORRESPONDENCE,
++    REFERRAL,
++    average,
++    days_between,
++    period,
++    rows,
++)
++
++def _number_column(label, fieldname, width=110):
++    return {"label": _(label), "fieldname": fieldname, "fieldtype": "Int", "width": width}
++
++
++def _float_column(label, fieldname, width=130):
++    return {"label": _(label), "fieldname": fieldname, "fieldtype": "Float", "width": width, "precision": 1}
++
++
++CORRESPONDENCE_FIELDS = ["name", "current_holder", "creation", "closed_on", "due_date"]
++REFERRAL_FIELDS = ["name", "recipient_department", "sent_on", "received_on",
++                   "completed_on", "due_date", "workflow_state"]
++
++
++def _unit():
++    return {"holding": 0, "open_referrals": 0, "overdue_referrals": 0,
++            "completed": 0, "complete_days": [], "oldest_open": 0}
++
++
++def execute(filters=None):
++    filters = frappe._dict(filters or {})
++    from_date, to_date = period(filters)
++    today = frappe.utils.getdate(frappe.utils.today())
++
++    units = {}
++
++    def bucket(name):
++        return units.setdefault(name, _unit())
++
++    for record in rows(CORRESPONDENCE, CORRESPONDENCE_FIELDS):
++        if not record.current_holder:
++            continue
++        item = bucket(record.current_holder)
++        if not record.closed_on:
++            item["holding"] += 1
++            age = days_between(record.creation, today) or 0
++            item["oldest_open"] = max(item["oldest_open"], age)
++
++    for record in rows(REFERRAL, REFERRAL_FIELDS):
++        unit = record.recipient_department
++        if not unit:
++            continue
++        item = bucket(unit)
++        if record.workflow_state in ("Draft", "Sent", "Received"):
++            item["open_referrals"] += 1
++            if record.due_date and frappe.utils.getdate(record.due_date) < today:
++                item["overdue_referrals"] += 1
++        completed = record.completed_on and frappe.utils.getdate(record.completed_on)
++        if completed and from_date <= completed <= to_date:
++            item["completed"] += 1
++            item["complete_days"].append(days_between(record.sent_on, record.completed_on))
++
++    if filters.get("organization"):
++        units = {name: item for name, item in units.items() if name == filters["organization"]}
++
++    data = []
++    for name in sorted(units):
++        item = units[name]
++        data.append({
++            "unit": name,
++            "holding": item["holding"],
++            "open_referrals": item["open_referrals"],
++            "overdue_referrals": item["overdue_referrals"],
++            "completed": item["completed"],
++            "oldest_open": item["oldest_open"],
++            "avg_complete_days": average(item["complete_days"]),
++        })
++
++    data.sort(key=lambda row: (row["overdue_referrals"], row["holding"]), reverse=True)
++
++    columns = [
++        {"label": _("Department"), "fieldname": "unit", "fieldtype": "Link",
++         "options": "Department", "width": 190},
++        _number_column("Holding Now", "holding"),
++        _number_column("Open Referrals", "open_referrals"),
++        _number_column("Overdue Referrals", "overdue_referrals"),
++        _number_column("Completed in Period", "completed"),
++        _number_column("Oldest Open (days)", "oldest_open"),
++        _float_column("Average Days to Complete", "avg_complete_days"),
++    ]
++
++    total_holding = sum(item["holding"] for item in units.values())
++    total_overdue = sum(item["overdue_referrals"] for item in units.values())
++    most_loaded = max(data, key=lambda row: row["holding"], default=None)
++
++    summary = [
++        summary_item(_("Departments"), len(data)),
++        summary_item(_("Files Held"), total_holding),
++        summary_item(_("Overdue Referrals"), total_overdue,
++                     indicator="Red" if total_overdue else "Gray"),
++        summary_item(_("Most Held"), (most_loaded or {}).get("unit") or "-",
++                     indicator="Orange" if most_loaded else "Gray"),
++    ]
++
++    top = data[:8]
++    chart = {
++        "data": {
++            "labels": [row["unit"] for row in top],
++            "datasets": [
++                {"name": _("Holding Now"), "values": [row["holding"] for row in top]},
++                {"name": _("Overdue Referrals"), "values": [row["overdue_referrals"] for row in top]},
++            ],
++        },
++        "type": "bar",
++        "colors": ["#2f6b5f", "#b03a2e"],
++    }
++
++    return columns, data, _(f"From {from_date} to {to_date}"), chart, summary
+diff --git a/murasalat_office/murasalat_office/report/murasalat_management_summary/__init__.py b/murasalat_office/murasalat_office/report/murasalat_management_summary/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.js b/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.js
+new file mode 100644
+index 0000000..e32a421
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.js
+@@ -0,0 +1,2 @@
++// Murasalat Management Summary: filters are declared in the report definition.
++frappe.query_reports["Murasalat Management Summary"] = {};
+diff --git a/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.json b/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.json
+new file mode 100644
+index 0000000..fdddc1c
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.json
+@@ -0,0 +1,37 @@
++{
++ "add_total_row": 0,
++ "columns": [],
++ "creation": "2026-09-24 00:00:00.000000",
++ "disable_prepared_report": 0,
++ "disabled": 0,
++ "docstatus": 0,
++ "doctype": "Report",
++ "idx": 0,
++ "is_standard": "Yes",
++ "json": "{}",
++ "letter_head": null,
++ "modified": "2026-09-24 00:00:00.000000",
++ "module": "Murasalat Office",
++ "name": "Murasalat Management Summary",
++ "owner": "Administrator",
++ "prepared_report": 0,
++ "query": null,
++ "ref_doctype": "Murasalat Correspondence",
++ "report_name": "Murasalat Management Summary",
++ "report_type": "Script Report",
++ "description": "Office-wide totals per direction: received, closed, sealed, open, overdue, average days.",
++ "filters": [
++  {
++   "fieldname": "from_date",
++   "label": "From Date",
++   "fieldtype": "Date",
++   "width": 120
++  },
++  {
++   "fieldname": "to_date",
++   "label": "To Date",
++   "fieldtype": "Date",
++   "width": 120
++  }
++ ]
++}
+diff --git a/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.py b/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.py
+new file mode 100644
+index 0000000..d2ff6ea
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_management_summary/murasalat_management_summary.py
+@@ -0,0 +1,148 @@
++"""ملخص الإدارة — the office's own numbers for a period, in one table.
++
++Answers the question no per-record report answers: **how did the office perform this month?**
++Every direction is a row, so a general manager compares incoming against outgoing and internal
++without opening a single record, and the last row totals them.
++
++Filters: a date range (*from_date*, *to_date*), defaulting to this month so far.
++"""
++import frappe
++from frappe import _
++
++from murasalat_office.services.aging import summary_item
++from murasalat_office.services.management import (
++    CORRESPONDENCE,
++    REFERRAL,
++    average,
++    days_between,
++    direction_label,
++    org_options,
++    period,
++    rows,
++)
++
++def _number_column(label, fieldname, width=110):
++    return {"label": _(label), "fieldname": fieldname, "fieldtype": "Int", "width": width}
++
++
++def _float_column(label, fieldname, width=130):
++    return {"label": _(label), "fieldname": fieldname, "fieldtype": "Float", "width": width, "precision": 1}
++
++
++FIELDS = ["name", "correspondence_direction", "creation", "registered_on", "closed_on",
++          "record_sealed_on", "due_date", "current_holder"]
++
++
++def _bucket():
++    """One fresh accumulator per direction."""
++    return {"received": 0, "registered": 0, "closed": 0, "sealed": 0,
++            "open_now": 0, "overdue_open": 0, "close_days": []}
++
++
++def execute(filters=None):
++    filters = frappe._dict(filters or {})
++    from_date, to_date = period(filters)
++    today = frappe.utils.getdate(frappe.utils.today())
++
++    organizations = org_options(filters.get("organization_doctype") or "Department")
++    if filters.get("organization"):
++        organizations = {filters["organization"]}
++
++    records = rows(CORRESPONDENCE, FIELDS)
++    if filters.get("organization"):
++        records = [r for r in records if r.current_holder == filters["organization"]]
++
++    buckets = {direction: _bucket() for direction in ("Incoming", "Outgoing", "Internal")}
++    other = _bucket()
++
++    for record in records:
++        bucket = buckets.get(record.correspondence_direction, other)
++        created = frappe.utils.getdate(record.creation)
++        registered = record.registered_on and frappe.utils.getdate(record.registered_on)
++        closed = record.closed_on and frappe.utils.getdate(record.closed_on)
++        sealed = record.record_sealed_on and frappe.utils.getdate(record.record_sealed_on)
++
++        if from_date <= created <= to_date:
++            bucket["received"] += 1
++        if registered and from_date <= registered <= to_date:
++            bucket["registered"] += 1
++        if closed and from_date <= closed <= to_date:
++            bucket["closed"] += 1
++            bucket["close_days"].append(days_between(record.creation, record.closed_on))
++        if sealed and from_date <= sealed <= to_date:
++            bucket["sealed"] += 1
++
++        if not closed:
++            bucket["open_now"] += 1
++            if record.due_date and frappe.utils.getdate(record.due_date) < today:
++                bucket["overdue_open"] += 1
++
++    data = []
++    totals = _bucket()
++
++    for direction in ("Incoming", "Outgoing", "Internal"):
++        bucket = buckets[direction]
++        average_close = average(bucket["close_days"])
++        data.append({
++            "direction": direction_label(direction),
++            "received": bucket["received"],
++            "registered": bucket["registered"],
++            "closed": bucket["closed"],
++            "sealed": bucket["sealed"],
++            "open_now": bucket["open_now"],
++            "overdue_open": bucket["overdue_open"],
++            "avg_close_days": average_close,
++        })
++        for key in ("received", "registered", "closed", "sealed", "open_now", "overdue_open"):
++            totals[key] += bucket[key]
++        totals["close_days"].extend(bucket["close_days"])
++
++    data.append({
++        "direction": _("Total"),
++        "received": totals["received"],
++        "registered": totals["registered"],
++        "closed": totals["closed"],
++        "sealed": totals["sealed"],
++        "open_now": totals["open_now"],
++        "overdue_open": totals["overdue_open"],
++        "avg_close_days": average(totals["close_days"]),
++    })
++
++    columns = [
++        {"label": _("Direction"), "fieldname": "direction", "fieldtype": "Data", "width": 130},
++        _number_column("Received", "received"),
++        _number_column("Registered", "registered"),
++        _number_column("Closed", "closed"),
++        _number_column("Sealed", "sealed"),
++        _number_column("Open Now", "open_now"),
++        _number_column("Overdue", "overdue_open"),
++        _float_column("Average Days to Close", "avg_close_days"),
++    ]
++
++    closed_total = totals["closed"]
++    settled = closed_total / totals["received"] * 100 if totals["received"] else 0
++
++    summary = [
++        summary_item(_("Received in Period"), totals["received"]),
++        summary_item(_("Closed in Period"), closed_total, indicator="Green" if closed_total else "Gray"),
++        summary_item(_("Open Now"), totals["open_now"],
++                     indicator="Orange" if totals["open_now"] else "Gray"),
++        summary_item(_("Overdue"), totals["overdue_open"],
++                     indicator="Red" if totals["overdue_open"] else "Gray"),
++        summary_item(_("Average Days to Close"), average(totals["close_days"]), indicator="Blue"),
++        summary_item(_("Closed of Received (%)"), round(settled, 1), indicator="Blue"),
++    ]
++
++    chart = {
++        "data": {
++            "labels": [direction_label(d) for d in ("Incoming", "Outgoing", "Internal")],
++            "datasets": [
++                {"name": _("Received"), "values": [buckets[d]["received"] for d in ("Incoming", "Outgoing", "Internal")]},
++                {"name": _("Closed"), "values": [buckets[d]["closed"] for d in ("Incoming", "Outgoing", "Internal")]},
++            ],
++        },
++        "type": "bar",
++        "colors": ["#2f6b5f", "#c9821f"],
++    }
++
++    return columns, data, _(f"From {from_date} to {to_date}"), chart, summary
+diff --git a/murasalat_office/murasalat_office/report/murasalat_response_times/__init__.py b/murasalat_office/murasalat_office/report/murasalat_response_times/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.js b/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.js
+new file mode 100644
+index 0000000..96c3ec6
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.js
+@@ -0,0 +1,2 @@
++// Murasalat Response Times: filters are declared in the report definition.
++frappe.query_reports["Murasalat Response Times"] = {};
+diff --git a/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.json b/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.json
+new file mode 100644
+index 0000000..dd803ae
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.json
+@@ -0,0 +1,44 @@
++{
++ "add_total_row": 0,
++ "columns": [],
++ "creation": "2026-09-24 00:00:00.000000",
++ "disable_prepared_report": 0,
++ "disabled": 0,
++ "docstatus": 0,
++ "doctype": "Report",
++ "idx": 0,
++ "is_standard": "Yes",
++ "json": "{}",
++ "letter_head": null,
++ "modified": "2026-09-24 00:00:00.000000",
++ "module": "Murasalat Office",
++ "name": "Murasalat Response Times",
++ "owner": "Administrator",
++ "prepared_report": 0,
++ "query": null,
++ "ref_doctype": "Murasalat Correspondence",
++ "report_name": "Murasalat Response Times",
++ "report_type": "Script Report",
++ "description": "Average days at each stage, so the delay can be located rather than guessed.",
++ "filters": [
++  {
++   "fieldname": "from_date",
++   "label": "From Date",
++   "fieldtype": "Date",
++   "width": 120
++  },
++  {
++   "fieldname": "to_date",
++   "label": "To Date",
++   "fieldtype": "Date",
++   "width": 120
++  },
++  {
++   "fieldname": "correspondence_direction",
++   "label": "Direction",
++   "fieldtype": "Select",
++   "options": "Incoming\nOutgoing\nInternal",
++   "width": 140
++  }
++ ]
++}
+diff --git a/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.py b/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.py
+new file mode 100644
+index 0000000..1a7307c
+--- /dev/null
++++ b/murasalat_office/murasalat_office/report/murasalat_response_times/murasalat_response_times.py
+@@ -0,0 +1,130 @@
++"""أزمنة الاستجابة — how long each stage of the office's work actually takes.
++
++A general manager asks where the delay is, and an average over the whole cycle cannot answer
++it: a file that waits a week to be registered and a day to be answered has a different problem
++from one that is registered at once and answered in a month. Each stage is measured on its own.
++
++Filters: date range and, optionally, one direction.
++"""
++import frappe
++from frappe import _
++
++from murasalat_office.services.aging import summary_item
++from murasalat_office.services.management import (
++    CORRESPONDENCE,
++    REFERRAL,
++    DIRECTION_LABELS,
++    average,
++    days_between,
++    direction_label,
++    period,
++    rows,
++)
++
++def _number_column(label, fieldname, width=110):
++    return {"label": _(label), "fieldname": fieldname, "fieldtype": "Int", "width": width}
++
++
++def _float_column(label, fieldname, width=130):
++    return {"label": _(label), "fieldname": fieldname, "fieldtype": "Float", "width": width, "precision": 1}
++
++
++STAGES = ("to_register", "referral_send", "send_to_receive", "receive_to_complete", "to_close")
++
++CORRESPONDENCE_FIELDS = ["name", "correspondence_direction", "creation", "registered_on", "closed_on"]
++REFERRAL_FIELDS = ["name", "correspondence", "creation", "sent_on", "received_on", "completed_on"]
++
++
++def _bucket():
++    return {stage: [] for stage in STAGES}
++
++
++def execute(filters=None):
++    filters = frappe._dict(filters or {})
++    from_date, to_date = period(filters)
++
++    correspondence = rows(CORRESPONDENCE, CORRESPONDENCE_FIELDS)
++    direction_of = {record.name: record.correspondence_direction for record in correspondence}
++
++    buckets = {direction: _bucket() for direction in DIRECTION_LABELS}
++
++    for record in correspondence:
++        bucket = buckets.get(record.correspondence_direction)
++        if bucket is None:
++            continue
++        bucket["to_register"].append(days_between(record.creation, record.registered_on))
++        bucket["to_close"].append(days_between(record.creation, record.closed_on))
++
++    for record in rows(REFERRAL, REFERRAL_FIELDS):
++        direction = direction_of.get(record.correspondence)
++        bucket = buckets.get(direction)
++        if bucket is None:
++            continue
++        bucket["referral_send"].append(days_between(record.creation, record.sent_on))
++        bucket["send_to_receive"].append(days_between(record.sent_on, record.received_on))
++        bucket["receive_to_complete"].append(days_between(record.received_on, record.completed_on))
++
++    data = []
++    all_stages = _bucket()
++
++    for direction in DIRECTION_LABELS:
++        bucket = buckets[direction]
++        row = {"direction": direction_label(direction)}
++        for stage in STAGES:
++            row[stage] = average(bucket[stage])
++            row[f"{stage}_n"] = len([v for v in bucket[stage] if v is not None])
++            all_stages[stage].extend(bucket[stage])
++        data.append(row)
++
++    if filters.get("correspondence_direction"):
++        wanted = filters["correspondence_direction"]
++        data = [row for row in data if row["direction"] == direction_label(wanted)]
++
++    data.append({"direction": _("Total"), **{stage: average(all_stages[stage]) for stage in STAGES},
++                 **{f"{stage}_n": len([v for v in all_stages[stage] if v is not None]) for stage in STAGES}})
++
++    columns = [
++        {"label": _("Direction"), "fieldname": "direction", "fieldtype": "Data", "width": 130},
++        _float_column("Days to Register", "to_register"),
++        _float_column("Days to Send a Referral", "referral_send"),
++        _float_column("Days from Send to Receive", "send_to_receive"),
++        _float_column("Days from Receive to Complete", "receive_to_complete"),
++        _float_column("Days to Close", "to_close"),
++        _number_column("Measured", "to_close_n"),
++    ]
++
++    slowest = max(
++        ((stage, average(all_stages[stage])) for stage in STAGES),
++        key=lambda pair: pair[1] or -1,
++        default=(None, None),
++    )
++    slowest_label = {
++        "to_register": _("Registration"),
++        "referral_send": _("Sending a Referral"),
++        "send_to_receive": _("Receipt of a Referral"),
++        "receive_to_complete": _("Completing a Referral"),
++        "to_close": _("Closing the File"),
++    }.get(slowest[0], "-")
++
++    summary = [
++        summary_item(_("Average Days to Close"), average(all_stages["to_close"]), indicator="Blue"),
++        summary_item(_("Slowest Stage"), slowest_label,
++                     indicator="Orange" if slowest[1] else "Gray"),
++        summary_item(_("Slowest Stage (days)"), slowest[1], indicator="Orange"),
++        summary_item(_("Files Closed (measured)"), len([v for v in all_stages["to_close"] if v is not None]),
++                     indicator="Gray"),
++    ]
++
++    chart = {
++        "data": {
++            "labels": [_("Register"), _("Send"), _("Receive"), _("Complete"), _("Close")],
++            "datasets": [{
++                "name": _("Average Days"),
++                "values": [average(all_stages[stage]) or 0 for stage in STAGES],
++            }],
++        },
++        "type": "line",
++        "colors": ["#2f6b5f"],
++    }
++
++    return columns, data, _(f"From {from_date} to {to_date}"), chart, summary
+diff --git a/murasalat_office/services/management.py b/murasalat_office/services/management.py
+new file mode 100644
+index 0000000..86bc5fc
+--- /dev/null
++++ b/murasalat_office/services/management.py
+@@ -0,0 +1,76 @@
++"""Shared helpers for the management reports.
++
++The three reports answer the questions a general manager and a department head ask, which no
++per-record report answers: how much work moved, where it is sitting, and how long it takes.
++They share one module so a metric is defined once - ``days_between`` treats a half-finished
++pair as "not yet measurable" rather than zero, and ``period`` keeps every report reading the
++same two dates the same way.
++"""
++import frappe
++from frappe import _
++from frappe.utils import date_diff, get_first_day, getdate
++
++DIRECTION_LABELS = {"Incoming": "وارد", "Outgoing": "صادر", "Internal": "داخلي"}
++
++CORRESPONDENCE = "Murasalat Correspondence"
++REFERRAL = "Murasalat Referral"
++
++
++def period(filters):
++    """The two dates every report reads the same way. Empty means this month so far."""
++    today = getdate(frappe.utils.today())
++    return (
++        getdate((filters or {}).get("from_date") or get_first_day(today)),
++        getdate((filters or {}).get("to_date") or today),
++    )
++
++
++def days_between(start, end):
++    """Whole days from start to end, or None when the pair is not complete yet.
++
++    None is the honest answer for work still in flight, and it is what keeps a report from
++    reporting a perfect average made of unfinished items counted as zero.
++    """
++    if not start or not end:
++        return None
++    return date_diff(getdate(end), getdate(start))
++
++
++def average(values):
++    """Mean of the values that exist, or None when none do."""
++    present = [value for value in values if value is not None]
++    if not present:
++        return None
++    return round(sum(present) / len(present), 1)
++
++
++def direction_label(value):
++    return DIRECTION_LABELS.get(value, value or "")
++
++
++def rows(doctype, fields, conditions=None, order_by=None):
++    """A permission-aware read - the same discipline every report in this app follows."""
++    return frappe.get_list(
++        doctype,
++        filters=conditions or [],
++        fields=fields,
++        order_by=order_by,
++        limit_page_length=0,
++        ignore_permissions=False,
++    )
++
++
++def org_options(org_doctype):
++    """Every organizational unit that can hold a record, plus any named in the data.
++
++    The DocType may not exist on a framework-only site, so it is probed rather than assumed -
++    and a value that appears in the data but not in the master list is still reported.
++    """
++    names = set()
++
++    try:
++        names.update(name for name in frappe.get_all(org_doctype, pluck="name") if name)
++    except Exception:
++        pass
++
++    return names
+diff --git a/murasalat_office/tests/test_management_reports.py b/murasalat_office/tests/test_management_reports.py
+new file mode 100644
+index 0000000..3229be0
+--- /dev/null
++++ b/murasalat_office/tests/test_management_reports.py
+@@ -0,0 +1,373 @@
++"""The management reports answer questions no per-record report answers.
++
++A general manager asks how the office performed this month and which department is behind. A
++department head asks how much is sitting with them and how long their stage takes. None of that
++is readable from a status column or an index of records, so three reports exist for it.
++
++These tests do two jobs. They hold the DocType/Report contract the framework expects, and they
++**execute each report** against stubbed rows - so a mistyped field name, an incomplete date
++pair counted as zero, or a return value that is not the five-part tuple the framework unpacks
++fails here instead of on a manager's screen.
++"""
++import importlib.util
++import sys
++import types
++from datetime import date
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++
++# The reports import `murasalat_office.services...`, so the app package has to be importable
++# from the repository root - not only the test directory pytest adds by default.
++REPO_ROOT = str(ROOT.parent)
++if REPO_ROOT not in sys.path:
++    sys.path.insert(0, REPO_ROOT)
++
++MANAGEMENT = ROOT / "services/management.py"
++REPORTS = ROOT / "murasalat_office/report"
++
++# Fields every document carries at runtime without being declared in its DocType JSON.
++STANDARD_FIELDS = {"name", "creation", "modified", "modified_by", "owner", "docstatus",
++                   "doctype", "idx", "parent", "parentfield", "parenttype"}
++
++REPORT_NAMES = {
++    "murasalat_management_summary": "Murasalat Management Summary",
++    "murasalat_department_workload": "Murasalat Department Workload",
++    "murasalat_response_times": "Murasalat Response Times",
++}
++
++
++# --- a stubbed framework, so the shipped code actually runs ---------------------------
++
++
++def _load(correspondence, referrals):
++    class Dict(dict):
++        def __getattr__(self, name):
++            try:
++                return self[name]
++            except KeyError:
++                raise AttributeError(name) from None
++
++    def getdate(value=None):
++        if isinstance(value, date):
++            return value
++        raise AssertionError(f"a report passed a non-date into getdate: {value!r}")
++
++    # A real module, not a namespace: the reports use `from frappe.utils import ...`, which
++    # resolves through sys.modules and would otherwise import the installed framework.
++    utils = types.ModuleType("frappe.utils")
++    utils.getdate = getdate
++    utils.date_diff = lambda end, start: (end - start).days
++    utils.get_first_day = lambda value: value.replace(day=1)
++    utils.today = lambda: date(2026, 9, 24)
++    sys.modules["frappe.utils"] = utils
++
++    def get_list(doctype, *args, **kwargs):
++        assert kwargs.get("ignore_permissions") is False, (
++            "every report in this app reads through permission checks"
++        )
++        rows = correspondence if doctype == "Murasalat Correspondence" else referrals
++        return [Dict(row) for row in rows]
++
++    frappe = types.ModuleType("frappe")
++    frappe._dict = lambda mapping=None: Dict(mapping or {})
++    frappe._ = lambda text, *args, **kwargs: text
++    frappe.__path__ = []  # so `frappe.utils` resolves as a submodule we control
++    frappe.get_list = get_list
++    frappe.get_all = lambda *args, **kwargs: []
++    frappe.utils = utils
++    frappe.getdate = getdate
++    frappe.throw = lambda message, *args, **kwargs: (_ for _ in ()).throw(Exception(message))
++    frappe.session = types.SimpleNamespace(user="Administrator")
++    sys.modules["frappe"] = frappe
++
++    spec = importlib.util.spec_from_file_location("murasalat_management", MANAGEMENT)
++    management = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(management)
++    sys.modules["murasalat_office.services.management"] = management
++
++    aging = types.ModuleType("murasalat_office.services.aging")
++    aging.summary_item = lambda label, value, indicator=None: {
++        "label": label, "value": value, "indicator": indicator,
++    }
++    sys.modules["murasalat_office.services.aging"] = aging
++
++    loaded = {}
++    for slug in REPORT_NAMES:
++        path = REPORTS / slug / f"{slug}.py"
++        spec = importlib.util.spec_from_file_location(slug, path)
++        module = importlib.util.module_from_spec(spec)
++        spec.loader.exec_module(module)
++        loaded[slug] = module
++
++    return loaded, management
++
++
++CORRESPONDENCE_ROWS = [
++    # incoming, registered, closed, sealed - a finished file
++    {"name": "MO-1", "correspondence_direction": "Incoming", "creation": date(2026, 9, 1),
++     "registered_on": date(2026, 9, 3), "closed_on": date(2026, 9, 11),
++     "record_sealed_on": date(2026, 9, 12), "due_date": date(2026, 9, 5),
++     "current_holder": "Correspondence Office"},
++    # outgoing, still open and overdue
++    {"name": "MO-2", "correspondence_direction": "Outgoing", "creation": date(2026, 9, 10),
++     "registered_on": None, "closed_on": None, "record_sealed_on": None,
++     "due_date": date(2026, 9, 20), "current_holder": "Central Archive"},
++    # internal, open, no due date
++    {"name": "MO-3", "correspondence_direction": "Internal", "creation": date(2026, 9, 15),
++     "registered_on": date(2026, 9, 15), "closed_on": None, "record_sealed_on": None,
++     "due_date": None, "current_holder": "Central Archive"},
++]
++
++REFERRAL_ROWS = [
++    {"name": "MR-1", "correspondence": "MO-1", "recipient_department": "Correspondence Office",
++     "creation": date(2026, 9, 2), "sent_on": date(2026, 9, 3), "received_on": date(2026, 9, 4),
++     "completed_on": date(2026, 9, 10), "due_date": date(2026, 9, 9), "workflow_state": "Completed"},
++    {"name": "MR-2", "correspondence": "MO-2", "recipient_department": "Central Archive",
++     "creation": date(2026, 9, 11), "sent_on": date(2026, 9, 12), "received_on": None,
++     "completed_on": None, "due_date": date(2026, 9, 18), "workflow_state": "Sent"},
++]
++
++
++# --- the framework contract ------------------------------------------------------------
++
++
++@pytest.mark.parametrize("slug", list(REPORT_NAMES))
++def test_each_report_is_packed_where_the_framework_looks(slug):
++    folder = REPORTS / slug
++
++    assert folder.is_dir(), slug
++    for suffix in (".py", ".js", ".json"):
++        assert (folder / f"{slug}{suffix}").is_file(), (slug, suffix)
++    assert (folder / "__init__.py").is_file(), slug
++
++
++@pytest.mark.parametrize("slug", list(REPORT_NAMES))
++def test_each_report_declares_itself_a_standard_script_report(slug):
++    import json
++
++    data = json.loads((REPORTS / slug / f"{slug}.json").read_text(encoding="utf-8"))
++
++    assert data["doctype"] == "Report"
++    assert data["name"] == REPORT_NAMES[slug]
++    assert data["report_type"] == "Script Report"
++    assert data["is_standard"] == "Yes"
++    assert data["module"] == "Murasalat Office"
++    assert data["disabled"] == 0
++    assert data["ref_doctype"] == "Murasalat Correspondence"
++    assert data["description"], "a report a manager cannot identify is a report they will not open"
++
++
++@pytest.mark.parametrize("slug", list(REPORT_NAMES))
++def test_each_report_offers_the_period_a_manager_thinks_in(slug):
++    import json
++
++    data = json.loads((REPORTS / slug / f"{slug}.json").read_text(encoding="utf-8"))
++    filters = {f["fieldname"] for f in data["filters"]}
++
++    assert {"from_date", "to_date"} <= filters, slug
++
++
++def test_the_reports_the_app_already_had_are_untouched():
++    """Adding reports must not disturb the ones the office already uses."""
++    existing = {"murasalat_correspondence_register", "murasalat_due_today",
++                "murasalat_referral_aging", "murasalat_work_queue"}
++
++    for slug in existing:
++        assert (REPORTS / slug / f"{slug}.py").is_file(), slug
++
++
++# --- the pure helpers, executed --------------------------------------------------------
++
++
++def test_an_unfinished_pair_is_not_counted_as_zero():
++    """This is what keeps an average from flattering the office.
++
++    A file that has not been closed has no closing time. Counting it as zero days would report
++    a faster office the more work was still open.
++    """
++    _, management = _load([], [])
++
++    assert management.days_between(date(2026, 9, 1), None) is None
++    assert management.days_between(None, date(2026, 9, 1)) is None
++    assert management.days_between(date(2026, 9, 1), date(2026, 9, 11)) == 10
++
++
++def test_the_average_ignores_what_could_not_be_measured():
++    _, management = _load([], [])
++
++    assert management.average([10, None, 20]) == 15.0
++    assert management.average([]) is None
++    assert management.average([None, None]) is None
++    assert management.average([1, 2]) == 1.5
++
++
++def test_the_period_defaults_to_this_month_so_far():
++    _, management = _load([], [])
++
++    start, end = management.period({})
++    assert (start, end) == (date(2026, 9, 1), date(2026, 9, 24))
++
++
++# --- the reports, executed -------------------------------------------------------------
++
++
++def _run(slug, filters=None):
++    loaded, _ = _load(CORRESPONDENCE_ROWS, REFERRAL_ROWS)
++    result = loaded[slug].execute(filters or {})
++
++    assert isinstance(result, tuple) and len(result) == 5, (
++        f"{slug} must return columns, data, message, chart, summary"
++    )
++    return result
++
++
++@pytest.mark.parametrize("slug", list(REPORT_NAMES))
++def test_every_report_returns_what_the_framework_unpacks(slug):
++    columns, data, message, chart, summary = _run(slug)
++
++    assert columns and data, slug
++    for column in columns:
++        assert {"label", "fieldname", "fieldtype"} <= set(column), (slug, column)
++        assert column["label"], (slug, column)
++    assert isinstance(summary, list) and summary, slug
++    assert chart is None or "data" in chart, slug
++
++
++@pytest.mark.parametrize("slug", list(REPORT_NAMES))
++def test_no_report_reads_a_field_its_doctype_does_not_have(slug):
++    """A mistyped field renders an empty column, which nobody reports as a bug."""
++    import json
++
++    columns, _, _, _, _ = _run(slug)
++    correspondence = {
++        f["fieldname"]
++        for f in json.loads((ROOT / "murasalat_office/doctype/murasalat_correspondence"
++                             "/murasalat_correspondence.json").read_text())["fields"]
++    }
++    referral = {
++        f["fieldname"]
++        for f in json.loads((ROOT / "murasalat_office/doctype/murasalat_referral"
++                             "/murasalat_referral.json").read_text())["fields"]
++    }
++    source = (REPORTS / slug / f"{slug}.py").read_text(encoding="utf-8")
++
++    for field in _fields_named_in(source):
++        assert field in correspondence or field in referral or field in STANDARD_FIELDS, (slug, field)
++
++
++def _fields_named_in(source):
++    """Field names the report pulls, read from the FIELDS lists it declares."""
++    import re
++
++    found = set()
++    for block in re.findall(r"FIELDS = \[(.*?)\]", source, re.S):
++        found.update(re.findall(r'"([a-z_]+)"', block))
++    return found
++
++
++def test_the_summary_totals_its_own_rows():
++    columns, data, _, chart, summary = _run("murasalat_management_summary")
++    total = data[-1]
++
++    assert total["direction"] == "Total"
++    assert total["received"] == sum(row["received"] for row in data[:-1])
++    assert total["open_now"] == sum(row["open_now"] for row in data[:-1])
++    assert total["overdue_open"] == sum(row["overdue_open"] for row in data[:-1])
++
++
++def test_the_summary_counts_a_closed_file_and_measures_its_days():
++    _, data, _, _, _ = _run("murasalat_management_summary")
++    incoming = next(row for row in data if row["direction"] == "وارد")
++
++    assert incoming["received"] == 1
++    assert incoming["closed"] == 1
++    assert incoming["sealed"] == 1
++    assert incoming["avg_close_days"] == 10.0, "creation 9-1 to close 9-11"
++
++
++def test_the_summary_reports_an_open_overdue_file_as_open():
++    _, data, _, _, _ = _run("murasalat_management_summary")
++    outgoing = next(row for row in data if row["direction"] == "صادر")
++
++    assert outgoing["open_now"] == 1
++    assert outgoing["overdue_open"] == 1
++    assert outgoing["closed"] == 0
++    assert outgoing["avg_close_days"] is None, "nothing closed means no average, not zero"
++
++
++def test_the_summary_charts_every_direction():
++    _, _, _, chart, _ = _run("murasalat_management_summary")
++
++    assert chart["data"]["labels"] == ["وارد", "صادر", "داخلي"]
++    assert len(chart["data"]["datasets"]) == 2
++    assert chart["type"] == "bar"
++
++
++def test_the_workload_report_puts_every_department_in_a_row():
++    _, data, _, _, _ = _run("murasalat_department_workload")
++    units = {row["unit"] for row in data}
++
++    assert "Central Archive" in units
++    assert "Correspondence Office" in units
++
++
++def test_the_workload_report_shows_what_a_department_holds_and_owes():
++    _, data, _, _, _ = _run("murasalat_department_workload")
++    archive = next(row for row in data if row["unit"] == "Central Archive")
++
++    assert archive["holding"] == 2, "two open files are held there"
++    assert archive["open_referrals"] == 1
++    assert archive["overdue_referrals"] == 1
++    assert archive["completed"] == 0
++
++
++def test_the_workload_report_measures_how_long_a_stage_takes():
++    _, data, _, _, _ = _run("murasalat_department_workload")
++    office = next(row for row in data if row["unit"] == "Correspondence Office")
++
++    assert office["completed"] == 1
++    assert office["avg_complete_days"] == 7.0, "sent 9-3 to completed 9-10"
++
++
++def test_the_workload_report_lists_the_worst_first():
++    _, data, _, _, _ = _run("murasalat_department_workload")
++    overdue = [row["overdue_referrals"] for row in data]
++
++    assert overdue == sorted(overdue, reverse=True)
++
++
++def test_the_response_times_report_measures_each_stage_separately():
++    """A single cycle average cannot say where the delay is; each stage is its own column."""
++    _, data, _, _, _ = _run("murasalat_response_times")
++    total = data[-1]
++
++    assert total["direction"] == "Total"
++    # MO-1 registered 2 days after creation, MO-3 the same day; MO-2 is not registered yet and
++    # is therefore not measured at all.
++    assert total["to_register"] == 1.0, "two measured files: 2 days and 0 days"
++    assert total["send_to_receive"] == 1.0
++    assert total["receive_to_complete"] == 6.0
++    assert total["to_close"] == 10.0
++
++
++def test_the_response_times_report_names_the_slowest_stage():
++    """The one line a general manager needs: which stage to attack."""
++    _, _, _, _, summary = _run("murasalat_response_times")
++
++    slowest = next(item for item in summary if item["label"] == "Slowest Stage")
++    assert slowest["value"], "the slowest stage must be named, not left blank"
++
++
++def test_the_response_times_report_can_be_narrowed_to_one_direction():
++    _, data, _, _, _ = _run("murasalat_response_times", {"correspondence_direction": "Incoming"})
++    labels = [row["direction"] for row in data]
++
++    assert labels == ["وارد", "Total"]
++
++
++def test_a_direction_filter_never_leaks_another_direction():
++    _, data, _, _, _ = _run("murasalat_management_summary")
++    assert len(data) == 4, "three directions and a total"
+-- 
+2.43.0
+

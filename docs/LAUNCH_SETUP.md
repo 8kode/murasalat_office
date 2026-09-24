@@ -15,33 +15,6 @@ bench --site <site> install-app murasalat_office
 bench --site <site> migrate
 ```
 
-## 2. Make the site launchable (one command)
-
-Steps 3 to 5 below are configuration this application deliberately does not ship as
-fixtures: roles, permission rows and Workflows all belong in Desk. Creating them through
-Frappe's own models is the same thing clicking through Desk does, so there is one command
-that does all of it after the master data is seeded:
-
-```bash
-bench --site <site> execute murasalat_office.setup.provision.readiness
-bench --site <site> execute murasalat_office.setup.provision.apply \
-    --kwargs "{'confirm': True}"
-```
-
-`readiness` only reads and prints a PASS/FAIL line per check. `apply` refuses to run
-without `confirm=True`, is idempotent, and **never overwrites an existing Workflow** -
-an administrator may have edited it in Desk. It creates:
-
-- the master data (step 3),
-- the three roles and their permission rows (step 4),
-- **the two Workflows with all seven transitions, each carrying its lifecycle task**
-  (step 5) - the piece that had no command before, and whose absence fails silently.
-
-Then confirm with `readiness` again: it must end with **Ready for users.**
-
-Steps 3 to 6 below describe the same things by hand, and are worth reading to know what
-was created.
-
 ## 2. Seed the master data (required)
 
 Without this step the **first save fails**. `Murasalat Correspondence` carries four
@@ -70,7 +43,7 @@ from a dictionary keyed on exactly those strings. Renaming one breaks registrati
 The seeded titles are a reviewable starting set, not a business decision — rename or
 extend them in Desk at any time.
 
-## 3. Seed the master data by hand (optional)
+## 3. Permissions (required)
 
 A DocType that ships no DocPerm row is reachable only by `Administrator`. Read the plan,
 then either materialise it or follow it by hand:
@@ -90,7 +63,7 @@ not be able to alter a sealed record.
 Deletion rights are deliberately withheld from all three: deleting a correspondence
 record destroys the sealed audit trail this application exists to preserve.
 
-## 4. Permissions by hand (optional)
+## 4. Workflows (required for the lifecycle)
 
 The application's seven lifecycle methods do not run on their own. Follow
 [`WORKFLOW_GOVERNANCE.md`](WORKFLOW_GOVERNANCE.md) — it carries the exact task names, the

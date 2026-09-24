@@ -1,0 +1,1065 @@
+From b70f73a64ca491a05b6469ec3bf07957886f050d Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Thu, 24 Sep 2026 05:15:02 +0300
+Subject: [PATCH] Ship A4 print layouts for the three management reports
+
+Frappe renders a report layout in the browser, not on the server: the report's print dialog
+returns the format's html and css through frappe.desk.query_report.get_print_format_data and
+query_report.js::pdf_report injects them, so the template sees title, subtitle, filters, data,
+columns, original_data, report - and may not call frappe.*, because there is no server-side render
+for it to reach. The templates are therefore executed in the tests against real columns and rows,
+which is what checks the total row, the alternating rows, the empty period and the dashes.
+
+One A4 layout ships three times, one row per report: a coloured title band, a filter strip, a dark
+teal table head, zebra rows, the total row highlighted, and a footer stating that the report is
+computed under the printing user's permissions. Arabic and right-to-left, with the Arabic font
+named so an English site does not fall back to a Latin default.
+
+They are created by an installer rather than imported from the module folder, for the framework's
+own reason: PrintFormat.before_save forces custom_format=1 and standard="No" on every report
+format, because Frappe treats a report layout as a site customisation rather than a document an app
+ships - and a row that is not standard=Yes is not re-imported on migrate. setup/report_print_formats.py
+creates it through frappe.get_doc().insert(), exactly what Desk does when a Print Format is saved
+by hand. It is idempotent, never overwrites an existing format because a site may have restyled it,
+and provision.apply calls it so one command still prepares a site.
+
+The metadata states custom_format=1 and standard="No" up front, instead of claiming "Yes" and
+being rewritten on the first save.
+---
+ docs/MANAGEMENT_REPORTS.md                    |  65 ++++-
+ .../murasalat_department_workload_print.html  | 153 ++++++++++++
+ .../murasalat_department_workload_print.json  |  31 +++
+ .../murasalat_management_summary_print.html   | 153 ++++++++++++
+ .../murasalat_management_summary_print.json   |  31 +++
+ .../murasalat_response_times_print.html       | 153 ++++++++++++
+ .../murasalat_response_times_print.json       |  31 +++
+ murasalat_office/setup/provision.py           |   5 +-
+ .../setup/report_print_formats.py             |  87 +++++++
+ .../tests/test_report_print_formats.py        | 226 ++++++++++++++++++
+ 10 files changed, 925 insertions(+), 10 deletions(-)
+ create mode 100644 murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.html
+ create mode 100644 murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.json
+ create mode 100644 murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.html
+ create mode 100644 murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.json
+ create mode 100644 murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.html
+ create mode 100644 murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.json
+ create mode 100644 murasalat_office/setup/report_print_formats.py
+ create mode 100644 murasalat_office/tests/test_report_print_formats.py
+
+diff --git a/docs/MANAGEMENT_REPORTS.md b/docs/MANAGEMENT_REPORTS.md
+index b6711f7..7120cf2 100644
+--- a/docs/MANAGEMENT_REPORTS.md
++++ b/docs/MANAGEMENT_REPORTS.md
+@@ -84,13 +84,62 @@
+ * **تصدير** → CSV / Excel.
+ * **طباعة** → جدول التقرير مع فلتره وملخصه.
+ 
+-> **ملاحظة صريحة:** Frappe 16 يدعم **قوالب طباعة للتقارير** (`print_format_for = "Report"`)،
+-> لكن `PrintFormat.before_save` تجبر قالب التقرير على `custom_format = 1` و`standard = "No"`،
+-> أي أن الإطار نفسه يعامله كتخصيص موقع لا كمستند قابل للشحن مع تطبيق. لذلك **لم يُشحن أي قالب
+-> طباعة للتقرير**؛ يُنشأ من Desk في دقيقة واحدة: **Print Format جديد → `Print Format For = Report`
+-> → اختر التقرير**، ثم الصق التنسيق. أضفه إن أردت مخرجات A4 مُنسّقة بالألوان.
++## قوالب الطباعة A4 الملوّنة
+ 
+-## أين تجدها بعد الترحيل
++**ثلاثة قوالب جاهزة تشحن مع التطبيق**، قالب لكل تقرير — A4 عمودي، عربي من اليمين إلى اليسار،
++بترويسة ملوّنة وشريط فلاتر، وجدول برأس أخضر داكن، وتخطيط متناوب للصفوف، و**إبراز صف الإجمالي**،
++وتذييل يذكّر بأن التقرير محسوب وفق صلاحيات مُصدِره.
+ 
+-**Desk → التقارير (Reports)** أو ابحث بالاسم في الشريط العلوي. ولمن يريدها في الشريط الجانبي:
+-**Workspace → Edit → Add Link → Report**.
++| القالب | على التقرير |
++|---|---|
++| `Murasalat Management Summary Print` | ملخص الإدارة |
++| `Murasalat Department Workload Print` | عبء الأقسام |
++| `Murasalat Response Times Print` | أزمنة الاستجابة |
++
++### التثبيت
++
++تأتي مع أمر التهيئة الواحد:
++
++```bash
++bench --site <site> execute murasalat_office.setup.provision.apply --kwargs "{'confirm': True}"
++```
++
++أو وحدها، وتقرأ أولًا بلا كتابة:
++
++```bash
++bench --site <site> execute murasalat_office.setup.report_print_formats.plan
++bench --site <site> execute murasalat_office.setup.report_print_formats.install
++```
++
++`plan` يطبع ما هو ناقص وما هو موجود. `install` **عادم التكرار ولا يكتب فوق قالب موجود** — قد
++يكون موقع قد أعاد تنسيقه.
++
++### الاستخدام
++
++افتح التقرير، اضغط **Print**، ثم:
++
++1. اختر القالب من قائمة **Print Format**.
++2. فعّل **Include filters** ليظهر شريط الفلاتر أعلى الصفحة.
++3. اختر **Landscape** إن أردت الجداول العريضة أفقيًّا.
++
++### لماذا يُنشئها أمر لا `bench migrate`
++
++`PrintFormat.before_save` في Frappe **تفرض** على قالب التقرير `custom_format = 1` و
++`standard = "No"`:
++
++```python
++def before_save(self):
++    if self.print_format_for == "Report":
++        self.custom_format = 1
++        self.standard = "No"
++```
++
++أي أن **الإطار نفسه يعامل قالب التقرير كتخصيص موقع لا كمستند يشحنه تطبيق**، وصفّ ليس
++`standard = "Yes"` لا يُعاد استيراده من مجلد الوحدة عند الترحيل. لذلك تُنشأ الصفوف عبر
++**نموذج Frappe نفسه** (`frappe.get_doc(...).insert()`) — وهو عين ما تفعله شاشة Desk عند حفظ قالب
++طباعة يدويًا. المصدر الواحد يبقى ملف `.html` المشحون، والمنشئ يقرأه منه.
++
++> **ملاحظة تقنية للقارئ المتقدّم:** قالب التقرير لا يُصيَّر على الخادم. الإطار يقرأ `html` و`css`
++> عبر `frappe.desk.query_report.get_print_format_data` ثم يرسمه في المتصفح
++> (`query_report.js::pdf_report`) بالمتغيّرات: `title, subtitle, filters, data, columns,
++> original_data, report`. لذلك القالب **لا يستدعي `frappe.*` إطلاقًا** — وهذا مُختبَر صراحةً.
+diff --git a/murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.html b/murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.html
+new file mode 100644
+index 0000000..7efa6fd
+--- /dev/null
++++ b/murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.html
+@@ -0,0 +1,153 @@
++{# قالب طباعة تقارير الإدارة — A4 ملوّن، عربي من اليمين إلى اليسار.
++
++   كيف يصل هذا القالب إلى الشاشة: يختاره المستخدم في نافذة الطباعة على التقرير، فيقرأه
++   الخادم بـ frappe.desk.query_report.get_print_format_data ويعيد html و css، ثم يرسمه
++   الإطار في المتصفح. فالقالب لا يستدعي شيئًا من الخادم ولا يستعمل frappe.*: يقرأ ما يمرّره
++   الإطار إليه ويرسمه.
++
++   المتغيّرات المتاحة (من query_report.js::pdf_report):
++     title, subtitle, filters, data, columns, original_data, report, print_settings
++
++   subtitle هو سطر الفلاتر الذي يبنيه الإطار حين يضع المستخدم علامة "Include filters" في
++   نافذة الطباعة. و"الإجمالي" هو آخر صف في التقارير الثلاثة، فيُبرَز بخلفية مميّزة.
++#}
++{% set NUMBER_TYPES = ["Int", "Float", "Currency", "Percent"] %}
++{% set TOTAL_WORDS = ["Total", "الإجمالي"] %}
++
++<div class="mo-rpt" dir="rtl">
++
++  <table class="mo-rpt-head">
++    <tr>
++      <td class="mo-rpt-head-main">
++        <div class="mo-rpt-title">{{ title }}</div>
++        <div class="mo-rpt-rule"></div>
++      </td>
++      <td class="mo-rpt-head-side">
++        <div class="mo-rpt-mark">نظام المعاملات</div>
++        <div class="mo-rpt-mark-sub">Murasalat Office</div>
++      </td>
++    </tr>
++  </table>
++
++  {% if subtitle %}
++  <div class="mo-rpt-filters">{{ subtitle | safe }}</div>
++  {% endif %}
++
++  <table class="mo-rpt-grid">
++    <thead>
++      <tr>
++        {% for column in columns %}
++        <th{% if column.fieldtype in NUMBER_TYPES %} class="num"{% endif %}>{{ column.label }}</th>
++        {% endfor %}
++      </tr>
++    </thead>
++    <tbody>
++      {% if data %}
++        {% for row in data %}
++        {% set first = row[columns[0].fieldname] %}
++        <tr{% if first in TOTAL_WORDS %} class="total"{% elif loop.index0 % 2 %} class="alt"{% endif %}>
++          {% for column in columns %}
++          {% set value = row[column.fieldname] %}
++          <td{% if column.fieldtype in NUMBER_TYPES %} class="num"{% endif %}>
++            {% if value or value == 0 %}{{ value }}{% else %}<span class="mo-dash">—</span>{% endif %}
++          </td>
++          {% endfor %}
++        </tr>
++        {% endfor %}
++      {% else %}
++        <tr>
++          <td colspan="{{ columns | length }}" class="mo-empty">لا توجد بيانات في هذه الفترة.</td>
++        </tr>
++      {% endif %}
++    </tbody>
++  </table>
++
++  <div class="mo-rpt-foot">
++    <span class="mo-rpt-foot-brand">نظام المعاملات — Murasalat Office</span>
++    <span class="mo-rpt-foot-note">هذا التقرير محسوب وفق صلاحيات مُصدِره، ولا يتضمّن سجلًا لا يملك قراءته.</span>
++  </div>
++
++</div>
++
++<style>
++  @page { size: A4 portrait; margin: 10mm; }
++
++  .mo-rpt {
++    direction: rtl;
++    text-align: right;
++    font-family: "Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
++    color: #17231f;
++    font-size: 10pt;
++    line-height: 1.6;
++  }
++
++  table.mo-rpt-head { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
++  table.mo-rpt-head td { border: none; padding: 0; vertical-align: bottom; }
++  .mo-rpt-title { font-size: 17pt; font-weight: bold; color: #123c35; }
++  .mo-rpt-rule { height: 2.6pt; background: #123c35; margin-top: 1.4mm; width: 100%; }
++  .mo-rpt-head-side { text-align: left; width: 42mm; }
++  .mo-rpt-mark { font-size: 11pt; font-weight: bold; color: #2f6b5f; }
++  .mo-rpt-mark-sub { font-size: 8pt; color: #7b8b86; direction: ltr; text-align: left; }
++
++  .mo-rpt-filters {
++    border: 0.6pt solid #c9d8d3;
++    background: #f4f8f6;
++    border-right: 3pt solid #c9821f;
++    padding: 2mm 3mm;
++    margin: 0 0 3.5mm 0;
++    font-size: 8.8pt;
++    color: #3c4a45;
++  }
++  .mo-rpt-filters .filter-row { display: block; }
++  .mo-rpt-filters strong { color: #123c35; }
++
++  table.mo-rpt-grid { width: 100%; border-collapse: collapse; }
++  .mo-rpt-grid thead th {
++    background: #123c35;
++    color: #ffffff;
++    font-size: 9.2pt;
++    font-weight: bold;
++    text-align: right;
++    padding: 2mm 2.2mm;
++    border: 0.6pt solid #123c35;
++  }
++  .mo-rpt-grid thead th.num { text-align: center; }
++  .mo-rpt-grid tbody td {
++    border: 0.6pt solid #d6e2de;
++    padding: 1.8mm 2.2mm;
++    vertical-align: middle;
++  }
++  .mo-rpt-grid tbody td.num {
++    text-align: center;
++    direction: ltr;
++    font-weight: bold;
++    font-family: "DejaVu Sans Mono", Consolas, monospace;
++    font-size: 9pt;
++  }
++  .mo-rpt-grid tbody tr.alt td { background: #f7faf9; }
++  .mo-rpt-grid tbody tr.total td {
++    background: #eef3f1;
++    border-top: 1.4pt solid #123c35;
++    color: #123c35;
++    font-weight: bold;
++  }
++  .mo-dash { color: #b3c2bd; }
++  .mo-empty {
++    text-align: center;
++    color: #7b8b86;
++    padding: 8mm 0;
++    font-size: 10pt;
++  }
++
++  .mo-rpt-foot {
++    margin-top: 4mm;
++    padding-top: 1.6mm;
++    border-top: 0.6pt solid #c9d8d3;
++    font-size: 7.8pt;
++    color: #55655f;
++    display: table;
++    width: 100%;
++  }
++  .mo-rpt-foot-brand { display: table-cell; text-align: right; font-weight: bold; color: #123c35; }
++  .mo-rpt-foot-note { display: table-cell; text-align: left; }
++</style>
+diff --git a/murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.json b/murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.json
+new file mode 100644
+index 0000000..f7420bb
+--- /dev/null
++++ b/murasalat_office/murasalat_office/print_format/murasalat_department_workload_print/murasalat_department_workload_print.json
+@@ -0,0 +1,31 @@
++{
++ "doctype": "Print Format",
++ "name": "Murasalat Department Workload Print",
++ "module": "Murasalat Office",
++ "doc_type": null,
++ "report": "Murasalat Department Workload",
++ "print_format_for": "Report",
++ "print_format_type": "Jinja",
++ "custom_format": 1,
++ "standard": "No",
++ "disabled": 0,
++ "align_labels_right": 0,
++ "show_section_headings": 0,
++ "line_breaks": 0,
++ "absolute_value": 0,
++ "font_size": 10,
++ "page_number": "Hide",
++ "margin_top": 0.0,
++ "margin_bottom": 0.0,
++ "margin_left": 0.0,
++ "margin_right": 0.0,
++ "html": "{# قالب طباعة تقارير الإدارة — A4 ملوّن، عربي من اليمين إلى اليسار.\n\n   كيف يصل هذا القالب إلى الشاشة: يختاره المستخدم في نافذة الطباعة على التقرير، فيقرأه\n   الخادم بـ frappe.desk.query_report.get_print_format_data ويعيد html و css، ثم يرسمه\n   الإطار في المتصفح. فالقالب لا يستدعي شيئًا من الخادم ولا يستعمل frappe.*: يقرأ ما يمرّره\n   الإطار إليه ويرسمه.\n\n   المتغيّرات المتاحة (من query_report.js::pdf_report):\n     title, subtitle, filters, data, columns, original_data, report, print_settings\n\n   subtitle هو سطر الفلاتر الذي يبنيه الإطار حين يضع المستخدم علامة \"Include filters\" في\n   نافذة الطباعة. و\"الإجمالي\" هو آخر صف في التقارير الثلاثة، فيُبرَز بخلفية مميّزة.\n#}\n{% set NUMBER_TYPES = [\"Int\", \"Float\", \"Currency\", \"Percent\"] %}\n{% set TOTAL_WORDS = [\"Total\", \"الإجمالي\"] %}\n\n<div class=\"mo-rpt\" dir=\"rtl\">\n\n  <table class=\"mo-rpt-head\">\n    <tr>\n      <td class=\"mo-rpt-head-main\">\n        <div class=\"mo-rpt-title\">{{ title }}</div>\n        <div class=\"mo-rpt-rule\"></div>\n      </td>\n      <td class=\"mo-rpt-head-side\">\n        <div class=\"mo-rpt-mark\">نظام المعاملات</div>\n        <div class=\"mo-rpt-mark-sub\">Murasalat Office</div>\n      </td>\n    </tr>\n  </table>\n\n  {% if subtitle %}\n  <div class=\"mo-rpt-filters\">{{ subtitle | safe }}</div>\n  {% endif %}\n\n  <table class=\"mo-rpt-grid\">\n    <thead>\n      <tr>\n        {% for column in columns %}\n        <th{% if column.fieldtype in NUMBER_TYPES %} class=\"num\"{% endif %}>{{ column.label }}</th>\n        {% endfor %}\n      </tr>\n    </thead>\n    <tbody>\n      {% if data %}\n        {% for row in data %}\n        {% set first = row[columns[0].fieldname] %}\n        <tr{% if first in TOTAL_WORDS %} class=\"total\"{% elif loop.index0 % 2 %} class=\"alt\"{% endif %}>\n          {% for column in columns %}\n          {% set value = row[column.fieldname] %}\n          <td{% if column.fieldtype in NUMBER_TYPES %} class=\"num\"{% endif %}>\n            {% if value or value == 0 %}{{ value }}{% else %}<span class=\"mo-dash\">—</span>{% endif %}\n          </td>\n          {% endfor %}\n        </tr>\n        {% endfor %}\n      {% else %}\n        <tr>\n          <td colspan=\"{{ columns | length }}\" class=\"mo-empty\">لا توجد بيانات في هذه الفترة.</td>\n        </tr>\n      {% endif %}\n    </tbody>\n  </table>\n\n  <div class=\"mo-rpt-foot\">\n    <span class=\"mo-rpt-foot-brand\">نظام المعاملات — Murasalat Office</span>\n    <span class=\"mo-rpt-foot-note\">هذا التقرير محسوب وفق صلاحيات مُصدِره، ولا يتضمّن سجلًا لا يملك قراءته.</span>\n  </div>\n\n</div>\n\n<style>\n  @page { size: A4 portrait; margin: 10mm; }\n\n  .mo-rpt {\n    direction: rtl;\n    text-align: right;\n    font-family: \"Noto Naskh Arabic\", \"Amiri\", \"Traditional Arabic\", \"Segoe UI\", Tahoma, Arial, sans-serif;\n    color: #17231f;\n    font-size: 10pt;\n    line-height: 1.6;\n  }\n\n  table.mo-rpt-head { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }\n  table.mo-rpt-head td { border: none; padding: 0; vertical-align: bottom; }\n  .mo-rpt-title { font-size: 17pt; font-weight: bold; color: #123c35; }\n  .mo-rpt-rule { height: 2.6pt; background: #123c35; margin-top: 1.4mm; width: 100%; }\n  .mo-rpt-head-side { text-align: left; width: 42mm; }\n  .mo-rpt-mark { font-size: 11pt; font-weight: bold; color: #2f6b5f; }\n  .mo-rpt-mark-sub { font-size: 8pt; color: #7b8b86; direction: ltr; text-align: left; }\n\n  .mo-rpt-filters {\n    border: 0.6pt solid #c9d8d3;\n    background: #f4f8f6;\n    border-right: 3pt solid #c9821f;\n    padding: 2mm 3mm;\n    margin: 0 0 3.5mm 0;\n    font-size: 8.8pt;\n    color: #3c4a45;\n  }\n  .mo-rpt-filters .filter-row { display: block; }\n  .mo-rpt-filters strong { color: #123c35; }\n\n  table.mo-rpt-grid { width: 100%; border-collapse: collapse; }\n  .mo-rpt-grid thead th {\n    background: #123c35;\n    color: #ffffff;\n    font-size: 9.2pt;\n    font-weight: bold;\n    text-align: right;\n    padding: 2mm 2.2mm;\n    border: 0.6pt solid #123c35;\n  }\n  .mo-rpt-grid thead th.num { text-align: center; }\n  .mo-rpt-grid tbody td {\n    border: 0.6pt solid #d6e2de;\n    padding: 1.8mm 2.2mm;\n    vertical-align: middle;\n  }\n  .mo-rpt-grid tbody td.num {\n    text-align: center;\n    direction: ltr;\n    font-weight: bold;\n    font-family: \"DejaVu Sans Mono\", Consolas, monospace;\n    font-size: 9pt;\n  }\n  .mo-rpt-grid tbody tr.alt td { background: #f7faf9; }\n  .mo-rpt-grid tbody tr.total td {\n    background: #eef3f1;\n    border-top: 1.4pt solid #123c35;\n    color: #123c35;\n    font-weight: bold;\n  }\n  .mo-dash { color: #b3c2bd; }\n  .mo-empty {\n    text-align: center;\n    color: #7b8b86;\n    padding: 8mm 0;\n    font-size: 10pt;\n  }\n\n  .mo-rpt-foot {\n    margin-top: 4mm;\n    padding-top: 1.6mm;\n    border-top: 0.6pt solid #c9d8d3;\n    font-size: 7.8pt;\n    color: #55655f;\n    display: table;\n    width: 100%;\n  }\n  .mo-rpt-foot-brand { display: table-cell; text-align: right; font-weight: bold; color: #123c35; }\n  .mo-rpt-foot-note { display: table-cell; text-align: left; }\n</style>\n",
++ "print_format_builder": 0,
++ "print_format_builder_beta": 0,
++ "creation": "2026-09-24 00:00:00.000000",
++ "modified": "2026-09-24 00:00:00.000000",
++ "owner": "Administrator",
++ "modified_by": "Administrator",
++ "idx": 0,
++ "docstatus": 0
++}
+diff --git a/murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.html b/murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.html
+new file mode 100644
+index 0000000..7efa6fd
+--- /dev/null
++++ b/murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.html
+@@ -0,0 +1,153 @@
++{# قالب طباعة تقارير الإدارة — A4 ملوّن، عربي من اليمين إلى اليسار.
++
++   كيف يصل هذا القالب إلى الشاشة: يختاره المستخدم في نافذة الطباعة على التقرير، فيقرأه
++   الخادم بـ frappe.desk.query_report.get_print_format_data ويعيد html و css، ثم يرسمه
++   الإطار في المتصفح. فالقالب لا يستدعي شيئًا من الخادم ولا يستعمل frappe.*: يقرأ ما يمرّره
++   الإطار إليه ويرسمه.
++
++   المتغيّرات المتاحة (من query_report.js::pdf_report):
++     title, subtitle, filters, data, columns, original_data, report, print_settings
++
++   subtitle هو سطر الفلاتر الذي يبنيه الإطار حين يضع المستخدم علامة "Include filters" في
++   نافذة الطباعة. و"الإجمالي" هو آخر صف في التقارير الثلاثة، فيُبرَز بخلفية مميّزة.
++#}
++{% set NUMBER_TYPES = ["Int", "Float", "Currency", "Percent"] %}
++{% set TOTAL_WORDS = ["Total", "الإجمالي"] %}
++
++<div class="mo-rpt" dir="rtl">
++
++  <table class="mo-rpt-head">
++    <tr>
++      <td class="mo-rpt-head-main">
++        <div class="mo-rpt-title">{{ title }}</div>
++        <div class="mo-rpt-rule"></div>
++      </td>
++      <td class="mo-rpt-head-side">
++        <div class="mo-rpt-mark">نظام المعاملات</div>
++        <div class="mo-rpt-mark-sub">Murasalat Office</div>
++      </td>
++    </tr>
++  </table>
++
++  {% if subtitle %}
++  <div class="mo-rpt-filters">{{ subtitle | safe }}</div>
++  {% endif %}
++
++  <table class="mo-rpt-grid">
++    <thead>
++      <tr>
++        {% for column in columns %}
++        <th{% if column.fieldtype in NUMBER_TYPES %} class="num"{% endif %}>{{ column.label }}</th>
++        {% endfor %}
++      </tr>
++    </thead>
++    <tbody>
++      {% if data %}
++        {% for row in data %}
++        {% set first = row[columns[0].fieldname] %}
++        <tr{% if first in TOTAL_WORDS %} class="total"{% elif loop.index0 % 2 %} class="alt"{% endif %}>
++          {% for column in columns %}
++          {% set value = row[column.fieldname] %}
++          <td{% if column.fieldtype in NUMBER_TYPES %} class="num"{% endif %}>
++            {% if value or value == 0 %}{{ value }}{% else %}<span class="mo-dash">—</span>{% endif %}
++          </td>
++          {% endfor %}
++        </tr>
++        {% endfor %}
++      {% else %}
++        <tr>
++          <td colspan="{{ columns | length }}" class="mo-empty">لا توجد بيانات في هذه الفترة.</td>
++        </tr>
++      {% endif %}
++    </tbody>
++  </table>
++
++  <div class="mo-rpt-foot">
++    <span class="mo-rpt-foot-brand">نظام المعاملات — Murasalat Office</span>
++    <span class="mo-rpt-foot-note">هذا التقرير محسوب وفق صلاحيات مُصدِره، ولا يتضمّن سجلًا لا يملك قراءته.</span>
++  </div>
++
++</div>
++
++<style>
++  @page { size: A4 portrait; margin: 10mm; }
++
++  .mo-rpt {
++    direction: rtl;
++    text-align: right;
++    font-family: "Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
++    color: #17231f;
++    font-size: 10pt;
++    line-height: 1.6;
++  }
++
++  table.mo-rpt-head { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
++  table.mo-rpt-head td { border: none; padding: 0; vertical-align: bottom; }
++  .mo-rpt-title { font-size: 17pt; font-weight: bold; color: #123c35; }
++  .mo-rpt-rule { height: 2.6pt; background: #123c35; margin-top: 1.4mm; width: 100%; }
++  .mo-rpt-head-side { text-align: left; width: 42mm; }
++  .mo-rpt-mark { font-size: 11pt; font-weight: bold; color: #2f6b5f; }
++  .mo-rpt-mark-sub { font-size: 8pt; color: #7b8b86; direction: ltr; text-align: left; }
++
++  .mo-rpt-filters {
++    border: 0.6pt solid #c9d8d3;
++    background: #f4f8f6;
++    border-right: 3pt solid #c9821f;
++    padding: 2mm 3mm;
++    margin: 0 0 3.5mm 0;
++    font-size: 8.8pt;
++    color: #3c4a45;
++  }
++  .mo-rpt-filters .filter-row { display: block; }
++  .mo-rpt-filters strong { color: #123c35; }
++
++  table.mo-rpt-grid { width: 100%; border-collapse: collapse; }
++  .mo-rpt-grid thead th {
++    background: #123c35;
++    color: #ffffff;
++    font-size: 9.2pt;
++    font-weight: bold;
++    text-align: right;
++    padding: 2mm 2.2mm;
++    border: 0.6pt solid #123c35;
++  }
++  .mo-rpt-grid thead th.num { text-align: center; }
++  .mo-rpt-grid tbody td {
++    border: 0.6pt solid #d6e2de;
++    padding: 1.8mm 2.2mm;
++    vertical-align: middle;
++  }
++  .mo-rpt-grid tbody td.num {
++    text-align: center;
++    direction: ltr;
++    font-weight: bold;
++    font-family: "DejaVu Sans Mono", Consolas, monospace;
++    font-size: 9pt;
++  }
++  .mo-rpt-grid tbody tr.alt td { background: #f7faf9; }
++  .mo-rpt-grid tbody tr.total td {
++    background: #eef3f1;
++    border-top: 1.4pt solid #123c35;
++    color: #123c35;
++    font-weight: bold;
++  }
++  .mo-dash { color: #b3c2bd; }
++  .mo-empty {
++    text-align: center;
++    color: #7b8b86;
++    padding: 8mm 0;
++    font-size: 10pt;
++  }
++
++  .mo-rpt-foot {
++    margin-top: 4mm;
++    padding-top: 1.6mm;
++    border-top: 0.6pt solid #c9d8d3;
++    font-size: 7.8pt;
++    color: #55655f;
++    display: table;
++    width: 100%;
++  }
++  .mo-rpt-foot-brand { display: table-cell; text-align: right; font-weight: bold; color: #123c35; }
++  .mo-rpt-foot-note { display: table-cell; text-align: left; }
++</style>
+diff --git a/murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.json b/murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.json
+new file mode 100644
+index 0000000..0ac4fbc
+--- /dev/null
++++ b/murasalat_office/murasalat_office/print_format/murasalat_management_summary_print/murasalat_management_summary_print.json
+@@ -0,0 +1,31 @@
++{
++ "doctype": "Print Format",
++ "name": "Murasalat Management Summary Print",
++ "module": "Murasalat Office",
++ "doc_type": null,
++ "report": "Murasalat Management Summary",
++ "print_format_for": "Report",
++ "print_format_type": "Jinja",
++ "custom_format": 1,
++ "standard": "No",
++ "disabled": 0,
++ "align_labels_right": 0,
++ "show_section_headings": 0,
++ "line_breaks": 0,
++ "absolute_value": 0,
++ "font_size": 10,
++ "page_number": "Hide",
++ "margin_top": 0.0,
++ "margin_bottom": 0.0,
++ "margin_left": 0.0,
++ "margin_right": 0.0,
++ "html": "{# قالب طباعة تقارير الإدارة — A4 ملوّن، عربي من اليمين إلى اليسار.\n\n   كيف يصل هذا القالب إلى الشاشة: يختاره المستخدم في نافذة الطباعة على التقرير، فيقرأه\n   الخادم بـ frappe.desk.query_report.get_print_format_data ويعيد html و css، ثم يرسمه\n   الإطار في المتصفح. فالقالب لا يستدعي شيئًا من الخادم ولا يستعمل frappe.*: يقرأ ما يمرّره\n   الإطار إليه ويرسمه.\n\n   المتغيّرات المتاحة (من query_report.js::pdf_report):\n     title, subtitle, filters, data, columns, original_data, report, print_settings\n\n   subtitle هو سطر الفلاتر الذي يبنيه الإطار حين يضع المستخدم علامة \"Include filters\" في\n   نافذة الطباعة. و\"الإجمالي\" هو آخر صف في التقارير الثلاثة، فيُبرَز بخلفية مميّزة.\n#}\n{% set NUMBER_TYPES = [\"Int\", \"Float\", \"Currency\", \"Percent\"] %}\n{% set TOTAL_WORDS = [\"Total\", \"الإجمالي\"] %}\n\n<div class=\"mo-rpt\" dir=\"rtl\">\n\n  <table class=\"mo-rpt-head\">\n    <tr>\n      <td class=\"mo-rpt-head-main\">\n        <div class=\"mo-rpt-title\">{{ title }}</div>\n        <div class=\"mo-rpt-rule\"></div>\n      </td>\n      <td class=\"mo-rpt-head-side\">\n        <div class=\"mo-rpt-mark\">نظام المعاملات</div>\n        <div class=\"mo-rpt-mark-sub\">Murasalat Office</div>\n      </td>\n    </tr>\n  </table>\n\n  {% if subtitle %}\n  <div class=\"mo-rpt-filters\">{{ subtitle | safe }}</div>\n  {% endif %}\n\n  <table class=\"mo-rpt-grid\">\n    <thead>\n      <tr>\n        {% for column in columns %}\n        <th{% if column.fieldtype in NUMBER_TYPES %} class=\"num\"{% endif %}>{{ column.label }}</th>\n        {% endfor %}\n      </tr>\n    </thead>\n    <tbody>\n      {% if data %}\n        {% for row in data %}\n        {% set first = row[columns[0].fieldname] %}\n        <tr{% if first in TOTAL_WORDS %} class=\"total\"{% elif loop.index0 % 2 %} class=\"alt\"{% endif %}>\n          {% for column in columns %}\n          {% set value = row[column.fieldname] %}\n          <td{% if column.fieldtype in NUMBER_TYPES %} class=\"num\"{% endif %}>\n            {% if value or value == 0 %}{{ value }}{% else %}<span class=\"mo-dash\">—</span>{% endif %}\n          </td>\n          {% endfor %}\n        </tr>\n        {% endfor %}\n      {% else %}\n        <tr>\n          <td colspan=\"{{ columns | length }}\" class=\"mo-empty\">لا توجد بيانات في هذه الفترة.</td>\n        </tr>\n      {% endif %}\n    </tbody>\n  </table>\n\n  <div class=\"mo-rpt-foot\">\n    <span class=\"mo-rpt-foot-brand\">نظام المعاملات — Murasalat Office</span>\n    <span class=\"mo-rpt-foot-note\">هذا التقرير محسوب وفق صلاحيات مُصدِره، ولا يتضمّن سجلًا لا يملك قراءته.</span>\n  </div>\n\n</div>\n\n<style>\n  @page { size: A4 portrait; margin: 10mm; }\n\n  .mo-rpt {\n    direction: rtl;\n    text-align: right;\n    font-family: \"Noto Naskh Arabic\", \"Amiri\", \"Traditional Arabic\", \"Segoe UI\", Tahoma, Arial, sans-serif;\n    color: #17231f;\n    font-size: 10pt;\n    line-height: 1.6;\n  }\n\n  table.mo-rpt-head { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }\n  table.mo-rpt-head td { border: none; padding: 0; vertical-align: bottom; }\n  .mo-rpt-title { font-size: 17pt; font-weight: bold; color: #123c35; }\n  .mo-rpt-rule { height: 2.6pt; background: #123c35; margin-top: 1.4mm; width: 100%; }\n  .mo-rpt-head-side { text-align: left; width: 42mm; }\n  .mo-rpt-mark { font-size: 11pt; font-weight: bold; color: #2f6b5f; }\n  .mo-rpt-mark-sub { font-size: 8pt; color: #7b8b86; direction: ltr; text-align: left; }\n\n  .mo-rpt-filters {\n    border: 0.6pt solid #c9d8d3;\n    background: #f4f8f6;\n    border-right: 3pt solid #c9821f;\n    padding: 2mm 3mm;\n    margin: 0 0 3.5mm 0;\n    font-size: 8.8pt;\n    color: #3c4a45;\n  }\n  .mo-rpt-filters .filter-row { display: block; }\n  .mo-rpt-filters strong { color: #123c35; }\n\n  table.mo-rpt-grid { width: 100%; border-collapse: collapse; }\n  .mo-rpt-grid thead th {\n    background: #123c35;\n    color: #ffffff;\n    font-size: 9.2pt;\n    font-weight: bold;\n    text-align: right;\n    padding: 2mm 2.2mm;\n    border: 0.6pt solid #123c35;\n  }\n  .mo-rpt-grid thead th.num { text-align: center; }\n  .mo-rpt-grid tbody td {\n    border: 0.6pt solid #d6e2de;\n    padding: 1.8mm 2.2mm;\n    vertical-align: middle;\n  }\n  .mo-rpt-grid tbody td.num {\n    text-align: center;\n    direction: ltr;\n    font-weight: bold;\n    font-family: \"DejaVu Sans Mono\", Consolas, monospace;\n    font-size: 9pt;\n  }\n  .mo-rpt-grid tbody tr.alt td { background: #f7faf9; }\n  .mo-rpt-grid tbody tr.total td {\n    background: #eef3f1;\n    border-top: 1.4pt solid #123c35;\n    color: #123c35;\n    font-weight: bold;\n  }\n  .mo-dash { color: #b3c2bd; }\n  .mo-empty {\n    text-align: center;\n    color: #7b8b86;\n    padding: 8mm 0;\n    font-size: 10pt;\n  }\n\n  .mo-rpt-foot {\n    margin-top: 4mm;\n    padding-top: 1.6mm;\n    border-top: 0.6pt solid #c9d8d3;\n    font-size: 7.8pt;\n    color: #55655f;\n    display: table;\n    width: 100%;\n  }\n  .mo-rpt-foot-brand { display: table-cell; text-align: right; font-weight: bold; color: #123c35; }\n  .mo-rpt-foot-note { display: table-cell; text-align: left; }\n</style>\n",
++ "print_format_builder": 0,
++ "print_format_builder_beta": 0,
++ "creation": "2026-09-24 00:00:00.000000",
++ "modified": "2026-09-24 00:00:00.000000",
++ "owner": "Administrator",
++ "modified_by": "Administrator",
++ "idx": 0,
++ "docstatus": 0
++}
+diff --git a/murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.html b/murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.html
+new file mode 100644
+index 0000000..7efa6fd
+--- /dev/null
++++ b/murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.html
+@@ -0,0 +1,153 @@
++{# قالب طباعة تقارير الإدارة — A4 ملوّن، عربي من اليمين إلى اليسار.
++
++   كيف يصل هذا القالب إلى الشاشة: يختاره المستخدم في نافذة الطباعة على التقرير، فيقرأه
++   الخادم بـ frappe.desk.query_report.get_print_format_data ويعيد html و css، ثم يرسمه
++   الإطار في المتصفح. فالقالب لا يستدعي شيئًا من الخادم ولا يستعمل frappe.*: يقرأ ما يمرّره
++   الإطار إليه ويرسمه.
++
++   المتغيّرات المتاحة (من query_report.js::pdf_report):
++     title, subtitle, filters, data, columns, original_data, report, print_settings
++
++   subtitle هو سطر الفلاتر الذي يبنيه الإطار حين يضع المستخدم علامة "Include filters" في
++   نافذة الطباعة. و"الإجمالي" هو آخر صف في التقارير الثلاثة، فيُبرَز بخلفية مميّزة.
++#}
++{% set NUMBER_TYPES = ["Int", "Float", "Currency", "Percent"] %}
++{% set TOTAL_WORDS = ["Total", "الإجمالي"] %}
++
++<div class="mo-rpt" dir="rtl">
++
++  <table class="mo-rpt-head">
++    <tr>
++      <td class="mo-rpt-head-main">
++        <div class="mo-rpt-title">{{ title }}</div>
++        <div class="mo-rpt-rule"></div>
++      </td>
++      <td class="mo-rpt-head-side">
++        <div class="mo-rpt-mark">نظام المعاملات</div>
++        <div class="mo-rpt-mark-sub">Murasalat Office</div>
++      </td>
++    </tr>
++  </table>
++
++  {% if subtitle %}
++  <div class="mo-rpt-filters">{{ subtitle | safe }}</div>
++  {% endif %}
++
++  <table class="mo-rpt-grid">
++    <thead>
++      <tr>
++        {% for column in columns %}
++        <th{% if column.fieldtype in NUMBER_TYPES %} class="num"{% endif %}>{{ column.label }}</th>
++        {% endfor %}
++      </tr>
++    </thead>
++    <tbody>
++      {% if data %}
++        {% for row in data %}
++        {% set first = row[columns[0].fieldname] %}
++        <tr{% if first in TOTAL_WORDS %} class="total"{% elif loop.index0 % 2 %} class="alt"{% endif %}>
++          {% for column in columns %}
++          {% set value = row[column.fieldname] %}
++          <td{% if column.fieldtype in NUMBER_TYPES %} class="num"{% endif %}>
++            {% if value or value == 0 %}{{ value }}{% else %}<span class="mo-dash">—</span>{% endif %}
++          </td>
++          {% endfor %}
++        </tr>
++        {% endfor %}
++      {% else %}
++        <tr>
++          <td colspan="{{ columns | length }}" class="mo-empty">لا توجد بيانات في هذه الفترة.</td>
++        </tr>
++      {% endif %}
++    </tbody>
++  </table>
++
++  <div class="mo-rpt-foot">
++    <span class="mo-rpt-foot-brand">نظام المعاملات — Murasalat Office</span>
++    <span class="mo-rpt-foot-note">هذا التقرير محسوب وفق صلاحيات مُصدِره، ولا يتضمّن سجلًا لا يملك قراءته.</span>
++  </div>
++
++</div>
++
++<style>
++  @page { size: A4 portrait; margin: 10mm; }
++
++  .mo-rpt {
++    direction: rtl;
++    text-align: right;
++    font-family: "Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
++    color: #17231f;
++    font-size: 10pt;
++    line-height: 1.6;
++  }
++
++  table.mo-rpt-head { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
++  table.mo-rpt-head td { border: none; padding: 0; vertical-align: bottom; }
++  .mo-rpt-title { font-size: 17pt; font-weight: bold; color: #123c35; }
++  .mo-rpt-rule { height: 2.6pt; background: #123c35; margin-top: 1.4mm; width: 100%; }
++  .mo-rpt-head-side { text-align: left; width: 42mm; }
++  .mo-rpt-mark { font-size: 11pt; font-weight: bold; color: #2f6b5f; }
++  .mo-rpt-mark-sub { font-size: 8pt; color: #7b8b86; direction: ltr; text-align: left; }
++
++  .mo-rpt-filters {
++    border: 0.6pt solid #c9d8d3;
++    background: #f4f8f6;
++    border-right: 3pt solid #c9821f;
++    padding: 2mm 3mm;
++    margin: 0 0 3.5mm 0;
++    font-size: 8.8pt;
++    color: #3c4a45;
++  }
++  .mo-rpt-filters .filter-row { display: block; }
++  .mo-rpt-filters strong { color: #123c35; }
++
++  table.mo-rpt-grid { width: 100%; border-collapse: collapse; }
++  .mo-rpt-grid thead th {
++    background: #123c35;
++    color: #ffffff;
++    font-size: 9.2pt;
++    font-weight: bold;
++    text-align: right;
++    padding: 2mm 2.2mm;
++    border: 0.6pt solid #123c35;
++  }
++  .mo-rpt-grid thead th.num { text-align: center; }
++  .mo-rpt-grid tbody td {
++    border: 0.6pt solid #d6e2de;
++    padding: 1.8mm 2.2mm;
++    vertical-align: middle;
++  }
++  .mo-rpt-grid tbody td.num {
++    text-align: center;
++    direction: ltr;
++    font-weight: bold;
++    font-family: "DejaVu Sans Mono", Consolas, monospace;
++    font-size: 9pt;
++  }
++  .mo-rpt-grid tbody tr.alt td { background: #f7faf9; }
++  .mo-rpt-grid tbody tr.total td {
++    background: #eef3f1;
++    border-top: 1.4pt solid #123c35;
++    color: #123c35;
++    font-weight: bold;
++  }
++  .mo-dash { color: #b3c2bd; }
++  .mo-empty {
++    text-align: center;
++    color: #7b8b86;
++    padding: 8mm 0;
++    font-size: 10pt;
++  }
++
++  .mo-rpt-foot {
++    margin-top: 4mm;
++    padding-top: 1.6mm;
++    border-top: 0.6pt solid #c9d8d3;
++    font-size: 7.8pt;
++    color: #55655f;
++    display: table;
++    width: 100%;
++  }
++  .mo-rpt-foot-brand { display: table-cell; text-align: right; font-weight: bold; color: #123c35; }
++  .mo-rpt-foot-note { display: table-cell; text-align: left; }
++</style>
+diff --git a/murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.json b/murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.json
+new file mode 100644
+index 0000000..77706a7
+--- /dev/null
++++ b/murasalat_office/murasalat_office/print_format/murasalat_response_times_print/murasalat_response_times_print.json
+@@ -0,0 +1,31 @@
++{
++ "doctype": "Print Format",
++ "name": "Murasalat Response Times Print",
++ "module": "Murasalat Office",
++ "doc_type": null,
++ "report": "Murasalat Response Times",
++ "print_format_for": "Report",
++ "print_format_type": "Jinja",
++ "custom_format": 1,
++ "standard": "No",
++ "disabled": 0,
++ "align_labels_right": 0,
++ "show_section_headings": 0,
++ "line_breaks": 0,
++ "absolute_value": 0,
++ "font_size": 10,
++ "page_number": "Hide",
++ "margin_top": 0.0,
++ "margin_bottom": 0.0,
++ "margin_left": 0.0,
++ "margin_right": 0.0,
++ "html": "{# قالب طباعة تقارير الإدارة — A4 ملوّن، عربي من اليمين إلى اليسار.\n\n   كيف يصل هذا القالب إلى الشاشة: يختاره المستخدم في نافذة الطباعة على التقرير، فيقرأه\n   الخادم بـ frappe.desk.query_report.get_print_format_data ويعيد html و css، ثم يرسمه\n   الإطار في المتصفح. فالقالب لا يستدعي شيئًا من الخادم ولا يستعمل frappe.*: يقرأ ما يمرّره\n   الإطار إليه ويرسمه.\n\n   المتغيّرات المتاحة (من query_report.js::pdf_report):\n     title, subtitle, filters, data, columns, original_data, report, print_settings\n\n   subtitle هو سطر الفلاتر الذي يبنيه الإطار حين يضع المستخدم علامة \"Include filters\" في\n   نافذة الطباعة. و\"الإجمالي\" هو آخر صف في التقارير الثلاثة، فيُبرَز بخلفية مميّزة.\n#}\n{% set NUMBER_TYPES = [\"Int\", \"Float\", \"Currency\", \"Percent\"] %}\n{% set TOTAL_WORDS = [\"Total\", \"الإجمالي\"] %}\n\n<div class=\"mo-rpt\" dir=\"rtl\">\n\n  <table class=\"mo-rpt-head\">\n    <tr>\n      <td class=\"mo-rpt-head-main\">\n        <div class=\"mo-rpt-title\">{{ title }}</div>\n        <div class=\"mo-rpt-rule\"></div>\n      </td>\n      <td class=\"mo-rpt-head-side\">\n        <div class=\"mo-rpt-mark\">نظام المعاملات</div>\n        <div class=\"mo-rpt-mark-sub\">Murasalat Office</div>\n      </td>\n    </tr>\n  </table>\n\n  {% if subtitle %}\n  <div class=\"mo-rpt-filters\">{{ subtitle | safe }}</div>\n  {% endif %}\n\n  <table class=\"mo-rpt-grid\">\n    <thead>\n      <tr>\n        {% for column in columns %}\n        <th{% if column.fieldtype in NUMBER_TYPES %} class=\"num\"{% endif %}>{{ column.label }}</th>\n        {% endfor %}\n      </tr>\n    </thead>\n    <tbody>\n      {% if data %}\n        {% for row in data %}\n        {% set first = row[columns[0].fieldname] %}\n        <tr{% if first in TOTAL_WORDS %} class=\"total\"{% elif loop.index0 % 2 %} class=\"alt\"{% endif %}>\n          {% for column in columns %}\n          {% set value = row[column.fieldname] %}\n          <td{% if column.fieldtype in NUMBER_TYPES %} class=\"num\"{% endif %}>\n            {% if value or value == 0 %}{{ value }}{% else %}<span class=\"mo-dash\">—</span>{% endif %}\n          </td>\n          {% endfor %}\n        </tr>\n        {% endfor %}\n      {% else %}\n        <tr>\n          <td colspan=\"{{ columns | length }}\" class=\"mo-empty\">لا توجد بيانات في هذه الفترة.</td>\n        </tr>\n      {% endif %}\n    </tbody>\n  </table>\n\n  <div class=\"mo-rpt-foot\">\n    <span class=\"mo-rpt-foot-brand\">نظام المعاملات — Murasalat Office</span>\n    <span class=\"mo-rpt-foot-note\">هذا التقرير محسوب وفق صلاحيات مُصدِره، ولا يتضمّن سجلًا لا يملك قراءته.</span>\n  </div>\n\n</div>\n\n<style>\n  @page { size: A4 portrait; margin: 10mm; }\n\n  .mo-rpt {\n    direction: rtl;\n    text-align: right;\n    font-family: \"Noto Naskh Arabic\", \"Amiri\", \"Traditional Arabic\", \"Segoe UI\", Tahoma, Arial, sans-serif;\n    color: #17231f;\n    font-size: 10pt;\n    line-height: 1.6;\n  }\n\n  table.mo-rpt-head { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }\n  table.mo-rpt-head td { border: none; padding: 0; vertical-align: bottom; }\n  .mo-rpt-title { font-size: 17pt; font-weight: bold; color: #123c35; }\n  .mo-rpt-rule { height: 2.6pt; background: #123c35; margin-top: 1.4mm; width: 100%; }\n  .mo-rpt-head-side { text-align: left; width: 42mm; }\n  .mo-rpt-mark { font-size: 11pt; font-weight: bold; color: #2f6b5f; }\n  .mo-rpt-mark-sub { font-size: 8pt; color: #7b8b86; direction: ltr; text-align: left; }\n\n  .mo-rpt-filters {\n    border: 0.6pt solid #c9d8d3;\n    background: #f4f8f6;\n    border-right: 3pt solid #c9821f;\n    padding: 2mm 3mm;\n    margin: 0 0 3.5mm 0;\n    font-size: 8.8pt;\n    color: #3c4a45;\n  }\n  .mo-rpt-filters .filter-row { display: block; }\n  .mo-rpt-filters strong { color: #123c35; }\n\n  table.mo-rpt-grid { width: 100%; border-collapse: collapse; }\n  .mo-rpt-grid thead th {\n    background: #123c35;\n    color: #ffffff;\n    font-size: 9.2pt;\n    font-weight: bold;\n    text-align: right;\n    padding: 2mm 2.2mm;\n    border: 0.6pt solid #123c35;\n  }\n  .mo-rpt-grid thead th.num { text-align: center; }\n  .mo-rpt-grid tbody td {\n    border: 0.6pt solid #d6e2de;\n    padding: 1.8mm 2.2mm;\n    vertical-align: middle;\n  }\n  .mo-rpt-grid tbody td.num {\n    text-align: center;\n    direction: ltr;\n    font-weight: bold;\n    font-family: \"DejaVu Sans Mono\", Consolas, monospace;\n    font-size: 9pt;\n  }\n  .mo-rpt-grid tbody tr.alt td { background: #f7faf9; }\n  .mo-rpt-grid tbody tr.total td {\n    background: #eef3f1;\n    border-top: 1.4pt solid #123c35;\n    color: #123c35;\n    font-weight: bold;\n  }\n  .mo-dash { color: #b3c2bd; }\n  .mo-empty {\n    text-align: center;\n    color: #7b8b86;\n    padding: 8mm 0;\n    font-size: 10pt;\n  }\n\n  .mo-rpt-foot {\n    margin-top: 4mm;\n    padding-top: 1.6mm;\n    border-top: 0.6pt solid #c9d8d3;\n    font-size: 7.8pt;\n    color: #55655f;\n    display: table;\n    width: 100%;\n  }\n  .mo-rpt-foot-brand { display: table-cell; text-align: right; font-weight: bold; color: #123c35; }\n  .mo-rpt-foot-note { display: table-cell; text-align: left; }\n</style>\n",
++ "print_format_builder": 0,
++ "print_format_builder_beta": 0,
++ "creation": "2026-09-24 00:00:00.000000",
++ "modified": "2026-09-24 00:00:00.000000",
++ "owner": "Administrator",
++ "modified_by": "Administrator",
++ "idx": 0,
++ "docstatus": 0
++}
+diff --git a/murasalat_office/setup/provision.py b/murasalat_office/setup/provision.py
+index 37a4428..7595823 100644
+--- a/murasalat_office/setup/provision.py
++++ b/murasalat_office/setup/provision.py
+@@ -25,7 +25,7 @@ half-built Workflow.
+ import frappe
+ from frappe import _
+ 
+-from murasalat_office.setup import governance_plan, master_data
++from murasalat_office.setup import governance_plan, master_data, report_print_formats
+ 
+ CORRESPONDENCE = "Murasalat Correspondence"
+ REFERRAL = "Murasalat Referral"
+@@ -220,10 +220,11 @@ def apply(confirm=False):
+             _("This writes roles, permissions and Workflows. Re-run with confirm=True.")
+         )
+ 
+-    report = {"master_data": None, "roles": [], "workflows": [], "errors": []}
++    report = {"master_data": None, "roles": [], "workflows": [], "print_formats": None, "errors": []}
+ 
+     report["master_data"] = master_data.seed()
+     report["roles"] = governance_plan.materialize(confirm=True)
++    report["print_formats"] = report_print_formats.install()
+ 
+     try:
+         names = _workflow_fieldnames()
+diff --git a/murasalat_office/setup/report_print_formats.py b/murasalat_office/setup/report_print_formats.py
+new file mode 100644
+index 0000000..442cab0
+--- /dev/null
++++ b/murasalat_office/setup/report_print_formats.py
+@@ -0,0 +1,87 @@
++"""Create the A4 print formats for the three management reports.
++
++Why this exists instead of being picked up by `bench migrate` like the two DocType print
++formats: Frappe's ``PrintFormat.before_save`` forces every report format to
++``custom_format = 1`` and ``standard = "No"`` -
++
++    def before_save(self):
++        if self.print_format_for == "Report":
++            self.custom_format = 1
++            self.standard = "No"
++
++- because the framework treats a report layout as a site customisation rather than a document an
++application ships. A row that is not ``standard = "Yes"`` is not re-imported from the module
++folder, so the formats are created here through Frappe's own model instead - exactly what Desk
++does when somebody saves a Print Format by hand, which keeps the Native-First promise intact.
++
++The template itself lives in ``print_format/<slug>/<slug>.html`` and is read from there, so the
++shipped file stays the single source. An existing format is reported, never overwritten: a site
++may have restyled it.
++
++    bench --site <site> execute murasalat_office.setup.report_print_formats.plan
++    bench --site <site> execute murasalat_office.setup.report_print_formats.install
++"""
++import json
++import pathlib
++
++import frappe
++
++MODULE = "Murasalat Office"
++
++# slug -> the Report the format prints
++FORMATS = {
++    "murasalat_management_summary_print": "Murasalat Management Summary",
++    "murasalat_department_workload_print": "Murasalat Department Workload",
++    "murasalat_response_times_print": "Murasalat Response Times",
++}
++
++
++def _folder(slug):
++    return pathlib.Path(frappe.get_app_path("murasalat_office", MODULE.lower().replace(" ", "_"),
++                                            "print_format", slug))
++
++
++def _definition(slug):
++    """Read what the app ships: the JSON for metadata, the HTML for the template."""
++    folder = _folder(slug)
++    meta = json.loads((folder / f"{slug}.json").read_text(encoding="utf-8"))
++    meta["html"] = (folder / f"{slug}.html").read_text(encoding="utf-8")
++    return meta
++
++
++def plan():
++    """Read-only: which formats are missing, which already exist, and on which report."""
++    return [
++        {
++            "format": slug,
++            "report": report,
++            "exists": bool(frappe.db.exists("Print Format", _definition(slug)["name"])),
++        }
++        for slug, report in FORMATS.items()
++    ]
++
++
++def install():
++    """Create the missing formats. Idempotent, and never overwrites an existing one."""
++    report = {"created": [], "exists": [], "errors": []}
++
++    for slug, report_name in FORMATS.items():
++        try:
++            definition = _definition(slug)
++        except Exception as exc:  # noqa: BLE001 - a missing file is reported, not thrown
++            report["errors"].append(f"{slug}: {exc}")
++            continue
++
++        if frappe.db.exists("Print Format", definition["name"]):
++            report["exists"].append(definition["name"])
++            continue
++
++        try:
++            frappe.get_doc(definition).insert(ignore_permissions=True)
++        except Exception as exc:  # noqa: BLE001
++            report["errors"].append(f"{definition['name']}: {exc}")
++            continue
++
++        report["created"].append(definition["name"])
++
++    return report
+diff --git a/murasalat_office/tests/test_report_print_formats.py b/murasalat_office/tests/test_report_print_formats.py
+new file mode 100644
+index 0000000..463da26
+--- /dev/null
++++ b/murasalat_office/tests/test_report_print_formats.py
+@@ -0,0 +1,226 @@
++"""The A4 print formats for the three management reports.
++
++Frappe renders a report layout differently from a DocType one. The user picks the format in the
++report's print dialog, the server returns its html and css through
++``frappe.desk.query_report.get_print_format_data``, and the framework renders it in the browser
++with ``query_report.js::pdf_report``. So the template sees ``title, subtitle, filters, data,
++columns, original_data, report, print_settings`` - and it may not call ``frappe.*`` at all,
++because there is no server-side render for it to call into.
++
++That makes executing the template the only honest check: these tests render it with real columns
++and rows, so a broken loop, a lost total row or an empty-data crash fails here.
++"""
++import json
++from pathlib import Path
++
++import jinja2
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++PRINT_FORMAT_DIR = ROOT / "murasalat_office/print_format"
++REPORT_DIR = ROOT / "murasalat_office/report"
++INSTALLER = ROOT / "setup/report_print_formats.py"
++PROVISION = ROOT / "setup/provision.py"
++
++FORMATS = [
++    ("murasalat_management_summary_print", "Murasalat Management Summary Print",
++     "Murasalat Management Summary", "murasalat_management_summary"),
++    ("murasalat_department_workload_print", "Murasalat Department Workload Print",
++     "Murasalat Department Workload", "murasalat_department_workload"),
++    ("murasalat_response_times_print", "Murasalat Response Times Print",
++     "Murasalat Response Times", "murasalat_response_times"),
++]
++
++SLUGS = [row[0] for row in FORMATS]
++
++
++def _folder(slug):
++    return PRINT_FORMAT_DIR / slug
++
++
++def _template(slug):
++    return (_folder(slug) / f"{slug}.html").read_text(encoding="utf-8")
++
++
++def _meta(slug):
++    return json.loads((_folder(slug) / f"{slug}.json").read_text(encoding="utf-8"))
++
++
++def _render(slug, **context):
++    environment = jinja2.Environment(autoescape=True)
++    return environment.from_string(_template(slug)).render(**context)
++
++
++COLUMNS = [
++    {"label": "الاتجاه", "fieldname": "direction", "fieldtype": "Data"},
++    {"label": "المستلم", "fieldname": "received", "fieldtype": "Int"},
++    {"label": "المغلق", "fieldname": "closed", "fieldtype": "Int"},
++    {"label": "متوسط أيام الإغلاق", "fieldname": "avg_close_days", "fieldtype": "Float"},
++]
++
++DATA = [
++    {"direction": "وارد", "received": 12, "closed": 9, "avg_close_days": 6.4},
++    {"direction": "صادر", "received": 7, "closed": 4, "avg_close_days": None},
++    {"direction": "داخلي", "received": 0, "closed": 0, "avg_close_days": 0},
++    {"direction": "الإجمالي", "received": 19, "closed": 13, "avg_close_days": 5.1},
++]
++
++
++# --- packed where Frappe expects, and declared honestly -------------------------------
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_each_format_is_packed_where_frappe_looks(slug):
++    folder = _folder(slug)
++
++    assert folder.is_dir(), slug
++    for suffix in (".html", ".json"):
++        assert (folder / f"{slug}{suffix}").is_file(), (slug, suffix)
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_each_format_targets_a_report_that_exists(slug):
++    """A format pointing at a report that is not there would list nowhere."""
++    meta = _meta(slug)
++
++    assert meta["doctype"] == "Print Format"
++    assert meta["print_format_for"] == "Report"
++    assert meta["print_format_type"] == "Jinja"
++    assert meta["module"] == "Murasalat Office"
++    assert not meta.get("disabled")
++    assert meta["report"] == dict((row[0], row[2]) for row in FORMATS)[slug]
++
++    report_folder = REPORT_DIR / dict((row[0], row[3]) for row in FORMATS)[slug]
++    assert report_folder.is_dir(), f"{meta['report']} is not a report in this app"
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_metadata_matches_what_frappe_forces_on_a_report_format(slug):
++    """PrintFormat.before_save sets custom_format=1 and standard="No" for a report layout.
++
++    The framework treats a report format as a site customisation, not a document an app ships.
++    Claiming "Yes" here would only be rewritten on the first save, so the files state what the
++    framework will make them - and the installer creates the rows instead of relying on import.
++    """
++    meta = _meta(slug)
++
++    assert meta["custom_format"] == 1
++    assert meta["standard"] == "No"
++    assert meta["doc_type"] is None
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_no_format_ships_a_permission_row(slug):
++    """Access stays site configuration, as it is for every other document in this app."""
++    assert "permissions" not in _meta(slug)
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_embedded_html_is_the_shipped_file(slug):
++    """One source: the HTML file. The installer reads that file, not the copy in the JSON."""
++    assert _meta(slug)["html"] == _template(slug)
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_installer_reads_the_shipped_files(slug):
++    source = INSTALLER.read_text(encoding="utf-8")
++
++    assert "def plan():" in source and "def install():" in source
++    assert '"html"' in source, "the template is read from the shipped file"
++    assert "frappe.get_app_path" in source, "the app path is resolved, not guessed"
++    assert "exists(" in source, "an existing format must be reported, not overwritten"
++
++
++def test_one_command_installs_them_with_everything_else():
++    source = PROVISION.read_text(encoding="utf-8")
++
++    assert "report_print_formats" in source
++    assert "report_print_formats.install()" in source
++
++
++# --- the template, parsed and rendered --------------------------------------------------
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_template_is_valid_jinja(slug):
++    jinja2.Environment().parse(_template(slug), filename=slug)
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_template_is_arabic_right_to_left_on_a4(slug):
++    source = _template(slug)
++
++    assert 'dir="rtl"' in source
++    assert "direction: rtl" in source
++    assert "Noto Naskh Arabic" in source, "an Arabic document must not fall back to Latin fonts"
++    assert "size: A4" in source
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_template_never_reaches_for_the_server(slug):
++    """There is no server-side render for a report layout - the browser renders this.
++
++    Jinja comments are stripped first: they document the mechanism by name, and a mention in
++    prose is not a call. What is checked is the code that actually renders.
++    """
++    import re
++
++    code = re.sub(r"\{#.*?#\}", "", _template(slug), flags=re.S)
++
++    assert "frappe." not in code, (
++        "a report print template is rendered in the browser and cannot call frappe.*"
++    )
++    assert "{% " in code, "the guard must have left the actual template in place"
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_every_column_and_value_is_rendered(slug):
++    html = _render(slug, title="ملخص الإدارة", subtitle=None, filters={},
++                   data=DATA, columns=COLUMNS)
++
++    for column in COLUMNS:
++        assert column["label"] in html, (slug, column["label"])
++
++    for row in DATA:
++        assert row["direction"] in html, (slug, row["direction"])
++        assert str(row["received"]) in html, (slug, row["received"])
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_total_row_is_marked_and_so_is_every_alternate_row(slug):
++    html = _render(slug, title="ت", subtitle=None, filters={}, data=DATA, columns=COLUMNS)
++
++    assert 'class="total"' in html, "the total row must stand out"
++    assert 'class="alt"' in html, "zebra striping keeps a long table readable"
++    assert html.count('class="total"') == 1
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_numbers_are_centred_and_missing_values_read_as_a_dash(slug):
++    html = _render(slug, title="ت", subtitle=None, filters={}, data=DATA, columns=COLUMNS)
++
++    assert 'class="num"' in html
++    assert "mo-dash" in html, "an unfinished measurement shows as a dash, not as a zero"
++    assert "0" in html, "a real zero is printed as a zero"
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_an_empty_period_prints_a_message_instead_of_breaking(slug):
++    html = _render(slug, title="ت", subtitle=None, filters={}, data=[], columns=COLUMNS)
++
++    assert "لا توجد بيانات" in html
++    assert 'colspan="4"' in html
++
++
++@pytest.mark.parametrize("slug", SLUGS)
++def test_the_filters_line_is_left_to_the_framework(slug):
++    """Frappe builds it as HTML and passes it as `subtitle` when the user ticks Include filters."""
++    html = _render(slug, title="ت", subtitle="<div>من 2026-09-01</div>", filters={},
++                   data=DATA, columns=COLUMNS)
++
++    assert "من 2026-09-01" in html, "the filter line has to reach the page unescaped"
++
++
++def test_the_reports_themselves_are_untouched():
++    for slug, _, _, report_slug in FORMATS:
++        assert (REPORT_DIR / report_slug / f"{report_slug}.py").is_file(), slug
+-- 
+2.43.0
+

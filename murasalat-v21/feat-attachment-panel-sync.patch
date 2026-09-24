@@ -1,0 +1,96 @@
+From 1a97edd34f48c7dea2a9e7cb0e6b6d7c4f1a58d5 Mon Sep 17 00:00:00 2001
+From: genspark_dev <genspark_dev@genspark.ai>
+Date: Thu, 24 Sep 2026 03:56:30 +0300
+Subject: [PATCH] Declare the backfill the way Frappe can resolve it
+
+bench migrate aborted:
+
+    execute_patch -> exec(patch, globals())
+    NameError: name 'murasalat_office' is not defined
+
+patch_handler.execute_patch has two branches. A line prefixed with `execute:` is documented
+there as being for "simple python commands" and is exec'd as raw Python in patch_handler's own
+globals - which hold no app name, only what that module imported - so a third-party module
+path cannot resolve. The other branch resolves the line with frappe.get_attr, which imports
+the module properly. The backfill is therefore listed as a bare module path.
+
+The two v0_2x lines keep their legacy text deliberately: the line itself is the key in the
+Patch Log, so rewriting them would make Frappe treat them as new patches and run them again.
+
+The patch function also gains a docstring, since Frappe prints it during migrate, and the test
+that asserted the broken declaration now guards against its return.
+---
+ murasalat_office/patches.txt                  |  7 ++++-
+ .../patches/v0_23_index_record_attachments.py |  1 +
+ .../tests/test_attachment_native_index.py     | 27 ++++++++++++++++---
+ 3 files changed, 31 insertions(+), 4 deletions(-)
+
+diff --git a/murasalat_office/patches.txt b/murasalat_office/patches.txt
+index 21274e5..d999433 100644
+--- a/murasalat_office/patches.txt
++++ b/murasalat_office/patches.txt
+@@ -2,4 +2,9 @@
+ 
+ execute:murasalat_office.patches.v0_21_migrate_referrals.execute
+ execute:murasalat_office.patches.v0_22_preserve_referral_history.execute
+-execute:murasalat_office.patches.v0_23_index_record_attachments.execute
++# New patches are listed as a bare module path: Frappe resolves that with frappe.get_attr,
++# which imports the module properly. A line prefixed with `execute:` is exec'd as raw Python
++# in patch_handler's own namespace - which holds no app name - so it raises NameError for an
++# app module. The two v0_2x lines above keep the legacy text on purpose: the line itself is
++# the key in the Patch Log, so rewriting them would make Frappe treat them as new patches.
++murasalat_office.patches.v0_23_index_record_attachments
+diff --git a/murasalat_office/patches/v0_23_index_record_attachments.py b/murasalat_office/patches/v0_23_index_record_attachments.py
+index 593259f..f081512 100644
+--- a/murasalat_office/patches/v0_23_index_record_attachments.py
++++ b/murasalat_office/patches/v0_23_index_record_attachments.py
+@@ -22,6 +22,7 @@ from murasalat_office.services import attachment_index
+ 
+ 
+ def execute():
++    """Index the attachments that predate automatic indexing (read-only plan first)."""
+     plan = attachment_index.plan_indexing()
+     summary = attachment_index.apply_indexing(plan)
+ 
+diff --git a/murasalat_office/tests/test_attachment_native_index.py b/murasalat_office/tests/test_attachment_native_index.py
+index 2332974..c29d3d4 100644
+--- a/murasalat_office/tests/test_attachment_native_index.py
++++ b/murasalat_office/tests/test_attachment_native_index.py
+@@ -306,10 +306,31 @@ def test_an_indexing_failure_does_not_abort_the_upload():
+     assert log["errors"] == ["Attachment index failed"], "the failure is recorded, not swallowed"
+ 
+ 
+-def test_the_backfill_ships_as_a_patch_and_says_so():
++def test_the_backfill_is_declared_the_way_frappe_can_resolve_it():
++    """A declaration that made `bench migrate` abort with NameError.
++
++    patch_handler.execute_patch runs `exec(patch, globals())` for a line prefixed with
++    `execute:`, so the dotted path is evaluated in patch_handler's own namespace - which holds
++    no app name, only what that module imported. Its other branch resolves the line with
++    frappe.get_attr, which imports the module properly. So the module path is listed bare.
++    """
+     patches = PATCHES.read_text(encoding="utf-8")
+-    assert "execute:murasalat_office.patches.v0_23_index_record_attachments.execute" in patches
+-    assert (ROOT / "patches/v0_23_index_record_attachments.py").is_file()
++    line = "murasalat_office.patches.v0_23_index_record_attachments"
++
++    assert line in patches
++    assert "execute:" + line not in patches, "this form aborts migrate with NameError"
++
++    module = ROOT / "patches/v0_23_index_record_attachments.py"
++    assert module.is_file()
++    assert "def execute():" in module.read_text(encoding="utf-8")
++
++
++def test_the_patch_describes_itself_while_migrating():
++    """Frappe prints the patch function's docstring, so it must say what the patch does."""
++    module = (ROOT / "patches/v0_23_index_record_attachments.py").read_text(encoding="utf-8")
++    after_def = module.split("def execute():", 1)[1].strip()
++
++    assert after_def.startswith('"""'), "migrate would print an empty description"
+ 
+ 
+ def test_the_patch_tells_the_operator_what_it_did():
+-- 
+2.43.0
+
