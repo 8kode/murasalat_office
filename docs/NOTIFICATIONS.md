@@ -8,7 +8,7 @@ scheduler, no queue, no transport, no second assignment model.
 |---|---|---|
 | What arrived? | Assignment -> ToDo + the framework's own assignment notification | An Assignment Rule (configuration) |
 | What should I do? | The same ToDo, carrying the referral's due date | `due_date_based_on = due_date` |
-| When must I finish? | `Notification`, event **Days Before** | One rule, `days_in_advance = 1` |
+| When must I finish? | `Notification`, event **Days Before** | Two rules: `days_in_advance = 1` and `0` |
 | What is late? | `Notification`, event **Days After** | One rule, `days_in_advance = 1` |
 | Is a formal action waiting for me? | The framework's **Workflow Action** list | Nothing |
 
@@ -82,8 +82,19 @@ Short, Arabic, and carrying the referral's own identity only:
 
 | Rule | Bell headline (`notification_title`) | Detail (`subject`, rendered) |
 |---|---|---|
-| Due soon | `موعد إحالة يقرب` | `الإحالة {{ doc.name }} موعدها {{ doc.due_date }}` |
-| Overdue | `لديك إحالة متأخرة` | `الإحالة {{ doc.name }} تجاوزت موعدها {{ doc.due_date }}` |
+| Due soon, one day before | `موعد إحالة يقرب` | `الإحالة {{ doc.name }} موعدها {{ doc.due_date }}` |
+| Due today | `إحالة تستحق اليوم` | `الإحالة {{ doc.name }} موعدها اليوم` |
+| Overdue, one day after | `لديك إحالة متأخرة` | `الإحالة {{ doc.name }} تجاوزت موعدها {{ doc.due_date }}` |
+
+Three reminders, one per day at most, and none of them repeats: `days_in_advance` is `1`, `0`, `1`
+across events `Days Before`, `Days Before`, `Days After`. The middle one exists because with only
+the outer two the due date itself - the one day the work is actually owed - was silent.
+
+The type is created under the framework's own field name (`type_name`, the doctype being
+autonamed `field:type_name`), so the reminders land in the bell under their own category. That is
+what lets a user mute *these* reminders and nothing else: Frappe ships
+`Notification Type Preference`, and a user who finds the type noisy can switch it off in their own
+Notification Settings without losing assignments or anything else.
 
 The headline is deliberately **static**: it is both the bell's category and part of the duplicate
 guard's key, so it must not depend on the document's values. The referral number and the date go
@@ -151,6 +162,9 @@ runs the framework's own job on demand to see one.
 * **A due date set in the past.** The framework matches the date field exactly, so a referral
   created already overdue misses its single "overdue" day. It still shows as overdue in the list
   indicator, in `Murasalat Overdue Referrals`, and on the form.
+* **A due date changed after a reminder went out.** The reminder that already fired stays in the
+  log, and the new date earns its own reminders - so moving a due date out can produce a second
+  "due soon" notice. Bounded at one per rule, but visible.
 * **Notification Settings.** A user who disabled notifications (`is_notifications_enabled`) is
   filtered out by the framework before a log is written. That is the user's own choice, and the
   app does not override it.

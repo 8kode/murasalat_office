@@ -25,10 +25,11 @@ Four decisions worth the sentence:
   so responsibility that ended takes its reminders with it - the Assignment Rule's close
   condition is what ends it. ``recipient_user`` would keep reminding a user who is no longer
   responsible, and a role recipient would remind every holder of the role.
-* **One day before the due date, one day after.** The framework matches the date field exactly,
-  so each reminder fires on a single day and a referral earns at most two reminders in its
-  life. ``days_in_advance`` is an Int field: changing the lead time is a Desk edit, not a
-  release.
+* **The day before, the day itself, and the day after.** The framework matches the date field
+  exactly, so each reminder fires on one day only - and a referral earns at most three reminders
+  in its life, one per day. ``days_in_advance`` is an Int field: changing a lead time is a Desk
+  edit, not a release. The middle one is not decoration: with only the outer two, the day a
+  referral is actually due was the one day nothing reached the person who owes it.
 * **The duplicate guard is a condition, not code.** The date match already limits a reminder to
   one day; the condition additionally refuses when a Notification Log of that kind already
   exists for the document, so a second run of the same day's job writes nothing.
@@ -66,6 +67,14 @@ REMINDERS = [
         "title": "موعد إحالة يقرب",
         "subject": "الإحالة {{ doc.name }} موعدها {{ doc.due_date }}",
         "message": "إحالة موكولة إليك يقترب موعدها. افتحها لاستلامها أو إتمامها.",
+    },
+    {
+        "name": "Murasalat Referral Due Today",
+        "event": "Days Before",
+        "days_in_advance": 0,
+        "title": "إحالة تستحق اليوم",
+        "subject": "الإحالة {{ doc.name }} موعدها اليوم",
+        "message": "إحالة موكولة إليك موعدها اليوم. افتحها لتسجيل ما تم.",
     },
     {
         "name": "Murasalat Referral Overdue",
@@ -137,9 +146,12 @@ def _notification_type(name, create=True):
         return "Alert"
 
     try:
-        frappe.get_doc(
-            {"doctype": "Notification Type", "notification_type": name}
-        ).insert(ignore_permissions=True)
+        # The doctype's autoname is `field:type_name`, and its data field is `type_name` - not
+        # `notification_type`, which is the *Notification's* own field. Naming it wrong here
+        # throws inside the insert and this silently downgrades to "Alert".
+        frappe.get_doc({"doctype": "Notification Type", "type_name": name}).insert(
+            ignore_permissions=True
+        )
     except Exception:  # noqa: BLE001 - the fallback is a working configuration, not a failure
         return "Alert"
 

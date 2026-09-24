@@ -92,7 +92,7 @@ OPEN = dict(
 def test_the_reminder_is_the_frameworks_date_mechanism(reminder):
     """Days Before / Days After is what `trigger_daily_alerts` runs, once a day, natively."""
     assert reminder["event"] in ("Days Before", "Days After")
-    assert reminder["days_in_advance"] == 1, "one day of lead time, and one day of grace"
+    assert reminder["days_in_advance"] in (0, 1), "the day itself, or the day before/after"
 
 
 @pytest.mark.parametrize("reminder", REMINDERS, ids=[r["name"] for r in REMINDERS])
@@ -209,14 +209,42 @@ def test_case_8_the_message_carries_nothing_from_the_parent_record(reminder):
     assert "MR-00001" in payload
 
 
-def test_case_10_two_reminders_per_referral_stay_distinguishable():
-    """At most two reminders in a referral's life, each with its own headline and its own
-    duplicate-guard key."""
+def test_the_due_day_itself_is_not_silent():
+    """The day a referral is actually due is the day it most needs to reach somebody.
+
+    With only a "before" and an "after", that day passed with nothing sent - the framework
+    matches the date field exactly, so a one-day lead time and a one-day grace leave a hole in
+    the middle.
+    """
+    due_day = [r for r in REMINDERS if r["days_in_advance"] == 0]
+
+    assert len(due_day) == 1, "exactly one reminder lands on the due date"
+    assert due_day[0]["event"] == "Days Before", "an offset of zero, not a negative grace period"
+    assert _fires(_condition(due_day[0]), **OPEN) is True
+
+
+def test_the_notification_type_uses_the_frameworks_own_field_name():
+    """`Notification Type` is autonamed `field:type_name` and its data field is `type_name`.
+
+    `notification_type` is the *Notification's* field. Naming it wrong on the type throws inside
+    the insert and downgrades every reminder to the framework's plain "Alert" - which is why
+    this is asserted rather than trusted.
+    """
+    creation = SOURCE.split("def _notification_type", 1)[1].split("def _definition", 1)[0]
+
+    assert '"type_name": name' in creation
+    assert '"notification_type": name' not in creation
+
+
+def test_case_10_three_reminders_per_referral_stay_distinguishable():
+    """At most three reminders in a referral's life, each with its own headline and its own
+    duplicate-guard key - so no two of them can ever be confused for one another."""
     titles = [r["title"] for r in REMINDERS]
     conditions = [_condition(r) for r in REMINDERS]
 
     assert len(set(titles)) == len(REMINDERS)
     assert len(set(conditions)) == len(REMINDERS), "each reminder guards on its own log entry"
+    assert {r["days_in_advance"] for r in REMINDERS} == {0, 1}, "one day each side, and the day"
     assert all(repr(r["title"]) in c for r, c in zip(REMINDERS, conditions))
 
 
