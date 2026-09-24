@@ -56,6 +56,7 @@ The app exposes standard Frappe views and navigation:
 | [`docs/PRINT_FORMATS.md`](docs/PRINT_FORMATS.md) | the two shipped print formats |
 | [`docs/SEAL_INTEGRITY.md`](docs/SEAL_INTEGRITY.md) | the auditor - how the seal is computed and checked |
 | [`docs/WORKFLOW_GOVERNANCE.md`](docs/WORKFLOW_GOVERNANCE.md) | the administrator - workflows and transition tasks |
+| [`docs/MANAGEMENT_REPORTS.md`](docs/MANAGEMENT_REPORTS.md) | the general manager and department heads - the three reports, in Arabic |
 
 ## Version
 
