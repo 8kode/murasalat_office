@@ -44,8 +44,6 @@
   "links_section",
   "links",
   "attachments_tab",
-  "attachments_gallery_section",
-  "attachments_gallery",
   "attachments_section",
   "attachments",
   "audit_security_tab",
@@ -244,7 +242,8 @@
    "collapsible": 1,
    "fieldname": "attachments_section",
    "fieldtype": "Section Break",
-   "label": "Attachments"
+   "label": "Attachments",
+   "description": "The record's files, in one place. Upload here; the file's SHA-256 is recorded automatically and checked whenever the record is verified."
   },
   {
    "fieldname": "attachments",
@@ -416,15 +415,6 @@
   {
    "fieldname": "column_break_tmju",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "attachments_gallery",
-   "fieldtype": "Attachment Gallery",
-   "label": "Attachments Gallery"
-  },
-  {
-   "fieldname": "attachments_gallery_section",
-   "fieldtype": "Section Break"
   }
  ],
  "links": [],
