@@ -84,13 +84,62 @@
 * **تصدير** → CSV / Excel.
 * **طباعة** → جدول التقرير مع فلتره وملخصه.
 
-> **ملاحظة صريحة:** Frappe 16 يدعم **قوالب طباعة للتقارير** (`print_format_for = "Report"`)،
-> لكن `PrintFormat.before_save` تجبر قالب التقرير على `custom_format = 1` و`standard = "No"`،
-> أي أن الإطار نفسه يعامله كتخصيص موقع لا كمستند قابل للشحن مع تطبيق. لذلك **لم يُشحن أي قالب
-> طباعة للتقرير**؛ يُنشأ من Desk في دقيقة واحدة: **Print Format جديد → `Print Format For = Report`
-> → اختر التقرير**، ثم الصق التنسيق. أضفه إن أردت مخرجات A4 مُنسّقة بالألوان.
+## قوالب الطباعة A4 الملوّنة
 
-## أين تجدها بعد الترحيل
+**ثلاثة قوالب جاهزة تشحن مع التطبيق**، قالب لكل تقرير — A4 عمودي، عربي من اليمين إلى اليسار،
+بترويسة ملوّنة وشريط فلاتر، وجدول برأس أخضر داكن، وتخطيط متناوب للصفوف، و**إبراز صف الإجمالي**،
+وتذييل يذكّر بأن التقرير محسوب وفق صلاحيات مُصدِره.
 
-**Desk → التقارير (Reports)** أو ابحث بالاسم في الشريط العلوي. ولمن يريدها في الشريط الجانبي:
-**Workspace → Edit → Add Link → Report**.
+| القالب | على التقرير |
+|---|---|
+| `Murasalat Management Summary Print` | ملخص الإدارة |
+| `Murasalat Department Workload Print` | عبء الأقسام |
+| `Murasalat Response Times Print` | أزمنة الاستجابة |
+
+### التثبيت
+
+تأتي مع أمر التهيئة الواحد:
+
+```bash
+bench --site <site> execute murasalat_office.setup.provision.apply --kwargs "{'confirm': True}"
+```
+
+أو وحدها، وتقرأ أولًا بلا كتابة:
+
+```bash
+bench --site <site> execute murasalat_office.setup.report_print_formats.plan
+bench --site <site> execute murasalat_office.setup.report_print_formats.install
+```
+
+`plan` يطبع ما هو ناقص وما هو موجود. `install` **عادم التكرار ولا يكتب فوق قالب موجود** — قد
+يكون موقع قد أعاد تنسيقه.
+
+### الاستخدام
+
+افتح التقرير، اضغط **Print**، ثم:
+
+1. اختر القالب من قائمة **Print Format**.
+2. فعّل **Include filters** ليظهر شريط الفلاتر أعلى الصفحة.
+3. اختر **Landscape** إن أردت الجداول العريضة أفقيًّا.
+
+### لماذا يُنشئها أمر لا `bench migrate`
+
+`PrintFormat.before_save` في Frappe **تفرض** على قالب التقرير `custom_format = 1` و
+`standard = "No"`:
+
+```python
+def before_save(self):
+    if self.print_format_for == "Report":
+        self.custom_format = 1
+        self.standard = "No"
+```
+
+أي أن **الإطار نفسه يعامل قالب التقرير كتخصيص موقع لا كمستند يشحنه تطبيق**، وصفّ ليس
+`standard = "Yes"` لا يُعاد استيراده من مجلد الوحدة عند الترحيل. لذلك تُنشأ الصفوف عبر
+**نموذج Frappe نفسه** (`frappe.get_doc(...).insert()`) — وهو عين ما تفعله شاشة Desk عند حفظ قالب
+طباعة يدويًا. المصدر الواحد يبقى ملف `.html` المشحون، والمنشئ يقرأه منه.
+
+> **ملاحظة تقنية للقارئ المتقدّم:** قالب التقرير لا يُصيَّر على الخادم. الإطار يقرأ `html` و`css`
+> عبر `frappe.desk.query_report.get_print_format_data` ثم يرسمه في المتصفح
+> (`query_report.js::pdf_report`) بالمتغيّرات: `title, subtitle, filters, data, columns,
+> original_data, report`. لذلك القالب **لا يستدعي `frappe.*` إطلاقًا** — وهذا مُختبَر صراحةً.

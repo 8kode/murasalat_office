@@ -25,7 +25,7 @@ half-built Workflow.
 import frappe
 from frappe import _
 
-from murasalat_office.setup import governance_plan, master_data
+from murasalat_office.setup import governance_plan, master_data, report_print_formats
 
 CORRESPONDENCE = "Murasalat Correspondence"
 REFERRAL = "Murasalat Referral"
@@ -220,10 +220,11 @@ def apply(confirm=False):
             _("This writes roles, permissions and Workflows. Re-run with confirm=True.")
         )
 
-    report = {"master_data": None, "roles": [], "workflows": [], "errors": []}
+    report = {"master_data": None, "roles": [], "workflows": [], "print_formats": None, "errors": []}
 
     report["master_data"] = master_data.seed()
     report["roles"] = governance_plan.materialize(confirm=True)
+    report["print_formats"] = report_print_formats.install()
 
     try:
         names = _workflow_fieldnames()
