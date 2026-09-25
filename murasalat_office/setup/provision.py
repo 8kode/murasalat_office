@@ -308,25 +308,32 @@ def _ensure_workflow(spec, names):
         names["active"]: 1,
     })
 
+    # Every fieldname is read from the child table that actually declares it. `allow_edit` lives
+    # only on Workflow Document State - a Workflow Transition carries `allowed` instead, and
+    # reading allow_edit off the transition's meta threw "None of allow_edit exists on Workflow
+    # Transition" after the Workflow State had already been created.
     state_meta, transition_meta = names["state_meta"], names["transition_meta"]
     state_name = _field(state_meta, "state")
     doc_status = _field(state_meta, "doc_status")
-    allow_edit = _field(transition_meta, "allow_edit")
+    allow_edit = _field(state_meta, "allow_edit")
+
+    t_state = _field(transition_meta, "state")
+    t_action = _field(transition_meta, "action")
+    t_next = _field(transition_meta, "next_state")
+    t_allowed = _field(transition_meta, "allowed")
 
     for state in spec["states"]:
         row = document.append(names["states"], {})
         row.set(state_name, state["state"])
-        row.set("state", state["state"])
         row.set(doc_status, "0")
         row.set(allow_edit, state["allow_edit"])
 
     for transition in spec["transitions"]:
         row = document.append(names["transitions"], {})
-        row.set("state", transition["state"])
-        row.set("action", transition["action"])
-        row.set("next_state", transition["next_state"])
-        row.set("allowed", transition["allowed"])
-        row.set(allow_edit, transition["allowed"])
+        row.set(t_state, transition["state"])
+        row.set(t_action, transition["action"])
+        row.set(t_next, transition["next_state"])
+        row.set(t_allowed, transition["allowed"])
         row.set(task_field, group_name)
 
     document.insert(ignore_permissions=True)

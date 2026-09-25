@@ -39,17 +39,18 @@ PERMISSION_PLAN = {
         "Murasalat External Party Type": {"read": 1},
     },
     "Correspondence Supervisor": {
-        # No ``amend``: Frappe refuses an amend right on a DocType that is not submittable
-        # (core/doctype/doctype/doctype.py, check_if_submittable), and no Murasalat DocType is.
-        # An amendment in this application is the Workflow's Reopen transition, which is a
-        # different thing entirely and is governed by a transition task.
+        # No ``amend`` and no ``import``: Frappe refuses both unless the DocType carries the
+        # matching flag (core/doctype/doctype/doctype.py, check_if_submittable and
+        # check_if_importable), and no Murasalat DocType is submittable or importable. An
+        # amendment here is the Workflow's Reopen transition, governed by a transition task, and
+        # a bulk import is not how this application takes records in.
         "Murasalat Correspondence": {
             "read": 1, "write": 1, "create": 1, "report": 1, "print": 1, "email": 1,
-            "share": 1, "export": 1, "import": 1,
+            "share": 1, "export": 1,
         },
         "Murasalat Referral": {
             "read": 1, "write": 1, "create": 1, "report": 1, "print": 1, "email": 1,
-            "share": 1, "export": 1, "import": 1,
+            "share": 1, "export": 1,
         },
         "Murasalat Approval Request": {"read": 1, "write": 1, "create": 1, "report": 1},
         "Murasalat Delegation": {"read": 1, "write": 1, "create": 1, "report": 1},
@@ -177,37 +178,48 @@ def describe(apply=False):
     return "\n".join(lines)
 
 
-# Rights Frappe only accepts on a submittable DocType.
-SUBMISSION_ONLY_RIGHTS = ("submit", "cancel", "amend")
+# A right Frappe only accepts when the DocType itself carries the matching flag. Each entry was
+# read from the framework's own validation (frappe/core/doctype/doctype/doctype.py):
+#   check_if_submittable -> "Cannot set Assign Amend if not Submittable"
+#   check_if_importable  -> "Cannot set import as <DocType> is not importable"
+# Both messages stopped a launch install at the roles step, one after the other.
+RIGHT_FLAGS = {
+    "submit": "is_submittable",
+    "cancel": "is_submittable",
+    "amend": "is_submittable",
+    "import": "allow_import",
+}
 
 
-def plan_problems(is_submittable=None):
+def _document_flag(doctype, flag):
+    """Does the DocType record carry this flag? Read from the site's own DocType."""
+    return bool(frappe.db.get_value("DocType", doctype, flag))
+
+
+def plan_problems(has_flag=None):
     """Rights in the plan that Frappe would refuse, caught before anything is written.
 
-    Rows are appended to the DocType's own permission table and the DocType is then saved, so
-    Frappe validates them late - and with a message that names a field rather than the row:
-    "Cannot set Assign Amend if not Submittable". A launch once stopped there, after the roles
-    had been created, and the master data, the print formats, the notifications and the
-    Workflows never ran. This turns that into a readable problem, found before any write.
+    The rows are appended to the DocType's own permission table and the DocType is then saved, so
+    Frappe validates them late and names a field rather than the row it came from - after the roles
+    have already been created. This turns that into a readable problem found before any write.
 
-    ``is_submittable`` is a callable ``doctype -> bool``; the default reads the live meta.
+    ``has_flag`` is a callable ``(doctype, flag) -> bool``; the default reads the site's DocType.
     An empty list means the plan is safe to materialise.
     """
-    if is_submittable is None:
-        def is_submittable(doctype):
-            return bool(frappe.get_meta(doctype).is_submittable)
+    if has_flag is None:
+        has_flag = _document_flag
 
     problems = []
     for role, doctypes in sorted(PERMISSION_PLAN.items()):
         for doctype, rights in sorted(doctypes.items()):
-            if is_submittable(doctype):
-                continue
-            for right in SUBMISSION_ONLY_RIGHTS:
-                if rights.get(right):
-                    problems.append(
-                        f"{role} on {doctype}: '{right}' needs a submittable DocType, "
-                        "and this one is not. An amendment here is the Reopen transition."
-                    )
+            for right, flag in sorted(RIGHT_FLAGS.items()):
+                if not rights.get(right) or has_flag(doctype, flag):
+                    continue
+                problems.append(
+                    f"{role} on {doctype}: '{right}' needs {flag} on the DocType, and it is not "
+                    "set. An amendment here is the Reopen transition, and a bulk import is not "
+                    "how this application takes records in."
+                )
     return problems
 
 

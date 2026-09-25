@@ -1,16 +1,10 @@
 {
- "doctype": "DocType",
- "name": "Murasalat Attachment Type",
- "module": "Murasalat Office",
- "custom": 0,
- "engine": "InnoDB",
+ "actions": [],
  "autoname": "field:attachment_type",
- "naming_rule": "By fieldname",
- "title_field": "type_label",
- "search_fields": "type_label",
- "allow_rename": 0,
- "quick_entry": 1,
- "track_changes": 1,
+ "creation": "2026-09-26 02:38:26.391895",
+ "description": "What a file is: the letter itself, an accompanying paper, a reply.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
  "field_order": [
   "attachment_type",
   "type_label",
@@ -19,38 +13,86 @@
  ],
  "fields": [
   {
+   "description": "The value stored on a record. Kept in English so values already recorded keep working.",
    "fieldname": "attachment_type",
-   "label": "Code",
    "fieldtype": "Data",
-   "reqd": 1,
-   "unique": 1,
    "in_list_view": 1,
-   "description": "The value stored on a record. Kept in English so values already recorded keep working."
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
   },
   {
+   "description": "What a user reads in the attachment table and on a printed record.",
    "fieldname": "type_label",
-   "label": "Name",
    "fieldtype": "Data",
-   "reqd": 1,
    "in_list_view": 1,
-   "description": "What a user reads in the attachment table and on a printed record."
+   "label": "Name",
+   "reqd": 1
   },
   {
    "fieldname": "description",
-   "label": "When to use it",
-   "fieldtype": "Small Text"
+   "fieldtype": "Small Text",
+   "label": "When to use it"
   },
   {
-   "fieldname": "enabled",
-   "label": "Enabled",
-   "fieldtype": "Check",
    "default": "1",
-   "in_list_view": 1
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
   }
  ],
  "links": [],
- "index_web_pages_for_search": 0,
+ "modified": "2026-09-26 02:38:29.106548",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Attachment Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Auditor",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Clerk",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Supervisor",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "search_fields": "type_label",
  "sort_field": "modified",
  "sort_order": "DESC",
- "description": "What a file is: the letter itself, an accompanying paper, a reply."
+ "states": [],
+ "title_field": "type_label",
+ "track_changes": 1
 }

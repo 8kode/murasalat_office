@@ -46,12 +46,38 @@
   }
  ],
  "links": [],
- "modified": "2026-09-14 18:53:07.980675",
+ "modified": "2026-09-26 02:51:47.022217",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat User Organization Membership",
  "naming_rule": "Expression",
  "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Auditor",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Supervisor",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",

@@ -170,17 +170,18 @@ def notice_condition(notice):
 
 
 # The framework requires a row per day in `assignment_days` and refuses a rule without one. The
-# child's field name is read from the live meta - it is Frappe's, not ours.
-WEEKDAYS = ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+# child's fieldname AND its allowed values are read from the live meta - `day` is a Select, and
+# Frappe validates the value against its options.
+DEFAULT_WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 
 def _assignment_rule_document():
     """The Assignment Rule as a document Frappe will accept.
 
     Assigning a referral to its recipient is the mechanism that tells the framework who owes an
-    action, so the rule has to exist. It did not, silently: ``assignment_days`` is required and
-    was missing, the insert threw, and the message went into ``install()``'s own report, which
-    nothing printed. ``setup/install.py`` now surfaces those.
+    action, so the rule has to exist. It did not, silently: ``assignment_days`` is required and was
+    missing, the insert threw, and the message went into ``install()``'s own report, which nothing
+    printed. ``setup/install.py`` now surfaces those.
     """
     definition = {"doctype": "Assignment Rule", **ASSIGNMENT_RULE}
     if definition.get("assignment_days"):
@@ -191,10 +192,13 @@ def _assignment_rule_document():
         return definition
 
     if field.fieldtype in ("Table", "Table MultiSelect"):
-        day_field = _field(frappe.get_meta(field.options), "day", "day_of_week")
-        definition["assignment_days"] = [{day_field: day} for day in WEEKDAYS]
+        child = frappe.get_meta(field.options)
+        day_field = _field(child, "day", "day_of_week")
+        options = (child.get_field(day_field).options or "").splitlines()
+        weekdays = [option.strip() for option in options if option.strip()] or list(DEFAULT_WEEKDAYS)
+        definition["assignment_days"] = [{day_field: day} for day in weekdays]
     else:
-        definition["assignment_days"] = len(WEEKDAYS)
+        definition["assignment_days"] = len(DEFAULT_WEEKDAYS)
 
     return definition
 

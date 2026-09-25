@@ -1,16 +1,10 @@
 {
- "doctype": "DocType",
- "name": "Murasalat Archive Location",
- "module": "Murasalat Office",
- "custom": 0,
- "engine": "InnoDB",
+ "actions": [],
  "autoname": "field:location",
- "naming_rule": "By fieldname",
- "title_field": "location_label",
- "search_fields": "location_label",
- "allow_rename": 0,
- "quick_entry": 1,
- "track_changes": 1,
+ "creation": "2026-09-26 02:38:26.154278",
+ "description": "Where the paper original of an attachment is filed.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
  "field_order": [
   "location",
   "location_label",
@@ -19,38 +13,86 @@
  ],
  "fields": [
   {
+   "description": "The value stored on a record.",
    "fieldname": "location",
-   "label": "Code",
    "fieldtype": "Data",
-   "reqd": 1,
-   "unique": 1,
    "in_list_view": 1,
-   "description": "The value stored on a record."
+   "label": "Code",
+   "reqd": 1,
+   "unique": 1
   },
   {
+   "description": "What a user reads in the attachment table.",
    "fieldname": "location_label",
-   "label": "Name",
    "fieldtype": "Data",
-   "reqd": 1,
    "in_list_view": 1,
-   "description": "What a user reads in the attachment table."
+   "label": "Name",
+   "reqd": 1
   },
   {
    "fieldname": "description",
-   "label": "What is kept there",
-   "fieldtype": "Small Text"
+   "fieldtype": "Small Text",
+   "label": "What is kept there"
   },
   {
-   "fieldname": "enabled",
-   "label": "Enabled",
-   "fieldtype": "Check",
    "default": "1",
-   "in_list_view": 1
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
   }
  ],
  "links": [],
- "index_web_pages_for_search": 0,
+ "modified": "2026-09-26 02:38:29.002207",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Archive Location",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Auditor",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Clerk",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Correspondence Supervisor",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "search_fields": "location_label",
  "sort_field": "modified",
  "sort_order": "DESC",
- "description": "Where the paper original of an attachment is filed."
+ "states": [],
+ "title_field": "location_label",
+ "track_changes": 1
 }

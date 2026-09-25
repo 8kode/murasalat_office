@@ -1,10 +1,7 @@
 {
+ "actions": [],
+ "creation": "2026-09-26 02:38:26.493173",
  "doctype": "DocType",
- "name": "Murasalat Attachment",
- "module": "Murasalat Office",
- "custom": 0,
- "istable": 1,
- "editable_grid": 0,
  "engine": "InnoDB",
  "field_order": [
   "attachment_type",
@@ -15,42 +12,55 @@
  ],
  "fields": [
   {
-   "fieldname": "attachment_type",
-   "label": "Attachment Type",
-   "fieldtype": "Link",
-   "options": "Murasalat Attachment Type",
-   "reqd": 1,
-   "in_list_view": 1,
    "default": "Attachment",
-   "description": "What this paper is. The list is a table you can extend in Desk - no upgrade needed to add a type."
-  },
-  {
-   "fieldname": "archive_location",
-   "label": "Archive Location",
+   "description": "What this paper is. The list is a table you can extend in Desk - no upgrade needed to add a type.",
+   "fieldname": "attachment_type",
    "fieldtype": "Link",
-   "options": "Murasalat Archive Location",
    "in_list_view": 1,
-   "description": "Where the paper original is filed. Optional: leave it empty rather than inventing a value."
+   "label": "Attachment Type",
+   "options": "Murasalat Attachment Type",
+   "reqd": 1
   },
   {
+   "description": "Where the paper original is filed. Optional: leave it empty rather than inventing a value.",
+   "fieldname": "archive_location",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Archive Location",
+   "options": "Murasalat Archive Location"
+  },
+  {
+   "description": "The uploaded file. Its SHA-256 is recorded automatically and is checked whenever the record is verified.",
    "fieldname": "file",
-   "label": "File",
    "fieldtype": "Attach",
-   "reqd": 1,
    "in_list_view": 1,
-   "description": "The uploaded file. Its SHA-256 is recorded automatically and is checked whenever the record is verified."
+   "label": "File",
+   "reqd": 1
   },
   {
+   "default": "0",
+   "description": "Withholds this file's name from the overview and the print formats. Access to the file itself is governed by Frappe's File permissions, which follow the record.",
    "fieldname": "is_secret",
-   "label": "Secret Attachment",
    "fieldtype": "Check",
-   "description": "Withholds this file's name from the overview and the print formats. Access to the file itself is governed by Frappe's File permissions, which follow the record."
+   "label": "Secret Attachment"
   },
   {
    "fieldname": "file_hash",
-   "label": "File Hash",
    "fieldtype": "Data",
+   "label": "File Hash",
    "read_only": 1
   }
- ]
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-26 02:51:46.237315",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Attachment",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
 }
