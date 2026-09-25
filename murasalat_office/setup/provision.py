@@ -130,6 +130,45 @@ def _field(meta, *candidates):
     )
 
 
+def _required_states():
+    """Every state the Workflows in WORKFLOWS reference, in a stable order."""
+    seen = []
+    for spec in WORKFLOWS:
+        for state in spec["states"]:
+            if state["state"] not in seen:
+                seen.append(state["state"])
+    return seen
+
+
+def _ensure_workflow_states():
+    """Create the Workflow State records the Workflows reference. Idempotent.
+
+    ``Workflow Document State.state`` is a Link to ``Workflow State``, and Frappe validates a
+    Workflow against the States that exist - it throws "<state> not a valid State"
+    (workflow/doctype/workflow/workflow.py). A Workflow therefore cannot be inserted before its
+    States, and a site that had none could not be given a Workflow at all.
+
+    That was the launch failure: the insert threw, the error was recorded inside ``apply``'s own
+    report and never printed, so the install announced "ok provision" while every Workflow, the
+    Assignment Rule and the transition tasks were in fact missing. See ``setup/install.py``.
+
+    The field name is read from the live meta - it is the framework's field, not ours.
+    """
+    meta = frappe.get_meta("Workflow State")
+    field = _field(meta, "workflow_state_name", "state")
+
+    created = []
+    for state in _required_states():
+        if frappe.db.exists("Workflow State", state):
+            continue
+        frappe.get_doc({"doctype": "Workflow State", field: state}).insert(
+            ignore_permissions=True
+        )
+        created.append(state)
+
+    return created
+
+
 def _workflow_fieldnames():
     meta = frappe.get_meta("Workflow")
 
@@ -312,6 +351,7 @@ def apply(confirm=False):
 
     report = {
         "master_data": None,
+        "workflow_states": None,
         "roles": [],
         "workflows": [],
         "print_formats": None,
@@ -323,6 +363,8 @@ def apply(confirm=False):
     _section(report, "roles", lambda: governance_plan.materialize(confirm=True))
     _section(report, "print_formats", report_print_formats.install)
     _section(report, "notifications", notifications.install)
+    # Before any Workflow: a Workflow cannot reference a State that does not exist yet.
+    _section(report, "workflow_states", _ensure_workflow_states)
 
     try:
         names = _workflow_fieldnames()
@@ -410,6 +452,13 @@ def readiness():
             not missing,
         ))
 
+    missing_states = [s for s in _required_states() if not frappe.db.exists("Workflow State", s)]
+    checks.append((
+        "workflow states",
+        "ok" if not missing_states else f"missing: {missing_states}",
+        not missing_states,
+    ))
+
     plan = notifications.plan()
     for row in plan["notifications"]:
         ok = bool(row["exists"] and row["current"])
@@ -424,7 +473,13 @@ def readiness():
     try:
         from murasalat_office.services.governance import workflow_task_readiness
         wired = workflow_task_readiness()
-        problems = wired.get("problems") or wired.get("issues") or []
+        # It returns a list of checks, each {key, title, status, details, remediation}. Reading it
+        # as a dict is how this line once printed "could not read ('list' object has no attribute
+        # 'get')" and reported a failure where there was only a shape mismatch.
+        if isinstance(wired, dict):
+            problems = wired.get("problems") or wired.get("issues") or []
+        else:
+            problems = [row for row in wired or [] if (row or {}).get("status") in ("FAIL", "WARN")]
         checks.append(("transition tasks", "ok" if not problems else f"{len(problems)} problem(s)",
                        not problems))
     except Exception as exc:

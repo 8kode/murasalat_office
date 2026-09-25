@@ -169,6 +169,46 @@ def notice_condition(notice):
     return 'doc.workflow_state == {state}'.format(state=repr(notice["state"]))
 
 
+# The framework requires a row per day in `assignment_days` and refuses a rule without one. The
+# child's field name is read from the live meta - it is Frappe's, not ours.
+WEEKDAYS = ("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+
+
+def _assignment_rule_document():
+    """The Assignment Rule as a document Frappe will accept.
+
+    Assigning a referral to its recipient is the mechanism that tells the framework who owes an
+    action, so the rule has to exist. It did not, silently: ``assignment_days`` is required and
+    was missing, the insert threw, and the message went into ``install()``'s own report, which
+    nothing printed. ``setup/install.py`` now surfaces those.
+    """
+    definition = {"doctype": "Assignment Rule", **ASSIGNMENT_RULE}
+    if definition.get("assignment_days"):
+        return definition
+
+    field = frappe.get_meta("Assignment Rule").get_field("assignment_days")
+    if not field:
+        return definition
+
+    if field.fieldtype in ("Table", "Table MultiSelect"):
+        day_field = _field(frappe.get_meta(field.options), "day", "day_of_week")
+        definition["assignment_days"] = [{day_field: day} for day in WEEKDAYS]
+    else:
+        definition["assignment_days"] = len(WEEKDAYS)
+
+    return definition
+
+
+def _field(meta, *candidates):
+    """The first of these fieldnames the live meta declares."""
+    for candidate in candidates:
+        if meta.get_field(candidate):
+            return candidate
+    frappe.throw(
+        _("None of {0} exists on {1}.").format(", ".join(candidates), meta.name)
+    )
+
+
 def _notification_type(name, create=True):
     """Use a dedicated Notification Type when the site can hold one.
 
@@ -266,10 +306,14 @@ def _notification_is_current(name, definition, fields):
 def _assignment_rule_is_current(name):
     fields = ("rule", "field", "assign_condition", "unassign_condition", "close_condition",
               "due_date_based_on", "description")
-    return all(
+    if not all(
         frappe.db.get_value("Assignment Rule", name, field) == ASSIGNMENT_RULE.get(field)
         for field in fields
-    )
+    ):
+        return False
+
+    # A rule with no assignment_days row is not a working rule, whatever its other fields say.
+    return bool(frappe.get_doc("Assignment Rule", name).get("assignment_days"))
 
 
 def _same(left, right):
@@ -361,9 +405,7 @@ def install():
     name = ASSIGNMENT_RULE["name"]
     try:
         if not frappe.db.exists("Assignment Rule", name):
-            frappe.get_doc({"doctype": "Assignment Rule", **ASSIGNMENT_RULE}).insert(
-                ignore_permissions=True
-            )
+            frappe.get_doc(_assignment_rule_document()).insert(ignore_permissions=True)
             result["assignment_rule"] = {"rule": name, "outcome": "created"}
         elif _assignment_rule_is_current(name):
             result["assignment_rule"] = {"rule": name, "outcome": "exists"}

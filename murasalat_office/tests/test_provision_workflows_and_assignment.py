@@ -1,0 +1,188 @@
+"""The three launch defects found once provisioning finally ran to the end.
+
+install-app on health16test.com printed
+
+    ok    provision
+    ok    report_roles
+
+and then a readiness report where every Workflow, the Assignment Rule and the transition-task
+check had failed. Four causes, all verified against Frappe 16 and each hidden by the last:
+
+1. Workflow Document State.state is a Link to Workflow State, and Frappe throws "<state> not a
+   valid State" for a State that does not exist - so a Workflow cannot be inserted before its
+   States. Nothing created them.
+2. Assignment Rule.assignment_days is required, and the rule was inserted without it.
+3. provision.readiness read workflow_task_readiness() as a dict while it returns a list of
+   checks, so it printed "could not read (list object has no attribute get)".
+4. setup.install only looked at its own report for errors. provision.apply and
+   notifications.install never raise - they record each failure and carry on - so their reports
+   were the only place these failures existed, and nothing printed them.
+
+These tests read the shipped source and exercise the pure helpers with a placeholder frappe.
+"""
+import ast
+import pathlib
+import sys
+import types
+import unittest
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.modules.setdefault("frappe", types.ModuleType("frappe"))
+
+PROVISION = (ROOT / "setup/provision.py").read_text(encoding="utf-8")
+NOTIFICATIONS = (ROOT / "setup/notifications.py").read_text(encoding="utf-8")
+INSTALL = (ROOT / "setup/install.py").read_text(encoding="utf-8")
+
+
+def _module(source, name):
+    """Execute a setup module with a placeholder frappe and return its namespace."""
+    namespace = {"__name__": name}
+    exec(compile(ast.parse(source), name, "exec"), namespace)
+    return namespace
+
+
+def _constants(source):
+    """Module-level simple assignments, evaluated in source order.
+
+    WORKFLOWS names its roles by constant (CLERK, SUPERVISOR), so it cannot be read with
+    ast.literal_eval - the constants are evaluated first, then the list that names them.
+    """
+    namespace = {}
+    for node in ast.parse(source).body:
+        if not isinstance(node, ast.Assign) or not isinstance(node.targets[0], ast.Name):
+            continue
+        try:
+            namespace[node.targets[0].id] = eval(
+                compile(ast.Expression(node.value), "<constants>", "eval"), {}, namespace
+            )
+        except Exception:
+            continue
+    return namespace
+
+
+def _workflows():
+    workflows = _constants(PROVISION).get("WORKFLOWS")
+    if not workflows:
+        raise AssertionError("WORKFLOWS is not declared in provision.py")
+    return workflows
+
+
+class TestWorkflowStates(unittest.TestCase):
+    def test_the_states_are_derived_from_the_workflows(self):
+        """A state list written twice drifts; the Workflows are the one source."""
+        provision = _module(PROVISION, "provision")
+        expected = []
+        for spec in _workflows():
+            for state in spec["states"]:
+                if state["state"] not in expected:
+                    expected.append(state["state"])
+        self.assertEqual(provision["_required_states"](), expected)
+        self.assertIn("Sealed", expected)
+
+    def test_the_states_are_created_before_any_workflow(self):
+        body = PROVISION.split("def apply(confirm=False):", 1)[1]
+        self.assertIn("_section(report, \"workflow_states\"", body)
+        self.assertLess(
+            body.index("_section(report, \"workflow_states\""),
+            body.index("for spec in WORKFLOWS:"),
+            "a Workflow cannot reference a Workflow State that does not exist yet",
+        )
+
+    def test_it_creates_through_frappe_and_never_overwrites(self):
+        helper = PROVISION.split("def _ensure_workflow_states():", 1)[1]
+        helper = helper.split("def _workflow_fieldnames", 1)[0]
+        self.assertIn("Workflow State", helper)
+        self.assertIn("if frappe.db.exists", helper)
+        self.assertNotIn("delete", helper)
+
+
+class TestAssignmentRule(unittest.TestCase):
+    def _document(self, fieldtype, options=None):
+        notifications = _module(NOTIFICATIONS, "notifications")
+        wanted = {"day": object()}
+
+        class Field:
+            def __init__(self):
+                self.fieldtype = fieldtype
+                self.options = options
+
+        class Meta:
+            name = "Assignment Rule"
+            fields = []
+
+            def get_field(self, name):
+                return Field() if name == "assignment_days" else None
+
+        class ChildMeta:
+            name = "Assignment Rule Day"
+
+            def get_field(self, name):
+                return wanted.get(name)
+
+        notifications["frappe"].get_meta = lambda doctype: (
+            Meta() if doctype == "Assignment Rule" else ChildMeta()
+        )
+        return notifications["_assignment_rule_document"]()
+
+    def test_a_table_field_gets_one_row_per_weekday(self):
+        document = self._document("Table", "Assignment Rule Day")
+        days = document["assignment_days"]
+        self.assertEqual(len(days), 7)
+        self.assertEqual(days[0], {"day": "Sunday"})
+        self.assertIn({"day": "Saturday"}, days)
+
+    def test_an_integer_field_gets_a_count(self):
+        self.assertEqual(self._document("Int")["assignment_days"], 7)
+
+    def test_a_rule_without_days_is_not_reported_as_current(self):
+        body = NOTIFICATIONS.split("def _assignment_rule_is_current(", 1)[1]
+        body = body.split("def ", 1)[0]
+        self.assertIn("assignment_days", body)
+
+    def test_install_builds_the_document_through_the_helper(self):
+        body = NOTIFICATIONS.split("def install():", 1)[1]
+        self.assertIn("_assignment_rule_document()", body)
+
+
+class TestInstallSurfacesNestedFailures(unittest.TestCase):
+    def test_a_failure_collected_by_a_runner_is_reported(self):
+        install = _module(INSTALL, "install")
+        report = {
+            "created": {
+                "provision": {
+                    "master_data": None,
+                    "workflows": [],
+                    "errors": ["Murasalat Correspondence Lifecycle: Draft not a valid State"],
+                },
+                "report_roles": {"updated": 13, "errors": []},
+            },
+            "errors": [],
+        }
+        found = install["_nested_errors"](report)
+        self.assertEqual(len(found), 1)
+        self.assertIn("provision:", found[0])
+        self.assertIn("not a valid State", found[0])
+
+    def test_a_clean_report_produces_nothing(self):
+        install = _module(INSTALL, "install")
+        self.assertEqual(
+            install["_nested_errors"]({"created": {"a": {"errors": []}}, "errors": []}), []
+        )
+
+    def test_the_nested_errors_reach_the_console_and_the_log(self):
+        self.assertIn("_nested_errors(report)", INSTALL)
+        self.assertIn("provisioning step reported a failure", INSTALL)
+
+
+class TestReadinessReadsTheRealShape(unittest.TestCase):
+    def test_it_handles_both_a_list_of_checks_and_a_dict(self):
+        body = PROVISION.split("def readiness():", 1)[1]
+        self.assertIn("isinstance(wired, dict)", body)
+        self.assertIn("get(\"status\")", body)
+
+    def test_it_reports_the_workflow_states(self):
+        self.assertIn("workflow states", PROVISION)
+
+
+if __name__ == "__main__":
+    unittest.main()

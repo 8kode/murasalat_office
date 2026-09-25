@@ -46,8 +46,45 @@ def _provision(verbose):
                 message=frappe.get_traceback(),
             )
 
+    # And the failures a runner collected inside its own report - see _nested_errors.
+    for error in _nested_errors(report):
+        report["errors"].append(error)
+        frappe.log_error(
+            title="Murasalat Office provisioning step reported a failure",
+            message=error,
+        )
+
     _announce(report, verbose=verbose)
     return report
+
+
+def _nested_errors(report):
+    """Failures a runner recorded inside the report it returned.
+
+    ``provision.apply`` and ``notifications.install`` deliberately do not raise: they record each
+    failure and carry on, so one bad row cannot hide the rest of the plan. That makes their
+    returned report the only place the failure exists - and a launch install printed
+    "ok provision" while every Workflow, the Assignment Rule and the transition tasks had in fact
+    failed, because only this module's own report was read. Everything nested under ``created``
+    is walked here, so a step that reports a problem cannot pass unnoticed again.
+    """
+    errors = []
+
+    def walk(node, owner):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "errors" and isinstance(value, list) and value:
+                    errors.extend(f"{owner}: {message}" for message in value)
+                else:
+                    walk(value, owner)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item, owner)
+
+    for step, result in (report.get("created") or {}).items():
+        walk(result, step)
+
+    return errors
 
 
 def _steps():
