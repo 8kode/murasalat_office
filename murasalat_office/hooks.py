@@ -72,9 +72,24 @@ workflow_methods = [
 # The Referral identifies the work item; ToDo identifies the user.
 
 
+# A fresh site has to be usable the moment `install-app` returns. Frappe executes
+# `after_install` (frappe/installer.py) at the end of that command, after DocTypes, Workspaces,
+# sidebars and Dashboards are synced - so everything the provisioners reference already exists.
+# `setup.install` then creates the roles and their permission rows, the Workflows with a task on
+# every transition, the Assignment Rule, the master data, the report print formats and the report
+# roles, through Frappe's own models, because this app ships no fixtures.
+#
+# `after_migrate` runs the same routine on every migrate, which is how a later version of this app
+# tops up what it adds. Both are idempotent and additive: an existing record - above all a
+# Workflow an administrator has edited in Desk - is reported, never overwritten.
+after_install = [
+    "murasalat_office.setup.install.install",
+]
+
 after_migrate = [
     "murasalat_office.patches.schema_repair.ensure_child_table_schema",
     "murasalat_office.patches.schema_repair.ensure_membership_unique_index",
+    "murasalat_office.setup.install.top_up",
 ]
 
 

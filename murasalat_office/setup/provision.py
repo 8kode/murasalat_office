@@ -296,7 +296,15 @@ def _ensure_workflow(spec, names):
 
 
 def apply(confirm=False):
-    """Create what is missing. Refuses to run without confirm=True."""
+    """Create what is missing. Refuses to run without confirm=True.
+
+    Each section runs even when an earlier one failed. They are independent, and stopping at
+    the first error is how one invalid permission row once cost a launch site its master data,
+    its print formats, its notifications and its Workflows as well - the console showed only
+    the first failure and the rest of the plan was silently never attempted. A failure is named
+    in ``report["errors"]``, the sections that could still run do run, and ``readiness()``
+    explains what is left.
+    """
     if not confirm:
         frappe.throw(
             _("This writes roles, permissions and Workflows. Re-run with confirm=True.")
@@ -311,15 +319,15 @@ def apply(confirm=False):
         "errors": [],
     }
 
-    report["master_data"] = master_data.seed()
-    report["roles"] = governance_plan.materialize(confirm=True)
-    report["print_formats"] = report_print_formats.install()
-    report["notifications"] = notifications.install()
+    _section(report, "master_data", master_data.seed)
+    _section(report, "roles", lambda: governance_plan.materialize(confirm=True))
+    _section(report, "print_formats", report_print_formats.install)
+    _section(report, "notifications", notifications.install)
 
     try:
         names = _workflow_fieldnames()
-    except Exception as exc:
-        report["errors"].append(str(exc))
+    except Exception as exc:  # noqa: BLE001 - reported: a renamed field is a real answer
+        report["errors"].append(f"workflow fields: {exc}")
         return report
 
     for spec in WORKFLOWS:
@@ -333,10 +341,19 @@ def apply(confirm=False):
                 "outcome": outcome,
                 "transition_tasks": tasks,
             })
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - one broken Workflow must not hide the rest
             report["errors"].append(f"{spec['name']}: {exc}")
 
     return report
+
+
+def _section(report, key, runner):
+    """Run one provisioning section and record its result, or its failure."""
+    try:
+        report[key] = runner()
+    except Exception as exc:  # noqa: BLE001 - see apply(): one failure must not stop the rest
+        report["errors"].append(f"{key}: {exc}")
+    return report[key]
 
 
 def _unattached_transitions(spec):

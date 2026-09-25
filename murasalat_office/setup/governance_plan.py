@@ -39,13 +39,17 @@ PERMISSION_PLAN = {
         "Murasalat External Party Type": {"read": 1},
     },
     "Correspondence Supervisor": {
+        # No ``amend``: Frappe refuses an amend right on a DocType that is not submittable
+        # (core/doctype/doctype/doctype.py, check_if_submittable), and no Murasalat DocType is.
+        # An amendment in this application is the Workflow's Reopen transition, which is a
+        # different thing entirely and is governed by a transition task.
         "Murasalat Correspondence": {
             "read": 1, "write": 1, "create": 1, "report": 1, "print": 1, "email": 1,
-            "share": 1, "export": 1, "import": 1, "amend": 1,
+            "share": 1, "export": 1, "import": 1,
         },
         "Murasalat Referral": {
             "read": 1, "write": 1, "create": 1, "report": 1, "print": 1, "email": 1,
-            "share": 1, "export": 1, "import": 1, "amend": 1,
+            "share": 1, "export": 1, "import": 1,
         },
         "Murasalat Approval Request": {"read": 1, "write": 1, "create": 1, "report": 1},
         "Murasalat Delegation": {"read": 1, "write": 1, "create": 1, "report": 1},
@@ -173,6 +177,40 @@ def describe(apply=False):
     return "\n".join(lines)
 
 
+# Rights Frappe only accepts on a submittable DocType.
+SUBMISSION_ONLY_RIGHTS = ("submit", "cancel", "amend")
+
+
+def plan_problems(is_submittable=None):
+    """Rights in the plan that Frappe would refuse, caught before anything is written.
+
+    Rows are appended to the DocType's own permission table and the DocType is then saved, so
+    Frappe validates them late - and with a message that names a field rather than the row:
+    "Cannot set Assign Amend if not Submittable". A launch once stopped there, after the roles
+    had been created, and the master data, the print formats, the notifications and the
+    Workflows never ran. This turns that into a readable problem, found before any write.
+
+    ``is_submittable`` is a callable ``doctype -> bool``; the default reads the live meta.
+    An empty list means the plan is safe to materialise.
+    """
+    if is_submittable is None:
+        def is_submittable(doctype):
+            return bool(frappe.get_meta(doctype).is_submittable)
+
+    problems = []
+    for role, doctypes in sorted(PERMISSION_PLAN.items()):
+        for doctype, rights in sorted(doctypes.items()):
+            if is_submittable(doctype):
+                continue
+            for right in SUBMISSION_ONLY_RIGHTS:
+                if rights.get(right):
+                    problems.append(
+                        f"{role} on {doctype}: '{right}' needs a submittable DocType, "
+                        "and this one is not. An amendment here is the Reopen transition."
+                    )
+    return problems
+
+
 def materialize(confirm=False):
     """Create the roles and the native DocPerm rows. Refuses without ``confirm=True``.
 
@@ -183,6 +221,13 @@ def materialize(confirm=False):
         frappe.throw(
             "Refusing to change site governance without confirm=True. "
             "Run describe() first, then materialize(confirm=True) if the plan is right."
+        )
+
+    problems = plan_problems()
+    if problems:
+        raise ValueError(
+            "The permission plan asks for rights Frappe will refuse:\n  "
+            + "\n  ".join(problems)
         )
 
     created_roles = []
