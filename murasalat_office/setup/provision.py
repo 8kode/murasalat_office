@@ -30,6 +30,7 @@ from murasalat_office.setup import (
     master_data,
     notifications,
     report_print_formats,
+    workflow_vocabulary,
 )
 
 CORRESPONDENCE = "Murasalat Correspondence"
@@ -140,33 +141,40 @@ def _required_states():
     return seen
 
 
+def _required_actions():
+    """Every transition action the Workflows use, in a stable order.
+
+    `Workflow Transition.action` is a Link to Workflow Action Master, so each of these has to be a
+    record before the Workflow that names it can be saved.
+    """
+    seen = []
+    for spec in WORKFLOWS:
+        for transition in spec["transitions"]:
+            if transition["action"] not in seen:
+                seen.append(transition["action"])
+    return seen
+
+
 def _ensure_workflow_states():
     """Create the Workflow State records the Workflows reference. Idempotent.
 
-    ``Workflow Document State.state`` is a Link to ``Workflow State``, and Frappe validates a
-    Workflow against the States that exist - it throws "<state> not a valid State"
-    (workflow/doctype/workflow/workflow.py). A Workflow therefore cannot be inserted before its
-    States, and a site that had none could not be given a Workflow at all.
+    A Workflow cannot be inserted before its States: ``Workflow Document State.state`` is a Link to
+    Workflow State and ``workflow.py`` throws "<state> not a valid State" for one that is missing.
 
-    That was the launch failure: the insert threw, the error was recorded inside ``apply``'s own
-    report and never printed, so the install announced "ok provision" while every Workflow, the
-    Assignment Rule and the transition tasks were in fact missing. See ``setup/install.py``.
-
-    The field name is read from the live meta - it is the framework's field, not ours.
+    The names come from WORKFLOWS so the two cannot drift; the appearance and the creation itself
+    live in ``setup.workflow_vocabulary``.
     """
-    meta = frappe.get_meta("Workflow State")
-    field = _field(meta, "workflow_state_name", "state")
+    return workflow_vocabulary.ensure_states(_required_states())
 
-    created = []
-    for state in _required_states():
-        if frappe.db.exists("Workflow State", state):
-            continue
-        frappe.get_doc({"doctype": "Workflow State", field: state}).insert(
-            ignore_permissions=True
-        )
-        created.append(state)
 
-    return created
+def _ensure_workflow_actions():
+    """Create the Workflow Action Master records the transitions reference. Idempotent.
+
+    ``Workflow Transition.action`` is a Link, and Frappe validates a Link when the document is
+    saved - so a transition naming an action that is not a record there cannot be saved at all. On
+    a fresh site none of them existed, which is why this runs before any Workflow is built.
+    """
+    return workflow_vocabulary.ensure_actions(_required_actions())
 
 
 def _workflow_fieldnames():
@@ -359,6 +367,7 @@ def apply(confirm=False):
     report = {
         "master_data": None,
         "workflow_states": None,
+        "workflow_actions": None,
         "roles": [],
         "workflows": [],
         "print_formats": None,
@@ -370,8 +379,9 @@ def apply(confirm=False):
     _section(report, "roles", lambda: governance_plan.materialize(confirm=True))
     _section(report, "print_formats", report_print_formats.install)
     _section(report, "notifications", notifications.install)
-    # Before any Workflow: a Workflow cannot reference a State that does not exist yet.
+    # Before any Workflow: a Workflow cannot reference a State or an action that does not exist yet.
     _section(report, "workflow_states", _ensure_workflow_states)
+    _section(report, "workflow_actions", _ensure_workflow_actions)
 
     try:
         names = _workflow_fieldnames()
@@ -464,6 +474,16 @@ def readiness():
         "workflow states",
         "ok" if not missing_states else f"missing: {missing_states}",
         not missing_states,
+    ))
+
+    missing_actions = [
+        action for action in _required_actions()
+        if not frappe.db.exists("Workflow Action Master", action)
+    ]
+    checks.append((
+        "workflow actions",
+        "ok" if not missing_actions else f"missing: {missing_actions}",
+        not missing_actions,
     ))
 
     plan = notifications.plan()

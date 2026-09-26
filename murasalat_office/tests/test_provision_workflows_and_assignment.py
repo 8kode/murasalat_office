@@ -33,7 +33,10 @@ import types
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-sys.modules.setdefault("frappe", types.ModuleType("frappe"))
+_placeholder = types.ModuleType("frappe")
+_placeholder._ = lambda text, *args, **kwargs: text
+_placeholder.throw = lambda message, *args, **kwargs: (_ for _ in ()).throw(RuntimeError(message))
+sys.modules.setdefault("frappe", _placeholder)
 
 PROVISION = (ROOT / "setup/provision.py").read_text(encoding="utf-8")
 NOTIFICATIONS = (ROOT / "setup/notifications.py").read_text(encoding="utf-8")
@@ -93,12 +96,21 @@ class TestWorkflowStates(unittest.TestCase):
             "a Workflow cannot reference a Workflow State that does not exist yet",
         )
 
-    def test_it_creates_through_frappe_and_never_overwrites(self):
-        helper = PROVISION.split("def _ensure_workflow_states():", 1)[1]
-        helper = helper.split("def _workflow_fieldnames", 1)[0]
-        self.assertIn("Workflow State", helper)
-        self.assertIn("if frappe.db.exists", helper)
-        self.assertNotIn("delete", helper)
+    def test_the_states_are_created_through_the_vocabulary_module(self):
+        """The creation and the appearance live in setup/workflow_vocabulary.py."""
+        vocabulary = (ROOT / "setup/workflow_vocabulary.py").read_text(encoding="utf-8")
+        self.assertIn("def ensure_states(states):", vocabulary)
+        self.assertIn("frappe.db.exists(WORKFLOW_STATE, state)", vocabulary)
+        for forbidden in ("delete_doc", "db.delete", "rename_doc"):
+            self.assertNotIn(forbidden, vocabulary)
+        self.assertIn("workflow_vocabulary.ensure_states(_required_states())", PROVISION)
+        self.assertIn("workflow_vocabulary.ensure_actions(_required_actions())", PROVISION)
+
+    def test_the_actions_are_created_before_any_workflow(self):
+        body = PROVISION.split("def apply(confirm=False):", 1)[1]
+        self.assertIn('_section(report, "workflow_actions"', body)
+        self.assertLess(body.index('_section(report, "workflow_actions"'),
+                        body.index("for spec in WORKFLOWS:"))
 
 
 class TestWorkflowFieldsAreReadFromTheRightTable(unittest.TestCase):
