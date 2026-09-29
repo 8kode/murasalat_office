@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:title",
- "creation": "2026-09-10 20:59:10.081069",
+ "creation": "2026-09-29 11:40:45.023534",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -26,7 +26,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-18 23:06:02.962598",
+ "modified": "2026-09-29 11:40:45.023534",
  "modified_by": "Administrator",
  "module": "Murasalat Office",
  "name": "Murasalat Transaction Type",
