@@ -23,6 +23,18 @@
   .mo-ov .mo-kpi.mo-warn .n { color: #c9821f; }
   .mo-ov .mo-kpi.mo-ok { border-color: #c3ddd2; background: #f5faf8; }
   .mo-ov .mo-kpi.mo-ok .n { color: #16694f; }
+  .mo-ov .mo-status { border: 1px solid #dfe8e5; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: #fbfdfc; }
+  .mo-ov .mo-status .title { font-size: 11px; color: #63736e; margin-bottom: 2px; }
+  .mo-ov .mo-status .value { font-size: 16px; font-weight: 700; color: #123c35; }
+  .mo-ov .mo-status .detail { font-size: 11.5px; color: #63736e; margin-top: 3px; }
+  .mo-ov .mo-status.green { border-color: #c3ddd2; background: #f5faf8; }
+  .mo-ov .mo-status.green .value { color: #16694f; }
+  .mo-ov .mo-status.orange { border-color: #eed8b0; background: #fdfaf3; }
+  .mo-ov .mo-status.orange .value { color: #9c6414; }
+  .mo-ov .mo-status.red { border-color: #e7bdb6; background: #fdf6f5; }
+  .mo-ov .mo-status.red .value { color: #b03a2e; }
+  .mo-ov .mo-status.blue { border-color: #cbdde8; background: #f5f9fc; }
+  .mo-ov .mo-status.blue .value { color: #1a5d8f; }
 
   .mo-ov h5.mo-sec { font-size: 13.5px; font-weight: 700; color: #123c35; margin: 0 0 8px 0; padding-right: 8px; border-right: 3px solid #98b5ad; }
   .mo-ov table.mo-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -81,6 +93,12 @@
     </div>
   </div>
 
+  <div class="mo-status {{ operational_status.css }}">
+    <div class="title">الحالة التشغيلية الحالية</div>
+    <div class="value">{{ operational_status.label }}</div>
+    <div class="detail">{{ operational_status.detail }}</div>
+  </div>
+
   <div class="mo-kpis">
     <div class="mo-kpi{% if kpis.open %} mo-ok{% endif %}">
       <div class="n">{{ kpis.open }}</div><div class="l">إحالات مفتوحة</div>
@@ -108,6 +126,12 @@
       <div class="n">{{ reply_kpis.total }}</div><div class="l">الردود الرسمية</div>
     </div>
     {% endif %}
+    <div class="mo-kpi">
+      <div class="n">{{ correspondence_age.days if correspondence_age.days is not none else "—" }}</div><div class="l">عمر المعاملة (يوم)</div>
+    </div>
+    <div class="mo-kpi{% if approval_summary.pending %} mo-warn{% elif approval_summary.rejected %} mo-alert{% elif approval_summary.approved %} mo-ok{% endif %}">
+      <div class="n">{{ approval_summary.pending if approval_summary.pending else approval_summary.approved if approval_summary.approved else approval_summary.rejected }}</div><div class="l">{{ approval_summary.label }}</div>
+    </div>
   </div>
 
   <div class="mo-card">
@@ -259,6 +283,14 @@
 
     <div class="mo-card">
       <h5 class="mo-sec">طلبات الاعتماد{% if approvals %} ({{ approvals | length }}){% endif %}</h5>
+      <div class="mo-reply-summary">
+        <span class="mo-chip{% if approval_summary.css == 'green' %} mo-green{% elif approval_summary.css == 'orange' %} mo-orange{% elif approval_summary.css == 'red' %} mo-red{% endif %}">
+          {{ approval_summary.label }}
+        </span>
+        {% if approval_summary.pending %}<span class="mo-chip mo-orange">معلّقة: {{ approval_summary.pending }}</span>{% endif %}
+        {% if approval_summary.approved %}<span class="mo-chip mo-green">معتمدة: {{ approval_summary.approved }}</span>{% endif %}
+        {% if approval_summary.rejected %}<span class="mo-chip mo-red">مرفوضة: {{ approval_summary.rejected }}</span>{% endif %}
+      </div>
       {% if approvals %}
       <table class="mo-tbl">
         <thead><tr><th>الطلب</th><th>المستوى</th><th>الحالة</th><th>مقدَّم</th><th>القرار</th></tr></thead>

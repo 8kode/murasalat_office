@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterable
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 import frappe
@@ -128,6 +128,95 @@ def _reply_kpis(rows: Iterable[dict]) -> dict[str, int]:
     return kpis
 
 
+def _approval_summary(rows: Iterable[dict]) -> dict[str, Any]:
+    """Summarize approval state without inventing a second approval system."""
+    total = 0
+    pending = 0
+    approved = 0
+    rejected = 0
+
+    for row in rows:
+        total += 1
+        state = (row.get("workflow_state") or "").strip().lower()
+        if state == "approved" or row.get("approved_on"):
+            approved += 1
+        elif state == "rejected":
+            rejected += 1
+        else:
+            pending += 1
+
+    if pending:
+        label = "بانتظار الاعتماد"
+        css = "orange"
+    elif rejected:
+        label = "مرفوض"
+        css = "red"
+    elif approved and total:
+        label = "معتمد"
+        css = "green"
+    else:
+        label = "لا يوجد اعتماد"
+        css = "gray"
+
+    return {
+        "total": total,
+        "pending": pending,
+        "approved": approved,
+        "rejected": rejected,
+        "label": label,
+        "css": css,
+    }
+
+
+def _operational_status(
+    doc,
+    referral_kpis: dict,
+    reply_kpis: dict,
+    approval_summary: dict,
+    today_date: date,
+) -> dict[str, str]:
+    """Derive a read-only operational state from existing native records."""
+    if doc.workflow_state == "Sealed" or doc.record_sealed_on:
+        return {"key": "sealed", "label": "مختومة", "css": "green", "detail": "المعاملة مختومة ومحفوظة كسجل نهائي."}
+
+    if referral_kpis["open"]:
+        if referral_kpis["overdue"]:
+            return {"key": "referrals_overdue", "label": "إحالات متأخرة", "css": "red", "detail": f"يوجد {referral_kpis['overdue']} إحالة متأخرة."}
+        return {"key": "referrals_open", "label": "بانتظار إكمال الإحالات", "css": "blue", "detail": f"يوجد {referral_kpis['open']} إحالة مفتوحة."}
+
+    if doc.closed_on:
+        return {"key": "closed", "label": "مغلقة", "css": "green", "detail": "تم إغلاق المعاملة."}
+
+    if doc.correspondence_direction == "Incoming":
+        if reply_kpis["draft"]:
+            return {"key": "reply_draft", "label": "يوجد رد مسودة", "css": "orange", "detail": "يوجد رد رسمي مسودة يحتاج إلى مراجعة."}
+        if reply_kpis["registered"]:
+            return {"key": "reply_registered", "label": "يوجد رد رسمي", "css": "green", "detail": "تم إنشاء رد رسمي لهذه المعاملة."}
+        due_left = _days_left(doc.due_date, today_date)
+        if due_left is not None and due_left < 0:
+            days = -due_left
+            return {"key": "correspondence_overdue", "label": "المعاملة متأخرة", "css": "red", "detail": f"تجاوزت الموعد النهائي بمقدار {days} يومًا."}
+        return {"key": "ready_for_reply", "label": "جاهزة لإنشاء الرد", "css": "green", "detail": "لا توجد إحالات مفتوحة ويمكن إنشاء رد رسمي."}
+
+    if approval_summary["rejected"]:
+        return {"key": "approval_rejected", "label": "الاعتماد مرفوض", "css": "red", "detail": "يوجد طلب اعتماد مرفوض يحتاج إلى معالجة."}
+
+    if approval_summary["pending"]:
+        return {"key": "approval_pending", "label": "بانتظار الاعتماد", "css": "orange", "detail": f"يوجد {approval_summary['pending']} طلب اعتماد معلّق."}
+
+    return {"key": "in_progress", "label": "قيد المعالجة", "css": "blue", "detail": "المعاملة قيد المعالجة."}
+
+
+def _correspondence_age(doc, today_date: date) -> dict[str, Any]:
+    """Return elapsed calendar days from registration to close/today."""
+    start = _as_date(doc.registered_on)
+    end = _as_date(doc.closed_on) or today_date
+    if not start:
+        return {"days": None, "label": "غير مسجلة بعد"}
+    days = max((end - start).days, 0)
+    return {"days": days, "label": f"{days} يومًا"}
+
+
 def _get_replies(correspondence: str) -> list[dict]:
     """Return visible official replies by querying the parent DocType.
 
@@ -182,6 +271,11 @@ def _as_date(value: Any) -> date | None:
     """Coerce a database value to a date without touching Frappe."""
     if not value:
         return None
+    # ``datetime`` is a subclass of ``date`` in Python, so it must be
+    # handled before the plain-date check. Frappe Datetime fields commonly
+    # arrive here as ``datetime`` objects while ``today_date`` is a ``date``.
+    if isinstance(value, datetime):
+        return value.date()
     if isinstance(value, date):
         return value
     text = str(value).strip()
@@ -353,6 +447,52 @@ def _environment() -> Environment:
 
 
 def render(template_name: str, **context) -> str:
+    """Render overview templates while remaining compatible with older callers/tests."""
+    if template_name == "correspondence.html":
+        kpis = context.get("kpis") or {
+            "total": 0,
+            "draft": 0,
+            "open": 0,
+            "overdue": 0,
+            "due_today": 0,
+            "completed": 0,
+        }
+        replies = context.get("replies") or []
+        approvals = context.get("approvals") or []
+        context.setdefault("reply_kpis", _reply_kpis(replies))
+        context.setdefault("approval_summary", _approval_summary(approvals))
+
+        if "operational_status" not in context:
+            class _FallbackDoc:
+                correspondence_direction = context.get("direction")
+                workflow_state = context.get("state")
+                record_sealed_on = context.get("sealed_on")
+                closed_on = context.get("closed_on")
+                due_date = context.get("due_date")
+
+            fallback_today = (
+                frappe.utils.getdate(frappe.utils.today())
+                if hasattr(frappe, "utils")
+                else date.today()
+            )
+            context["operational_status"] = _operational_status(
+                _FallbackDoc(),
+                kpis,
+                context["reply_kpis"],
+                context["approval_summary"],
+                fallback_today,
+            )
+
+        if "correspondence_age" not in context:
+            registered = _as_date(context.get("registered_on"))
+            closed = _as_date(context.get("closed_on"))
+            today = frappe.utils.getdate(frappe.utils.today()) if hasattr(frappe, "utils") else date.today()
+            if registered:
+                days = max(((closed or today) - registered).days, 0)
+                context["correspondence_age"] = {"days": days, "label": f"{days} يومًا"}
+            else:
+                context["correspondence_age"] = {"days": None, "label": "غير مسجلة بعد"}
+
     return _environment().get_template(template_name).render(**context)
 
 
@@ -400,6 +540,9 @@ def correspondence_overview(correspondence: str) -> dict:
     # They are displayed only for Incoming correspondence.
     replies = _get_replies(doc.name) if doc.correspondence_direction == "Incoming" else []
     reply_kpis = _reply_kpis(replies)
+    approval_summary = _approval_summary(approvals)
+    operational_status = _operational_status(doc, kpis, reply_kpis, approval_summary, today_date)
+    correspondence_age = _correspondence_age(doc, today_date)
 
     attachments = list(doc.attachments or [])
     secret_count = sum(1 for row in attachments if row.is_secret)
@@ -434,6 +577,9 @@ def correspondence_overview(correspondence: str) -> dict:
         "referrals": decorated,
         "replies": replies,
         "reply_kpis": reply_kpis,
+        "approval_summary": approval_summary,
+        "operational_status": operational_status,
+        "correspondence_age": correspondence_age,
         "approvals": [dict(row) for row in approvals],
         "links": _link_rows(doc),
         "activity": _activity_rows(doc),
