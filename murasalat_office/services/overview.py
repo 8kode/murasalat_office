@@ -80,6 +80,104 @@ APPROVAL_FIELDS = [
 ]
 
 
+REPLY_LINK_FIELDS = [
+    "parent",
+    "linked_correspondence",
+    "relationship_type",
+    "link_order",
+]
+
+REPLY_FIELDS = [
+    "name",
+    "subject",
+    "correspondence_direction",
+    "outgoing_source_entity",
+    "outgoing_target_entry",
+    "transaction_type",
+    "importance",
+    "confidentiality",
+    "workflow_state",
+    "external_letter_number",
+    "external_letter_date",
+    "registered_on",
+    "closed_on",
+    "creation",
+]
+
+
+def _reply_kpis(rows: Iterable[dict]) -> dict[str, int]:
+    """Return presentation counters for official replies to an incoming record."""
+    kpis = {
+        "total": 0,
+        "draft": 0,
+        "registered": 0,
+        "closed": 0,
+    }
+
+    for row in rows:
+        kpis["total"] += 1
+
+        if row.get("registered_on") or row.get("workflow_state") == "Registered":
+            kpis["registered"] += 1
+        else:
+            kpis["draft"] += 1
+
+        if row.get("closed_on"):
+            kpis["closed"] += 1
+
+    return kpis
+
+
+def _get_replies(correspondence: str) -> list[dict]:
+    """Return visible official replies by querying the parent DocType.
+
+    ``Murasalat Correspondence Link`` is a child table, not an independent business
+    record. The authoritative record is the Outgoing ``Murasalat Correspondence``
+    itself. Querying the parent and filtering through ``links.*`` lets Frappe apply
+    the parent document's normal read permissions while retaining the existing
+    ``Reply To`` relationship as the single source of truth.
+
+    Frappe v16 Query Builder supports filtering parent records through Child Table
+    fields. ``distinct=True`` prevents duplicate parents if more than one matching
+    child row ever exists.
+    """
+    replies = frappe.qb.get_query(
+        "Murasalat Correspondence",
+        fields=REPLY_FIELDS,
+        filters=[
+            ["correspondence_direction", "=", "Outgoing"],
+            ["links.linked_correspondence", "=", correspondence],
+            ["links.relationship_type", "=", "Reply To"],
+        ],
+        distinct=True,
+        ignore_permissions=False,
+    ).run(as_dict=True)
+
+    replies = sorted(
+        replies,
+        key=lambda row: (row.get("creation") or "", row.get("name") or ""),
+    )
+
+    decorated = []
+
+    for row in replies:
+        item = dict(row)
+
+        if row.get("closed_on"):
+            item["status_label"] = "مغلقة"
+            item["status_class"] = "orange"
+        elif row.get("registered_on") or row.get("workflow_state") == "Registered":
+            item["status_label"] = "مسجّلة"
+            item["status_class"] = "green"
+        else:
+            item["status_label"] = "مسوّدة"
+            item["status_class"] = "gray"
+
+        decorated.append(item)
+
+    return decorated
+
+
 def _as_date(value: Any) -> date | None:
     """Coerce a database value to a date without touching Frappe."""
     if not value:
@@ -298,6 +396,11 @@ def correspondence_overview(correspondence: str) -> dict:
     decorated = decorate_referrals(referrals, today_date)
     kpis = referral_kpis(referrals, today_date)
 
+    # Replies are reverse-linked through the existing Reply To child-table row.
+    # They are displayed only for Incoming correspondence.
+    replies = _get_replies(doc.name) if doc.correspondence_direction == "Incoming" else []
+    reply_kpis = _reply_kpis(replies)
+
     attachments = list(doc.attachments or [])
     secret_count = sum(1 for row in attachments if row.is_secret)
 
@@ -329,6 +432,8 @@ def correspondence_overview(correspondence: str) -> dict:
         "seal_reason": doc.seal_reason,
         "kpis": kpis,
         "referrals": decorated,
+        "replies": replies,
+        "reply_kpis": reply_kpis,
         "approvals": [dict(row) for row in approvals],
         "links": _link_rows(doc),
         "activity": _activity_rows(doc),
