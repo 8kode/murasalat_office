@@ -1,0 +1,10 @@
+{
+ "creation": "2026-10-01 23:57:55.661298",
+ "doc_type": "Murasalat Correspondence",
+ "doctype": "Permission Type",
+ "modified": "2026-10-01 23:57:55.661298",
+ "modified_by": "Administrator",
+ "name": "murasalat_correspondence_create_reply",
+ "owner": "Administrator",
+ "perm_type": "create_reply"
+}
