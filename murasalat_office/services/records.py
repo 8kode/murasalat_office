@@ -26,6 +26,7 @@ IMMUTABLE_AFTER_SEALING = {
     "notes",
     "due_date",
     "concerned_person",
+    "links",
 }
 
 
@@ -53,6 +54,14 @@ def canonical_payload(doc):
         "notes": doc.notes,
         "due_date": str(doc.due_date or ""),
         "concerned_person": doc.concerned_person,
+        "links": [
+            {
+                "linked_correspondence": row.linked_correspondence,
+                "relationship_type": row.relationship_type,
+                "link_order": row.link_order,
+            }
+            for row in (getattr(doc, "links", None) or [])
+        ],
         "attachments": [
             {
                 "file": row.file,

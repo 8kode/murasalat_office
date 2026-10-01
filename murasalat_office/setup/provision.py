@@ -37,6 +37,7 @@ REFERRAL = "Murasalat Referral"
 
 CLERK = "Correspondence Clerk"
 SUPERVISOR = "Correspondence Supervisor"
+CREATE_REPLY_PERMISSION = "create_reply"
 
 # Draft is the state a new record starts in, and every DocType here is non-submittable, so all
 # states sit at doc_status 0.
@@ -150,6 +151,44 @@ def _transition_task_field(transition_meta):
     return _field(transition_meta, "transition_tasks", "transition_task", "task")
 
 
+def ensure_custom_permission_type(confirm=False):
+    """Create the native v16 Permission Type used by the Create Reply action.
+
+    Permission Types are site governance, not app fixtures. They are created explicitly during
+    the confirmed provisioning command so an administrator can review and rerun the operation.
+    The live DocType metadata is used for the document-type field name because Frappe has used
+    ``doc_type`` for this record in v16.
+    """
+    if not confirm:
+        frappe.throw(
+            _("Creating the Create Reply permission requires confirm=True.")
+        )
+
+    meta = frappe.get_meta("Permission Type")
+    doc_type_field = "doc_type" if meta.get_field("doc_type") else "document_type"
+    if not meta.get_field(doc_type_field) or not meta.get_field("perm_type"):
+        frappe.throw(
+            _("This Frappe version does not expose the expected Permission Type fields.")
+        )
+
+    filters = {
+        doc_type_field: CORRESPONDENCE,
+        "perm_type": CREATE_REPLY_PERMISSION,
+    }
+    existing = frappe.db.exists("Permission Type", filters)
+    if existing:
+        return {"name": existing, "created": False, "perm_type": CREATE_REPLY_PERMISSION}
+
+    doc = frappe.get_doc({
+        "doctype": "Permission Type",
+        doc_type_field: CORRESPONDENCE,
+        "perm_type": CREATE_REPLY_PERMISSION,
+    })
+    doc.insert(ignore_permissions=True)
+
+    return {"name": doc.name, "created": True, "perm_type": CREATE_REPLY_PERMISSION}
+
+
 def plan():
     """Read-only: what provisioning would create, and what is already there."""
     roles = {role: frappe.db.exists("Role", role) for role in governance_plan.PERMISSION_PLAN}
@@ -165,8 +204,14 @@ def plan():
             "would_create_transitions": transitions,
         })
 
+    permission_type_exists = frappe.db.exists(
+        "Permission Type",
+        {"perm_type": CREATE_REPLY_PERMISSION, "doc_type": CORRESPONDENCE},
+    )
+
     return {
         "master_data_missing": master_data.verify(),
+        "create_reply_permission_type_present": bool(permission_type_exists),
         "roles_present": roles,
         "roles_to_create": [r for r, present in roles.items() if not present],
         "workflows": workflows,
@@ -304,6 +349,7 @@ def apply(confirm=False):
 
     report = {
         "master_data": None,
+        "permission_type": None,
         "roles": [],
         "workflows": [],
         "print_formats": None,
@@ -312,6 +358,7 @@ def apply(confirm=False):
     }
 
     report["master_data"] = master_data.seed()
+    report["permission_type"] = ensure_custom_permission_type(confirm=True)
     report["roles"] = governance_plan.materialize(confirm=True)
     report["print_formats"] = report_print_formats.install()
     report["notifications"] = notifications.install()
@@ -371,6 +418,16 @@ def readiness():
 
     missing = master_data.verify()
     checks.append(("master data", "ok" if not missing else f"{len(missing)} missing", not missing))
+
+    permission_type_exists = frappe.db.exists(
+        "Permission Type",
+        {"perm_type": CREATE_REPLY_PERMISSION, "doc_type": CORRESPONDENCE},
+    )
+    checks.append((
+        "permission type create_reply",
+        "ok" if permission_type_exists else "not created",
+        bool(permission_type_exists),
+    ))
 
     roles = [role for role in governance_plan.PERMISSION_PLAN
              if not frappe.db.exists("Role", role)]

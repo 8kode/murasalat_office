@@ -22,6 +22,7 @@ class MurasalatReferral(Document):
     def validate(self):
         self._validate_recipient()
         self._validate_dates()
+        self._validate_completion_result()
         self._validate_correspondence()
 
     def _validate_recipient(self):
@@ -50,6 +51,13 @@ class MurasalatReferral(Document):
                 _("Recipient Type must be User or Department; this record has {0}.").format(
                     repr(self.recipient_type)
                 )
+            )
+
+    def _validate_completion_result(self):
+        """A completed referral must contain an accountable outcome."""
+        if self.completed_on and not (getattr(self, "completion_result", None) or "").strip():
+            frappe.throw(
+                _("A Completion Result is required before a referral can be completed.")
             )
 
     def _validate_dates(self):

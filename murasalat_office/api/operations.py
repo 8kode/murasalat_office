@@ -131,3 +131,24 @@ def referral_overview(referral):
     from murasalat_office.services.overview import referral_overview as build
 
     return build(referral)
+
+
+@frappe.whitelist()
+def get_reply_context(correspondence):
+    """Return the permission-aware context used by the native Create Reply dialog."""
+    from murasalat_office.services.reply import get_reply_context as build
+
+    return build(correspondence)
+
+
+@frappe.whitelist()
+def create_reply_draft(correspondence, subject=None, notes=None, source_department=None):
+    """Create a new Outgoing correspondence as a draft reply to an Incoming record."""
+    from murasalat_office.services.reply import create_reply_draft as create
+
+    return create(
+        correspondence=correspondence,
+        subject=subject,
+        notes=notes,
+        source_department=source_department,
+    )

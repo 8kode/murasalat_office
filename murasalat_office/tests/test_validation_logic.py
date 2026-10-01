@@ -157,6 +157,7 @@ def test_referral_completion_requires_receipt():
         is_new=False,
         sent_on="2026-09-09 08:00:00",
         completed_on="2026-09-09 12:00:00",
+        completion_result="تمت مراجعة المعاملة وإعداد النتيجة.",
     )
     try:
         mod.MurasalatReferral.validate(doc)

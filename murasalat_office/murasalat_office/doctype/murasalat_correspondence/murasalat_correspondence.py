@@ -45,6 +45,7 @@ class MurasalatCorrespondence(Document):
         self._validate_direction_exclusivity()
         self._validate_numeric_fields()
         self._validate_links()
+        self._validate_reply_relationships()
 
         validate_immutable_fields(self)
         validate_sealed_attachments(self)
@@ -166,6 +167,50 @@ class MurasalatCorrespondence(Document):
                 )
 
             seen.add(key)
+
+    def _validate_reply_relationships(self):
+        """Enforce the business meaning of the existing ``Reply To`` link.
+
+        The relationship is intentionally represented by the existing child table rather
+        than by a second reply-specific Link field. This keeps one source of truth for
+        correspondence relationships.
+        """
+        reply_rows = [
+            row for row in (self.links or [])
+            if row.relationship_type == "Reply To"
+        ]
+
+        if not reply_rows:
+            return
+
+        if self.correspondence_direction != "Outgoing":
+            frappe.throw(
+                _("The Reply To relationship is allowed only on Outgoing correspondence.")
+            )
+
+        if len(reply_rows) > 1:
+            frappe.throw(
+                _("An Outgoing reply can have only one Reply To correspondence.")
+            )
+
+        target = frappe.get_doc(
+            "Murasalat Correspondence",
+            reply_rows[0].linked_correspondence,
+        )
+        target.check_permission("read")
+
+        if target.correspondence_direction != "Incoming":
+            frappe.throw(
+                _("Reply To must point to an Incoming correspondence.")
+            )
+
+        if self.outgoing_target_entry != target.incoming_source_entity:
+            frappe.throw(
+                _(
+                    "The Outgoing external recipient must be the same external party "
+                    "that sent the Incoming correspondence."
+                )
+            )
 
     def before_insert(self):
         self._append_activity(

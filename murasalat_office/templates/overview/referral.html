@@ -109,6 +109,13 @@
     <div class="mo-instr">{{ instructions or "—" }}</div>
   </div>
 
+  {% if completed_on %}
+  <div class="mo-card">
+    <h5 class="mo-sec">نتيجة الإحالة</h5>
+    <div class="mo-instr">{{ completion_result or "—" }}</div>
+  </div>
+  {% endif %}
+
   <div class="mo-grid">
     <div class="mo-card">
       <h5 class="mo-sec">المعاملة المرجعية</h5>

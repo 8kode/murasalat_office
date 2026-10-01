@@ -362,6 +362,11 @@ def complete_referral(doc):
             _("A referral must be received before it can be completed.")
         )
 
+    if not (doc.get("completion_result") or "").strip():
+        frappe.throw(
+            _("A Completion Result is required before a referral can be completed.")
+        )
+
     if doc.completed_on:
         return
 
