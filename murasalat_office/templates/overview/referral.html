@@ -24,6 +24,8 @@
   .mo-ov .mo-kpi.mo-ok .n { color: #16694f; }
   .mo-ov h5.mo-sec { font-size: 13.5px; font-weight: 700; color: #123c35; margin: 0 0 8px 0; padding-right: 8px; border-right: 3px solid #98b5ad; }
   .mo-ov table.mo-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mo-ov table.mo-tbl { min-width: 860px; }
+  .mo-ov .mo-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e9efed; border-radius: 7px; }
   .mo-ov table.mo-tbl th { background: #eef3f1; color: #123c35; text-align: right; padding: 6px 8px; border: 1px solid #e2eae7; font-weight: 700; white-space: nowrap; }
   .mo-ov table.mo-tbl td { padding: 6px 8px; border: 1px solid #e9efed; vertical-align: middle; }
   .mo-ov table.mo-tbl tr:nth-child(even) td { background: #fbfdfc; }
@@ -54,6 +56,36 @@
   .mo-ov .mo-kv .k { color: #63736e; }
   .mo-ov .mo-kv .v { font-weight: 700; color: #1b2a27; text-align: left; }
   .mo-ov .mo-locked { border: 1px dashed #d7cfc5; background: #fdfbf8; border-radius: 8px; padding: 12px; color: #8a7f70; font-size: 12.5px; }
+</style>
+<style>
+  /* Mobile only: original desktop presentation is retained exactly. */
+  .mo-ov table.mo-tbl .mo-cell-label { display: none; }
+
+  @media (max-width: 767px) {
+    .mo-ov { max-width: 100%; min-width: 0; overflow: hidden; }
+    .mo-ov .mo-card { padding: 10px; }
+    .mo-ov .mo-grid { display: block; }
+    .mo-ov .mo-grid > .mo-card { margin-bottom: 10px; }
+    .mo-ov .mo-stamps { display: grid; grid-template-columns: 1fr 1fr; }
+    .mo-ov table.mo-tbl, .mo-ov table.mo-tbl tbody, .mo-ov table.mo-tbl tr, .mo-ov table.mo-tbl td { display: block; width: 100%; }
+    .mo-ov table.mo-tbl thead { display: none; }
+    .mo-ov table.mo-tbl { border: 0; }
+    .mo-ov table.mo-tbl { min-width: 0; }
+    .mo-ov table.mo-tbl tr { margin: 0 0 9px; border: 1px solid #dfe8e5; border-radius: 8px; overflow: hidden; background: #fff; }
+    .mo-ov table.mo-tbl tr:last-child { margin-bottom: 0; }
+    .mo-ov table.mo-tbl tr:nth-child(even) td { background: transparent; }
+    .mo-ov table.mo-tbl td { display: grid; grid-template-columns: minmax(86px, 34%) minmax(0, 1fr); gap: 8px; align-items: start; min-width: 0; padding: 7px 8px; border: 0; border-bottom: 1px solid #edf2f0; background: transparent; overflow-wrap: anywhere; word-break: break-word; }
+    .mo-ov table.mo-tbl td:last-child { border-bottom: 0; }
+    .mo-ov table.mo-tbl .mo-cell-label { display: block; color: #63736e; font-weight: 700; line-height: 1.45; }
+    .mo-ov table.mo-tbl .mo-cell-value { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+    .mo-ov table.mo-tbl .mo-chip { margin-top: 0; }
+    .mo-ov table.mo-tbl a { overflow-wrap: anywhere; word-break: break-word; }
+  }
+  @media (max-width: 420px) {
+    .mo-ov .mo-stamps { grid-template-columns: 1fr; }
+    .mo-ov table.mo-tbl td { grid-template-columns: 78px minmax(0, 1fr); padding: 7px 6px; }
+    .mo-ov .mo-title { font-size: 15px; }
+  }
 </style>
 
 <div class="mo-ov">
@@ -135,25 +167,27 @@
     <div class="mo-card">
       <h5 class="mo-sec">بقية إحالات المعاملة{% if siblings %} ({{ siblings | length }}){% endif %}</h5>
       {% if siblings %}
-      <table class="mo-tbl">
+      <div class="mo-table-wrap"><table class="mo-tbl">
         <thead><tr><th>الإحالة</th><th>الموجَّه إليه</th><th>الحالة</th><th>الاستحقاق</th></tr></thead>
         <tbody>
           {% for s in siblings %}
           <tr>
-            <td><a href="/app/murasalat-referral/{{ s.name }}">{{ s.referral_number or s.name }}</a></td>
-            <td>{{ s.recipient_label }}</td>
-            <td>
+            <td data-label="الإحالة"><span class="mo-cell-label">الإحالة</span><span class="mo-cell-value"><a href="/app/murasalat-referral/{{ s.name }}">{{ s.referral_number or s.name }}</a></span></td>
+            <td data-label="الموجَّه إليه"><span class="mo-cell-label">الموجَّه إليه</span><span class="mo-cell-value">{{ s.recipient_label }}</span></td>
+            <td data-label="الحالة">
+              <span class="mo-cell-label">الحالة</span><span class="mo-cell-value">
               {% if s.is_completed %}<span class="mo-chip mo-green">مكتملة</span>
               {% elif s.is_overdue %}<span class="mo-chip mo-red">متأخرة</span>
               {% elif s.is_due_today %}<span class="mo-chip mo-orange">تستحق اليوم</span>
               {% elif s.is_open %}<span class="mo-chip">مفتوحة</span>
               {% else %}<span class="mo-chip">مسوّدة</span>{% endif %}
+              </span>
             </td>
-            <td class="mo-muted">{{ s.due_date or "—" }}</td>
+            <td data-label="الاستحقاق" class="mo-muted"><span class="mo-cell-label">الاستحقاق</span><span class="mo-cell-value">{{ s.due_date or "—" }}</span></td>
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+      </table></div>
       {% elif parent %}
       <div class="mo-empty">لا توجد إحالات أخرى على هذه المعاملة.</div>
       {% else %}
@@ -165,18 +199,18 @@
   <div class="mo-card">
     <h5 class="mo-sec">مرفقات الإحالة{% if attachments %} ({{ attachments | length }}){% endif %}</h5>
     {% if attachments %}
-    <table class="mo-tbl">
+    <div class="mo-table-wrap"><table class="mo-tbl">
       <thead><tr><th>النوع</th><th>الملف</th><th>الملف الورقي</th></tr></thead>
       <tbody>
         {% for a in attachments %}
         <tr>
-          <td>{{ a.attachment_type or "—" }}</td>
-          <td>{% if a.is_secret %}<span class="mo-muted">{{ a.label }}</span>{% else %}{{ a.label or "—" }}{% endif %}</td>
-          <td class="mo-muted">{{ a.archive_location or "—" }}</td>
+          <td data-label="النوع"><span class="mo-cell-label">النوع</span><span class="mo-cell-value">{{ a.attachment_type or "—" }}</span></td>
+          <td data-label="الملف"><span class="mo-cell-label">الملف</span><span class="mo-cell-value">{% if a.is_secret %}<span class="mo-muted">{{ a.label }}</span>{% else %}{{ a.label or "—" }}{% endif %}</span></td>
+          <td data-label="الملف الورقي" class="mo-muted"><span class="mo-cell-label">الملف الورقي</span><span class="mo-cell-value">{{ a.archive_location or "—" }}</span></td>
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+    </table></div>
     {% else %}
     <div class="mo-empty">لا توجد مرفقات على هذه الإحالة.</div>
     {% endif %}
@@ -205,19 +239,19 @@
     <div class="mo-card">
       <h5 class="mo-sec">طلبات اعتماد المعاملة{% if approvals %} ({{ approvals | length }}){% endif %}</h5>
       {% if approvals %}
-      <table class="mo-tbl">
+      <div class="mo-table-wrap"><table class="mo-tbl">
         <thead><tr><th>الطلب</th><th>المستوى</th><th>الحالة</th><th>القرار</th></tr></thead>
         <tbody>
           {% for a in approvals %}
           <tr>
-            <td><a href="/app/murasalat-approval-request/{{ a.name }}">{{ a.name }}</a></td>
-            <td>{{ a.approval_level or "—" }}</td>
-            <td>{{ a.workflow_state or "—" }}</td>
-            <td class="mo-muted">{{ a.approved_by or "بانتظار القرار" }}{% if a.approved_on %}<br>{{ a.approved_on }}{% endif %}</td>
+            <td data-label="الطلب"><span class="mo-cell-label">الطلب</span><span class="mo-cell-value"><a href="/app/murasalat-approval-request/{{ a.name }}">{{ a.name }}</a></span></td>
+            <td data-label="المستوى"><span class="mo-cell-label">المستوى</span><span class="mo-cell-value">{{ a.approval_level or "—" }}</span></td>
+            <td data-label="الحالة"><span class="mo-cell-label">الحالة</span><span class="mo-cell-value">{{ a.workflow_state or "—" }}</span></td>
+            <td data-label="القرار" class="mo-muted"><span class="mo-cell-label">القرار</span><span class="mo-cell-value">{{ a.approved_by or "بانتظار القرار" }}{% if a.approved_on %}<br>{{ a.approved_on }}{% endif %}</span></td>
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+      </table></div>
       {% else %}
       <div class="mo-empty">لا توجد طلبات اعتماد.</div>
       {% endif %}
