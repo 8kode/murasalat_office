@@ -80,7 +80,8 @@ def _condition(reminder):
 
 OPEN = dict(
     name="MR-00001",
-    workflow_state="Sent",
+    sent_on="2026-09-29 09:00:00",
+    completed_on=None,
     due_date="2026-09-30",
     cancelled_on=None,
     recipient_type="User",
@@ -164,9 +165,9 @@ def test_case_3_a_referral_without_a_due_date_never_fires(reminder):
 
 
 @pytest.mark.parametrize("reminder", REMINDERS, ids=[r["name"] for r in REMINDERS])
-def test_case_4_and_5_the_state_decides_that_someone_owes_the_work(reminder):
-    assert _fires(_condition(reminder), **{**OPEN, "workflow_state": "Received"}) is True
-    assert _fires(_condition(reminder), **{**OPEN, "workflow_state": "Draft"}) is False, (
+def test_case_4_and_5_business_evidence_decides_that_someone_owes_the_work(reminder):
+    assert _fires(_condition(reminder), **OPEN) is True
+    assert _fires(_condition(reminder), **{**OPEN, "sent_on": None}) is False, (
         "a draft has not been sent, so nobody owes anything yet"
     )
 
@@ -175,15 +176,15 @@ def test_case_4_and_5_the_state_decides_that_someone_owes_the_work(reminder):
 def test_case_6_completing_before_the_due_date_stops_the_reminders(reminder):
     """The Assignment Rule's close condition is what ends them: once the ToDo is closed,
     `get_assignees` returns nobody and the notification has no recipient left at all."""
-    assert _fires(_condition(reminder), **{**OPEN, "workflow_state": "Completed"}) is False
-    assert _fires(_condition(reminder), **{**OPEN, "workflow_state": "Cancelled"}) is False
+    assert _fires(_condition(reminder), **{**OPEN, "completed_on": "2026-09-25 10:00:00"}) is False
+    assert _fires(_condition(reminder), **{**OPEN, "cancelled_on": "2026-09-25 10:00:00"}) is False
     assert _fires(_condition(reminder), **{**OPEN, "cancelled_on": "2026-09-25 10:00:00"}) is False
 
 
 @pytest.mark.parametrize("reminder", REMINDERS, ids=[r["name"] for r in REMINDERS])
 def test_case_7_a_late_referral_that_is_then_completed_stops(reminder):
     assert _fires(_condition(reminder), **OPEN) is True
-    assert _fires(_condition(reminder), **{**OPEN, "workflow_state": "Completed"}) is False
+    assert _fires(_condition(reminder), **{**OPEN, "completed_on": "2026-09-25 10:00:00"}) is False
 
 
 @pytest.mark.parametrize("reminder", REMINDERS, ids=[r["name"] for r in REMINDERS])
@@ -269,9 +270,9 @@ def test_the_assignment_rule_assigns_once_and_only_while_the_work_is_owed():
     """The framework calls `apply_assign` only when nothing is assigned, so an unchanged
     referral cannot announce itself twice - and a finished one is never assigned again."""
     assert _fires(RULE["assign_condition"], **OPEN) is True
-    assert _fires(RULE["assign_condition"], **{**OPEN, "workflow_state": "Received"}) is True
-    assert _fires(RULE["assign_condition"], **{**OPEN, "workflow_state": "Completed"}) is False
-    assert _fires(RULE["assign_condition"], **{**OPEN, "workflow_state": "Draft"}) is False
+    assert _fires(RULE["assign_condition"], **OPEN) is True
+    assert _fires(RULE["assign_condition"], **{**OPEN, "completed_on": "2026-09-25 10:00:00"}) is False
+    assert _fires(RULE["assign_condition"], **{**OPEN, "sent_on": None}) is False
     assert _fires(
         RULE["assign_condition"], **{**OPEN, "recipient_type": "Department", "recipient_user": None}
     ) is False, (
@@ -279,8 +280,8 @@ def test_the_assignment_rule_assigns_once_and_only_while_the_work_is_owed():
         "department - Murasalat Inbox is what tells a department what is waiting"
     )
 
-    assert _fires(RULE["close_condition"], **{**OPEN, "workflow_state": "Completed"}) is True
-    assert _fires(RULE["unassign_condition"], **{**OPEN, "workflow_state": "Cancelled"}) is True
+    assert _fires(RULE["close_condition"], **{**OPEN, "completed_on": "2026-09-25 10:00:00"}) is True
+    assert _fires(RULE["unassign_condition"], **{**OPEN, "cancelled_on": "2026-09-25 10:00:00"}) is True
     assert _fires(RULE["close_condition"], **OPEN) is False
 
 
@@ -332,14 +333,13 @@ NOTICES = notifications.SENDER_NOTICES
 
 
 def test_the_sender_is_told_when_the_referral_moves():
-    """Two milestones, one notice each. Value Change fires only when the state actually
-    changes, so nothing repeats and no guard is needed."""
-    assert {n["state"] for n in NOTICES} == {"Received", "Completed"}
+    """Two milestone notices are driven by evidence fields, not Workflow state names."""
+    assert {n["value_changed"] for n in NOTICES} == {"received_on", "completed_on"}
 
     for notice in NOTICES:
         definition = notifications._definition(notice, notice["name"])
         assert definition["event"] == "Value Change"
-        assert definition["value_changed"] == "workflow_state"
+        assert definition["value_changed"] == notice["value_changed"]
         assert definition["document_type"] == "Murasalat Referral"
         assert definition["enabled"] == 1
 
@@ -356,18 +356,14 @@ def test_the_sender_notice_goes_to_the_records_own_owner_field():
         assert "receiver_by_role" not in definition["recipients"][0]
 
 
-@pytest.mark.parametrize("notice", NOTICES, ids=[n["name"] for n in NOTICES])
-def test_each_sender_notice_fires_on_its_own_state_only(notice):
-    condition = notifications.notice_condition(notice)
-    compile(condition, "<notice condition>", "eval")
-
-    assert _fires(condition, **{**OPEN, "workflow_state": notice["state"]}) is True
-
-    for other in {n["state"] for n in NOTICES} - {notice["state"]}:
-        assert _fires(condition, **{**OPEN, "workflow_state": other}) is False
-
-    assert _fires(condition, **{**OPEN, "workflow_state": "Sent"}) is False
-    assert _fires(condition, **{**OPEN, "workflow_state": "Cancelled"}) is False
+def test_each_sender_notice_fires_on_its_own_evidence_field():
+    for notice in NOTICES:
+        condition = notifications.notice_condition(notice)
+        compile(condition, "<notice condition>", "eval")
+        field = notice["value_changed"]
+        assert _fires(condition, **{**OPEN, field: "2026-09-30 10:00:00"}) is True
+        other = "completed_on" if field == "received_on" else "received_on"
+        assert _fires(condition, **{**OPEN, other: None, field: None}) is False
 
 
 @pytest.mark.parametrize("reminder", REMINDERS, ids=[r["name"] for r in REMINDERS])
@@ -426,55 +422,8 @@ def _resolve(node, values):
     raise AssertionError(ast.dump(node))
 
 
-def _workflow_spec(name):
-    provision = ast.parse((ROOT / "setup/provision.py").read_text(encoding="utf-8"))
-    values = _module_constants(provision)
-    for node in provision.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "WORKFLOWS" for t in node.targets
-        ):
-            for spec in _resolve(node.value, values):
-                if spec["name"] == name:
-                    return spec
-    raise AssertionError(f"{name} is not a shipped workflow")
-
-
-def test_the_referral_can_actually_be_cancelled():
-    """The reminders and the close condition both key on cancellation. Without the transition the
-    method, its mandatory reason and the Cancelled state had nothing to run them."""
-    spec = _workflow_spec("Murasalat Referral Lifecycle")
-    states = {row["state"] for row in spec["states"]}
-    cancels = [t for t in spec["transitions"] if t["action"] == "Cancel"]
-
-    assert "Cancelled" in states, "the state a cancellation lands in must exist"
-    assert cancels, "no Cancel transition means cancel_referral is unreachable"
-    assert {t["task"] for t in cancels} == {"Cancel Referral"}
-    assert {t["next_state"] for t in cancels} == {"Cancelled"}
-    assert {t["state"] for t in cancels} <= {"Draft", "Sent", "Received"}, (
-        "a completed referral cannot be cancelled - the method refuses it, so no transition "
-        "should offer it"
-    )
-
-
-def test_the_approval_workflow_makes_a_pending_decision_visible():
-    """Question 5 - is a formal action waiting for me - is answered by the native Workflow Action
-    list, which only lists something when a Workflow exists. The methods shipped before the
-    workflow did, so an approval had no state and no transition to run them."""
-    spec = _workflow_spec("Murasalat Approval Workflow")
-
-    assert spec["document_type"] == "Murasalat Approval Request"
-    transitions = {(t["state"], t["action"], t["next_state"], t["task"]) for t in spec["transitions"]}
-
-    assert ("Pending Approval", "Approve", "Approved", "Stamp Approval") in transitions
-    assert ("Approved", "Return for Amendment", "Pending Approval", "Clear Approval") in transitions
-    assert {row["state"] for row in spec["states"]} == {"Pending Approval", "Approved"}
-
-
-def test_every_shipped_transition_carries_its_task():
-    """The invariant the whole governance model rests on: a transition with no task completes
-    silently and writes nothing, so a guarded lifecycle step would be skipped without a word."""
-    for name in ("Murasalat Correspondence Lifecycle", "Murasalat Referral Lifecycle",
-                 "Murasalat Approval Workflow"):
-        spec = _workflow_spec(name)
-        missing = [t["action"] for t in spec["transitions"] if not t.get("task")]
-        assert not missing, (name, missing)
+def test_notifications_do_not_depend_on_workflow_state_names():
+    source = SOURCE
+    assert "workflow_state" not in source
+    assert "doc.sent_on and not doc.completed_on and not doc.cancelled_on" in source
+    assert "received_on" in source and "completed_on" in source

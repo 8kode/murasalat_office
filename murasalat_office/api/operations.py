@@ -142,7 +142,11 @@ def get_reply_context(correspondence):
 
 
 @frappe.whitelist()
-def create_reply_draft(correspondence, subject=None, notes=None, source_department=None):
+def create_reply_draft(
+    correspondence, subject=None, notes=None, source_department=None, salutation=None,
+    closing_phrase=None, signatory_name=None, signatory_position=None, approval_entity=None,
+    preparation_entity=None, prepared_on=None,
+):
     """Create a new Outgoing correspondence as a draft reply to an Incoming record."""
     from murasalat_office.services.reply import create_reply_draft as create
 
@@ -151,4 +155,11 @@ def create_reply_draft(correspondence, subject=None, notes=None, source_departme
         subject=subject,
         notes=notes,
         source_department=source_department,
+        salutation=salutation,
+        closing_phrase=closing_phrase,
+        signatory_name=signatory_name,
+        signatory_position=signatory_position,
+        approval_entity=approval_entity,
+        preparation_entity=preparation_entity,
+        prepared_on=prepared_on,
     )

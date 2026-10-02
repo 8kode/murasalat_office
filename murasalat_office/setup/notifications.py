@@ -16,8 +16,8 @@ What each question a user has gets, and the native surface that answers it:
        waiting for a supervisor appears in that list like any other pending transition.
 
 Plus one notice that closes the loop in the other direction: whoever sent a referral is told
-when it is received and when it is completed, through a native **Value Change** rule on
-``workflow_state`` whose recipient is the document's own ``owner`` field.
+when it is received and when it is completed, through native **Value Change** rules on the
+actual evidence fields ``received_on`` and ``completed_on``.
 
 There is no notification doctype, no inbox, no queue, no scheduler and no transport in this
 module. It creates native rows through Frappe's own models, exactly as clicking through Desk
@@ -53,16 +53,10 @@ from frappe import _
 
 REFERRAL = "Murasalat Referral"
 
-# The workflow states in which a referral is somebody's open work, and the ones in which
-# nobody owes anything any more. Read from the shipped Workflow in provision.WORKFLOWS; a
-# state renamed there has to be renamed here, and ``readiness`` reports the mismatch.
-OPEN_STATES = ("Sent", "Received")
-DONE_STATES = ("Completed", "Cancelled")
-
-# The condition a reminder must satisfy. Spelled once and reused, so the three reminders cannot
-# drift apart.
-_OPEN = 'doc.workflow_state in {states} and not doc.cancelled_on'.format(states=OPEN_STATES)
-_DONE = 'doc.workflow_state in {states} or doc.cancelled_on'.format(states=DONE_STATES)
+# Operational responsibility is determined by evidence fields, not by a Workflow state name.
+# The site may call its states anything it wants; these facts remain stable business data.
+_OPEN = 'doc.sent_on and not doc.completed_on and not doc.cancelled_on'
+_DONE = 'doc.completed_on or doc.cancelled_on'
 
 REMINDERS = [
     {
@@ -94,23 +88,23 @@ REMINDERS = [
 ]
 
 # The loop in the other direction: whoever created the referral is the clerk who sent it, so the
-# document's own `owner` field names the person to tell. Value Change fires only when the state
-# actually changes, so each of these is written at most once per referral - no guard needed, and
+# document's own `owner` field names the person to tell. Value Change fires when the evidence
+# field changes, so each of these is written at most once per referral - no guard needed, and
 # no notice for the person who performed the action (the framework skips a self-notification).
 SENDER_NOTICES = [
     {
         "name": "Murasalat Referral Received",
-        "state": "Received",
+        "value_changed": "received_on",
         "title": "تم استلام إحالتك",
         "subject": "استُلمت الإحالة {{ doc.name }}",
-        "message": "أكّد المستلم استلام الإحالة. تابعها لمعرفة ما تم.",
+        "message": "تم تسجيل استلام الإحالة. تابعها لمعرفة ما تم.",
     },
     {
         "name": "Murasalat Referral Completed",
-        "state": "Completed",
+        "value_changed": "completed_on",
         "title": "تم إتمام إحالتك",
         "subject": "أُتمَّت الإحالة {{ doc.name }}",
-        "message": "أُتمَّت الإحالة. راجع نتيجتها في سجل الإحالة.",
+        "message": "تم تسجيل إتمام الإحالة. راجع نتيجتها في سجل الإحالة.",
     },
 ]
 
@@ -165,8 +159,9 @@ def reminder_condition(reminder, notification_type):
 
 
 def notice_condition(notice):
-    """The condition for a sender notice: the one state it exists to announce."""
-    return 'doc.workflow_state == {state}'.format(state=repr(notice["state"]))
+    """The condition for a sender notice: the evidence field changed and is populated."""
+    field = notice["value_changed"]
+    return f"doc.{field}"
 
 
 def _notification_type(name, create=True):
@@ -233,7 +228,7 @@ def _definition(spec, notification_type):
         "enabled": 1,
         "document_type": REFERRAL,
         "event": "Value Change",
-        "value_changed": "workflow_state",
+        "value_changed": spec["value_changed"],
         "condition_type": "Python",
         "condition": notice_condition(spec),
         "channel": "System Notification",
@@ -313,7 +308,7 @@ def plan():
             "exists": exists,
             "current": exists and _assignment_rule_is_current(name),
         },
-        "open_states": list(OPEN_STATES),
+        "operational_rule": "sent_on + not completed_on + not cancelled_on",
     }
 
 

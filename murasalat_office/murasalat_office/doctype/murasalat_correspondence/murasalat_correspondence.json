@@ -230,6 +230,56 @@
    "label": "Body"
   },
   {
+   "fieldname": "official_reply_section",
+   "fieldtype": "Section Break",
+   "label": "Official Letter"
+  },
+  {
+   "fieldname": "salutation",
+   "fieldtype": "Data",
+   "label": "Salutation",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
+   "fieldname": "closing_phrase",
+   "fieldtype": "Data",
+   "label": "Closing Phrase",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
+   "fieldname": "signatory_name",
+   "fieldtype": "Data",
+   "label": "Signatory Name",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
+   "fieldname": "signatory_position",
+   "fieldtype": "Data",
+   "label": "Signatory Position",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
+   "fieldname": "approval_entity",
+   "fieldtype": "Link",
+   "options": "Department",
+   "label": "Approval Entity",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
+   "fieldname": "preparation_entity",
+   "fieldtype": "Link",
+   "options": "Department",
+   "label": "Preparation Entity",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
+   "fieldname": "prepared_on",
+   "fieldtype": "Date",
+   "label": "Preparation Date",
+   "read_only": 1,
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
+  },
+  {
    "fieldname": "links_section",
    "fieldtype": "Section Break"
   },

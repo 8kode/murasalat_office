@@ -117,7 +117,7 @@ def _reply_kpis(rows: Iterable[dict]) -> dict[str, int]:
     for row in rows:
         kpis["total"] += 1
 
-        if row.get("registered_on") or row.get("workflow_state") == "Registered":
+        if row.get("registered_on"):
             kpis["registered"] += 1
         else:
             kpis["draft"] += 1
@@ -137,11 +137,12 @@ def _approval_summary(rows: Iterable[dict]) -> dict[str, Any]:
 
     for row in rows:
         total += 1
-        state = (row.get("workflow_state") or "").strip().lower()
-        if state == "approved" or row.get("approved_on"):
+        if row.get("approved_on"):
             approved += 1
-        elif state == "rejected":
-            rejected += 1
+        elif row.get("decision_note") and not row.get("approved_on"):
+            # A decision note is evidence that review occurred; whether the outcome is
+            # approval or rejection remains the site's own Approval Workflow semantics.
+            pending += 1
         else:
             pending += 1
 
@@ -176,7 +177,7 @@ def _operational_status(
     today_date: date,
 ) -> dict[str, str]:
     """Derive a read-only operational state from existing native records."""
-    if doc.workflow_state == "Sealed" or doc.record_sealed_on:
+    if doc.record_sealed_on:
         return {"key": "sealed", "label": "مختومة", "css": "green", "detail": "المعاملة مختومة ومحفوظة كسجل نهائي."}
 
     if referral_kpis["open"]:
@@ -255,7 +256,7 @@ def _get_replies(correspondence: str) -> list[dict]:
         if row.get("closed_on"):
             item["status_label"] = "مغلقة"
             item["status_class"] = "orange"
-        elif row.get("registered_on") or row.get("workflow_state") == "Registered":
+        elif row.get("registered_on"):
             item["status_label"] = "مسجّلة"
             item["status_class"] = "green"
         else:
@@ -370,21 +371,17 @@ def _is_sent(row) -> bool:
     state as well is what keeps a panel from contradicting the badge printed beside it - the
     symptom that made a sent referral read as "لم تُرسل".
     """
-    return bool(row.get("sent_on")) or row.get("workflow_state") in (
-        "Sent",
-        "Received",
-        "Completed",
-    )
+    return bool(row.get("sent_on"))
 
 
 def _is_completed(row) -> bool:
     """Whether a referral counts as finished, by the same two sources."""
-    return bool(row.get("completed_on")) or row.get("workflow_state") == "Completed"
+    return bool(row.get("completed_on"))
 
 
 def _is_closed_referral(row) -> bool:
     """Cancelled work is closed work: it stops counting as open, and keeps its place in the log."""
-    return row.get("workflow_state") == "Cancelled" or bool(row.get("cancelled_on"))
+    return bool(row.get("cancelled_on"))
 
 
 def decorate_referrals(rows: Iterable[dict], today_date: date) -> list[dict]:
@@ -568,7 +565,7 @@ def correspondence_overview(correspondence: str) -> dict:
         "reopened_on": doc.reopened_on,
         # Same two-source rule as a referral's sent state: the lifecycle stamps the field, and
         # a migrated record may carry only the state.
-        "sealed": bool(doc.record_sealed_on) or doc.workflow_state == "Sealed",
+        "sealed": bool(doc.record_sealed_on),
         "sealed_on": doc.record_sealed_on,
         "sealed_by": doc.record_sealed_by,
         "integrity_hash": doc.integrity_hash,
@@ -609,12 +606,7 @@ def _correspondence_indicators(kpis: dict, approvals: list, sealed: bool) -> lis
     if kpis["due_today"]:
         indicators.append({"label": f"تستحق اليوم: {kpis['due_today']}", "color": "orange"})
 
-    pending = [
-        row
-        for row in approvals
-        if (row.get("workflow_state") or "").lower() not in {"approved", "rejected"}
-        and not row.get("approved_on")
-    ]
+    pending = [row for row in approvals if not row.get("approved_on")]
     if pending:
         indicators.append({"label": f"طلبات اعتماد معلّقة: {len(pending)}", "color": "orange"})
 

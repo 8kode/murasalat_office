@@ -112,69 +112,9 @@ def test_the_new_refusal_is_translated():
     assert "Recipient Type must be User or Department; this record has {0}." in translated
 
 
-# --- the state ------------------------------------------------------------------------
 
 
-SENT_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Sent"}
-RECEIVED_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Received"}
-COMPLETED_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Completed"}
-CANCELLED_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Cancelled"}
-DRAFT = {"sent_on": None, "completed_on": None, "workflow_state": "Draft"}
-STAMPED = {"sent_on": "2026-09-01 09:00:00", "completed_on": None, "workflow_state": "Sent"}
-
-
-def test_a_migrated_sent_referral_reads_as_sent():
-    """The exact record from the site: state "Sent", no timestamp, panel said "لم تُرسل"."""
-    assert PANEL["_is_sent"](SENT_STATE_ONLY) is True
-    assert PANEL["_is_sent"](RECEIVED_STATE_ONLY) is True
-    assert PANEL["_is_sent"](COMPLETED_STATE_ONLY) is True
-
-
-def test_a_draft_still_reads_as_a_draft():
-    """The rule must not make every referral look sent - the state has to say so."""
-    assert PANEL["_is_sent"](DRAFT) is False
-    assert PANEL["_is_sent"]({**DRAFT, "workflow_state": None}) is False
-    assert PANEL["_is_sent"]({**DRAFT, "workflow_state": ""}) is False
-
-
-def test_both_sources_agree_on_a_stamped_record():
-    assert PANEL["_is_sent"](STAMPED) is True
-    assert PANEL["_is_completed"](STAMPED) is False
-
-
-def test_completion_reads_from_either_source():
-    assert PANEL["_is_completed"](COMPLETED_STATE_ONLY) is True
-    assert PANEL["_is_completed"]({**STAMPED, "completed_on": "2026-09-02 10:00:00"}) is True
-    assert PANEL["_is_completed"](RECEIVED_STATE_ONLY) is False
-
-
-def test_cancelled_work_is_closed_not_open():
-    """Cancellation ends the work without completing it, so it must leave the open set - the
-    same rule the notification close condition and the cancellation transition follow."""
-    assert PANEL["_is_closed_referral"](CANCELLED_STATE_ONLY) is True
-    assert PANEL["_is_closed_referral"]({**DRAFT, "cancelled_on": "2026-09-20 10:00:00"}) is True
-    assert PANEL["_is_closed_referral"](RECEIVED_STATE_ONLY) is False
-
-
-def test_the_panel_no_longer_decides_from_the_timestamp_alone():
-    """Every site that decided sent/open/draft had to be moved onto the two-source rule."""
+def test_overview_never_uses_fixed_workflow_state_names():
     source = OVERVIEW
-
-    assert source.count('not row.get("sent_on")') == 0
-    assert source.count('bool(doc.sent_on)') == 0
-    assert source.count("not doc.sent_on") == 0
-    assert source.count("_is_sent(") >= 4, "the kpis, the list rows and the document panel"
-
-
-def test_the_correspondence_panel_uses_the_same_rule_for_the_seal():
-    """A correspondence migrated with state "Sealed" and no seal timestamp must not read as
-    unsealed while its badge says otherwise."""
-    assert 'doc.workflow_state == "Sealed"' in OVERVIEW
-
-
-def test_a_list_row_is_not_decorated_from_a_field_it_never_fetched():
-    """`decorate_referrals` reads the state, so the query has to select it."""
-    block = OVERVIEW.split("REFERRAL_FIELDS = [", 1)[1].split("]", 1)[0]
-
-    assert '"workflow_state"' in block
-    assert '"cancelled_on"' in block
+    for token in ("workflow_state == \"Sent\"", "workflow_state == \"Received\"", "workflow_state == \"Completed\"", "workflow_state == \"Cancelled\"", "workflow_state == \"Sealed\""):
+        assert token not in source
