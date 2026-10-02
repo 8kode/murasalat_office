@@ -54,6 +54,7 @@ frappe.ui.form.on("Murasalat Correspondence", {
         const panels = [
             ["overview_html", "overview"],
             ["referrals_html", "referrals"],
+            ["attachments_center_html", "attachments"],
             ["replies_html", "replies"],
             ["tracking_html", "tracking"],
         ];

@@ -83,6 +83,10 @@
   .mo-ov .mo-attachment-meta { min-width: 0; }
   .mo-ov .mo-attachment-name { font-weight: 700; color: #1b2a27; overflow-wrap: anywhere; }
   .mo-ov .mo-attachment-sub { color: #86968f; font-size: 10.5px; margin-top: 2px; }
+  .mo-ov .mo-card-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+  .mo-ov .mo-attachment-kpis { margin-top:10px; }
+  .mo-ov .mo-attachment-type-summary { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+  .mo-ov .mo-attachment-actions { flex:0 0 auto; display:flex; align-items:center; gap:6px; }
   .mo-ov .mo-attachment-action {
     flex: 0 0 auto; border: 1px solid #c9d8d3; border-radius: 6px; padding: 5px 8px;
     background: #fff; color: #1a5d8f; font-size: 11px; font-weight: 700; text-decoration: none;
@@ -303,33 +307,55 @@
 {% endif %}
 {% if experience_section is not defined or experience_section == "attachments" %}
 <div id="mo-section-attachments" class="mo-section-anchor">
-    <div class="mo-card">
-      <h5 class="mo-sec">المرفقات{% if attachments %} ({{ attachments | length }}){% endif %}</h5>
-      <div class="mo-center-note">الملفات تبقى تحت إدارة Frappe File. المرفق السرّي يظهر كوجود فقط دون كشف اسمه أو رابط الوصول.</div>
-      {% if attachments %}
+  <div class="mo-card">
+    <div class="mo-card-head">
+      <div>
+        <h5 class="mo-sec">مركز المرفقات{% if attachments_total %} ({{ attachments_total }}){% endif %}</h5>
+        <div class="mo-center-note">المرفقات الرسمية تبقى داخل جدول <strong>Murasalat Attachment</strong> وتُدار ملفاتها عبر Frappe File. هذه الواجهة تلخّصها ولا تنشئ نظام ملفات بديلًا.</div>
+      </div>
+      {% if sealed %}<span class="mo-chip mo-green">المعاملة مختومة</span>{% endif %}
+    </div>
+
+    <div class="mo-kpi-grid mo-attachment-kpis">
+      <div class="mo-kpi"><div class="n">{{ attachments_total }}</div><div class="l">إجمالي المرفقات</div></div>
+      <div class="mo-kpi"><div class="n">{{ attachments_visible }}</div><div class="l">متاحة للعرض</div></div>
+      <div class="mo-kpi"><div class="n">{{ attachments_secret }}</div><div class="l">سرّية</div></div>
+      <div class="mo-kpi"><div class="n">{{ attachments_type_count }}</div><div class="l">أنواع مستخدمة</div></div>
+      <div class="mo-kpi"><div class="n">{{ attachments_archive_count }}</div><div class="l">مواقع أرشفة</div></div>
+    </div>
+
+    {% if attachments_types %}
+    <div class="mo-attachment-type-summary">
+      {% for item in attachments_types %}<span class="mo-chip">{{ item[0] }}: {{ item[1] }}</span>{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if attachments %}
       <div class="mo-attachment-grid">
         <div class="mo-attachment-list">
           {% for a in attachments %}
           <div class="mo-attachment-row">
             <div class="mo-attachment-meta">
               <div class="mo-attachment-name">{{ a.label }}</div>
-              <div class="mo-attachment-sub">{{ a.attachment_type or "مرفق" }}{% if a.archive_location %} · {{ a.archive_location }}{% endif %}</div>
+              <div class="mo-attachment-sub">{{ a.attachment_type or "مرفق" }}{% if a.archive_location %} · أرشيف: {{ a.archive_location }}{% endif %}</div>
             </div>
-            {% if not a.is_secret and a.file %}
-            <a class="mo-attachment-action mo-preview-file" href="{{ a.file }}" target="_blank" rel="noopener">فتح / معاينة</a>
-            {% else %}
-            <span class="mo-chip mo-red">سرّي</span>
-            {% endif %}
+            <div class="mo-attachment-actions">
+              {% if not a.is_secret and a.file %}
+              <a class="mo-attachment-action mo-preview-file" href="{{ a.file }}" target="_blank" rel="noopener">فتح / معاينة</a>
+              {% else %}
+              <span class="mo-chip mo-red">سرّي</span>
+              {% endif %}
+            </div>
           </div>
           {% endfor %}
         </div>
-        <div class="mo-preview-hint">اختر «فتح / معاينة» لفتح الملف عبر عارض المتصفح أو Frappe الأصلي.<br>سيبقى اختيار نوع العارض المتقدم لمرحلة لاحقة بعد اختبار أنواع الملفات الفعلية.</div>
       </div>
-      {% else %}
+      <div class="mo-preview-hint">يمكن إضافة/تعديل المرفقات من جدول المرفقات الأصلي في هذا التبويب. عند الختم تُطبق الحماية من جهة الخادم؛ لا تعتمد الحماية على إخفاء أزرار الواجهة.</div>
+    {% else %}
       <div class="mo-empty">لا توجد مرفقات مسجلة على هذه المعاملة.</div>
-      {% endif %}
-    </div>
+    {% endif %}
   </div>
+</div>
 {% endif %}
 {% if experience_section is not defined or experience_section == "replies" %}
 {% if direction == "Incoming" and replies is defined and reply_kpis is defined %}

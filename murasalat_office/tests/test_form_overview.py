@@ -492,3 +492,29 @@ def test_overview_introduces_no_governance_or_doctype():
         if path.is_dir() and path.name == "murasalat_overview"
     ]
     assert new_doctypes == []
+
+
+def test_correspondence_attachment_center_is_native_and_secret_safe():
+    mod = _load_overview()
+    html = mod.render(
+        "correspondence.html",
+        **_correspondence_context(
+            mod,
+            attachments=[
+                {"label": "incoming-letter.pdf", "attachment_type": "خطاب", "archive_location": "A-01", "is_secret": False, "file": "/files/incoming-letter.pdf"},
+                {"label": "مرفق سرّي — يُطلب من الأرشيف", "attachment_type": "مستند سرّي", "archive_location": "S-01", "is_secret": True, "file": ""},
+            ],
+            attachments_total=2,
+            attachments_visible=1,
+            attachments_secret=1,
+            attachments_type_count=2,
+            attachments_archive_count=2,
+            attachments_types=[("خطاب", 1), ("مستند سرّي", 1)],
+        ),
+    )
+    assert "مركز المرفقات" in html
+    assert "إجمالي المرفقات" in html
+    assert "incoming-letter.pdf" in html
+    assert "/files/incoming-letter.pdf" in html
+    assert "مرفق سرّي — يُطلب من الأرشيف" in html
+    assert "/files/" not in html.split("مرفق سرّي — يُطلب من الأرشيف", 1)[1]

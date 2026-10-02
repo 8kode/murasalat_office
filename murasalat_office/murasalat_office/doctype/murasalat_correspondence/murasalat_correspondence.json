@@ -1,478 +1,484 @@
 {
-  "actions": [],
-  "autoname": "MO-.#####",
-  "creation": "2026-09-10 20:59:09.997166",
-  "description": "Native Frappe correspondence record. Permissions and lifecycle governance are administered from Desk.",
-  "doctype": "DocType",
-  "engine": "InnoDB",
-  "field_order": [
-    "data_tab",
-    "overview_identity_section",
-    "subject",
-    "correspondence_direction",
-    "workflow_state",
-    "overview_classification_section",
-    "transaction_type",
-    "importance",
-    "confidentiality",
-    "incoming_parties_section",
-    "incoming_source_entity",
-    "overview_party_column_in",
-    "incoming_target_entry",
-    "outgoing_parties_section",
-    "outgoing_source_entity",
-    "overview_party_column_out",
-    "outgoing_target_entry",
-    "internal_parties_section",
-    "internal_source_entity",
-    "overview_party_column_internal",
-    "internal_target_entry",
-    "overview_dates_section",
-    "external_letter_number",
-    "external_letter_date",
-    "due_date",
-    "overview_dates_column",
-    "page_count",
-    "concerned_person",
-    "notes",
-    "overview_tab",
-    "overview_summary_section",
-    "overview_html",
-    "referrals_tab",
-    "referrals_summary_section",
-    "referrals_html",
-    "attachments_tab",
-    "attachments_section",
-    "attachments_note_html",
-    "attachments",
-    "replies_tab",
-    "replies_section",
-    "replies_html",
-    "tracking_tab",
-    "tracking_links_section",
-    "links",
-    "tracking_html_section",
-    "tracking_html",
-    "activity_security_tab",
-    "activity_section",
-    "activities",
-    "security_section",
-    "current_holder",
-    "current_holder_user",
-    "originating_organization",
-    "registered_on",
-    "closed_on",
-    "record_sealed_on",
-    "record_sealed_by",
-    "seal_reason",
-    "reopen_reason",
-    "integrity_hash",
-    "reopened_on",
-    "reopened_by"
-  ],
-  "fields": [
-    {
-      "fieldname": "data_tab",
-      "fieldtype": "Tab Break",
-      "label": "البيانات"
-    },
-    {
-      "fieldname": "overview_identity_section",
-      "fieldtype": "Section Break",
-      "label": "البيانات الأساسية"
-    },
-    {
-      "fieldname": "subject",
-      "fieldtype": "Data",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "label": "Subject",
-      "reqd": 1,
-      "search_index": 1
-    },
-    {
-      "default": "Internal",
-      "fieldname": "correspondence_direction",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "label": "Correspondence Direction",
-      "options": "Murasalat Correspondence Direction",
-      "reqd": 1,
-      "set_only_once": 1
-    },
-    {
-      "fieldname": "workflow_state",
-      "fieldtype": "Data",
-      "in_list_view": 1,
-      "label": "Status",
-      "read_only": 1
-    },
-    {
-      "fieldname": "overview_classification_section",
-      "fieldtype": "Section Break",
-      "label": "التصنيف"
-    },
-    {
-      "default": "مذكرة",
-      "fieldname": "transaction_type",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "label": "Transaction Type",
-      "options": "Murasalat Transaction Type",
-      "reqd": 1
-    },
-    {
-      "default": "متوسط",
-      "fieldname": "importance",
-      "fieldtype": "Link",
-      "label": "Importance",
-      "options": "Murasalat Importance Level",
-      "reqd": 1
-    },
-    {
-      "default": "عام",
-      "fieldname": "confidentiality",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "label": "Confidentiality Level",
-      "options": "Murasalat Confidentiality Level",
-      "reqd": 1
-    },
-    {
-      "fieldname": "incoming_parties_section",
-      "fieldtype": "Section Break",
-      "label": "وارد — من / إلى",
-      "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-    },
-    {
-      "description": "External party that sent the correspondence.",
-      "fieldname": "incoming_source_entity",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "label": "Sender",
-      "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
-      "options": "Murasalat External Party"
-    },
-    {
-      "fieldname": "overview_party_column_in",
-      "fieldtype": "Column Break"
-    },
-    {
-      "description": "Internal department receiving the correspondence.",
-      "fieldname": "incoming_target_entry",
-      "fieldtype": "Link",
-      "label": "Receiving Department",
-      "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
-      "options": "Department"
-    },
-    {
-      "fieldname": "outgoing_parties_section",
-      "fieldtype": "Section Break",
-      "label": "صادر — من / إلى",
-      "depends_on": "eval:doc.correspondence_direction==\"Outgoing\""
-    },
-    {
-      "description": "Internal department sending the correspondence.",
-      "fieldname": "outgoing_source_entity",
-      "fieldtype": "Link",
-      "label": "Sending Department",
-      "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
-      "options": "Department"
-    },
-    {
-      "fieldname": "overview_party_column_out",
-      "fieldtype": "Column Break"
-    },
-    {
-      "description": "External party receiving the correspondence.",
-      "fieldname": "outgoing_target_entry",
-      "fieldtype": "Link",
-      "label": "External Recipient",
-      "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
-      "options": "Murasalat External Party"
-    },
-    {
-      "fieldname": "internal_parties_section",
-      "fieldtype": "Section Break",
-      "label": "داخلي — من / إلى",
-      "depends_on": "eval:doc.correspondence_direction==\"Internal\""
-    },
-    {
-      "description": "Internal department sending the correspondence.",
-      "fieldname": "internal_source_entity",
-      "fieldtype": "Link",
-      "label": "From Department",
-      "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
-      "options": "Department"
-    },
-    {
-      "fieldname": "overview_party_column_internal",
-      "fieldtype": "Column Break"
-    },
-    {
-      "description": "Internal department receiving the correspondence.",
-      "fieldname": "internal_target_entry",
-      "fieldtype": "Link",
-      "label": "To Department",
-      "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
-      "options": "Department"
-    },
-    {
-      "fieldname": "overview_dates_section",
-      "fieldtype": "Section Break",
-      "label": "البيانات الرسمية"
-    },
-    {
-      "fieldname": "external_letter_number",
-      "fieldtype": "Data",
-      "label": "External Letter Number"
-    },
-    {
-      "fieldname": "external_letter_date",
-      "fieldtype": "Date",
-      "label": "External Letter Date"
-    },
-    {
-      "fieldname": "due_date",
-      "fieldtype": "Date",
-      "in_list_view": 1,
-      "label": "Due Date"
-    },
-    {
-      "fieldname": "overview_dates_column",
-      "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "page_count",
-      "fieldtype": "Int",
-      "label": "Pages"
-    },
-    {
-      "fieldname": "concerned_person",
-      "fieldtype": "Data",
-      "label": "Concerned Person"
-    },
-    {
-      "description": "نصّ الخطاب أو مضمون المعاملة. يُحسب داخل بصمة السلامة عند الختم.",
-      "fieldname": "notes",
-      "fieldtype": "Small Text",
-      "label": "Body"
-    },
-    {
-      "fieldname": "overview_tab",
-      "fieldtype": "Tab Break",
-      "label": "نظرة عامة"
-    },
-    {
-      "fieldname": "overview_summary_section",
-      "fieldtype": "Section Break",
-      "label": "ملخص المعاملة"
-    },
-    {
-      "fieldname": "overview_html",
-      "fieldtype": "HTML",
-      "label": "ملخص المعاملة"
-    },
-    {
-      "fieldname": "referrals_tab",
-      "fieldtype": "Tab Break",
-      "label": "الإحالات"
-    },
-    {
-      "fieldname": "referrals_summary_section",
-      "fieldtype": "Section Break",
-      "label": "إدارة الإحالات"
-    },
-    {
-      "fieldname": "referrals_html",
-      "fieldtype": "HTML",
-      "label": "ملخص الإحالات"
-    },
-    {
-      "fieldname": "attachments_tab",
-      "fieldtype": "Tab Break",
-      "label": "المرفقات"
-    },
-    {
-      "fieldname": "attachments_section",
-      "fieldtype": "Section Break",
-      "label": "مرفقات المعاملة",
-      "description": "المرفقات الرسمية المرتبطة بهذه المعاملة. الملفات تدار عبر Frappe File وتخضع لصلاحيات المستند."
-    },
-    {
-      "fieldname": "attachments_note_html",
-      "fieldtype": "HTML",
-      "label": "إرشادات المرفقات",
-      "options": "<div style=\"direction:rtl;text-align:right;padding:8px 10px;border-right:3px solid #98b5ad;background:#f8fbfa;border-radius:6px;color:#63736e;font-size:12px;\">تُدار ملفات المعاملة عبر Frappe File والجدول الرسمي للمرفقات. الصلاحيات والحماية تطبّق على الخادم، ولا ينشئ Murasalat نظام ملفات بديلًا.</div>"
-    },
-    {
-      "fieldname": "attachments",
-      "fieldtype": "Table",
-      "label": "Attachments",
-      "options": "Murasalat Attachment"
-    },
-    {
-      "fieldname": "replies_tab",
-      "fieldtype": "Tab Break",
-      "label": "الردود الرسمية",
-      "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-    },
-    {
-      "fieldname": "replies_section",
-      "fieldtype": "Section Break",
-      "label": "الردود المرتبطة بهذه المعاملة",
-      "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-    },
-    {
-      "fieldname": "replies_html",
-      "fieldtype": "HTML",
-      "label": "الردود الرسمية",
-      "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-    },
-    {
-      "fieldname": "tracking_tab",
-      "fieldtype": "Tab Break",
-      "label": "التتبع"
-    },
-    {
-      "fieldname": "tracking_links_section",
-      "fieldtype": "Section Break",
-      "label": "العلاقات والمعاملات المرتبطة"
-    },
-    {
-      "fieldname": "links",
-      "fieldtype": "Table",
-      "label": "Related Records",
-      "options": "Murasalat Correspondence Link"
-    },
-    {
-      "fieldname": "tracking_html_section",
-      "fieldtype": "Section Break",
-      "label": "البيانات الزمنية والاعتمادات"
-    },
-    {
-      "fieldname": "tracking_html",
-      "fieldtype": "HTML",
-      "label": "التتبع والاعتمادات"
-    },
-    {
-      "fieldname": "activity_security_tab",
-      "fieldtype": "Tab Break",
-      "label": "النشاط والسلامة"
-    },
-    {
-      "fieldname": "activity_section",
-      "fieldtype": "Section Break",
-      "label": "سجل النشاط"
-    },
-    {
-      "fieldname": "activities",
-      "fieldtype": "Table",
-      "label": "Activities",
-      "options": "Murasalat Correspondence Activity",
-      "read_only": 1
-    },
-    {
-      "fieldname": "security_section",
-      "fieldtype": "Section Break",
-      "label": "الختم والسلامة",
-      "collapsible": 1
-    },
-    {
-      "fieldname": "current_holder",
-      "fieldtype": "Link",
-      "label": "Current Department",
-      "options": "Department",
-      "read_only": 1
-    },
-    {
-      "fieldname": "current_holder_user",
-      "fieldtype": "Link",
-      "hidden": 1,
-      "label": "Current User",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "originating_organization",
-      "fieldtype": "Link",
-      "label": "Originating Department",
-      "options": "Department",
-      "read_only": 1
-    },
-    {
-      "fieldname": "registered_on",
-      "fieldtype": "Datetime",
-      "label": "Registered On",
-      "read_only": 1
-    },
-    {
-      "fieldname": "closed_on",
-      "fieldtype": "Datetime",
-      "label": "Closed On",
-      "read_only": 1
-    },
-    {
-      "fieldname": "record_sealed_on",
-      "fieldtype": "Datetime",
-      "label": "Sealed On",
-      "read_only": 1
-    },
-    {
-      "fieldname": "record_sealed_by",
-      "fieldtype": "Link",
-      "label": "Sealed By",
-      "options": "User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "seal_reason",
-      "fieldtype": "Small Text",
-      "label": "Seal Reason"
-    },
-    {
-      "description": "Required when reopening: reopening lifts the integrity seal and the reason is recorded in the activity trail.",
-      "fieldname": "reopen_reason",
-      "fieldtype": "Small Text",
-      "label": "Reopen Reason"
-    },
-    {
-      "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",
-      "fieldname": "integrity_hash",
-      "fieldtype": "Data",
-      "label": "Integrity Hash",
-      "read_only": 1
-    },
-    {
-      "fieldname": "reopened_on",
-      "fieldtype": "Datetime",
-      "label": "Reopened On",
-      "read_only": 1
-    },
-    {
-      "fieldname": "reopened_by",
-      "fieldtype": "Link",
-      "label": "Reopened By",
-      "options": "User",
-      "read_only": 1
-    }
-  ],
-  "links": [],
-  "modified": "2026-09-29 12:05:43.042295",
-  "modified_by": "Administrator",
-  "module": "Murasalat Office",
-  "name": "Murasalat Correspondence",
-  "naming_rule": "Expression",
-  "owner": "Administrator",
-  "permissions": [],
-  "row_format": "Dynamic",
-  "search_fields": "subject,external_letter_number",
-  "show_title_field_in_link": 1,
-  "sort_field": "modified",
-  "sort_order": "DESC",
-  "states": [],
-  "title_field": "subject",
-  "track_changes": 1
+ "actions": [],
+ "autoname": "MO-.#####",
+ "creation": "2026-09-10 20:59:09.997166",
+ "description": "Native Frappe correspondence record. Permissions and lifecycle governance are administered from Desk.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "data_tab",
+  "overview_identity_section",
+  "subject",
+  "correspondence_direction",
+  "workflow_state",
+  "overview_classification_section",
+  "transaction_type",
+  "importance",
+  "confidentiality",
+  "incoming_parties_section",
+  "incoming_source_entity",
+  "overview_party_column_in",
+  "incoming_target_entry",
+  "outgoing_parties_section",
+  "outgoing_source_entity",
+  "overview_party_column_out",
+  "outgoing_target_entry",
+  "internal_parties_section",
+  "internal_source_entity",
+  "overview_party_column_internal",
+  "internal_target_entry",
+  "overview_dates_section",
+  "external_letter_number",
+  "external_letter_date",
+  "due_date",
+  "overview_dates_column",
+  "page_count",
+  "concerned_person",
+  "notes",
+  "overview_tab",
+  "overview_summary_section",
+  "overview_html",
+  "referrals_tab",
+  "referrals_summary_section",
+  "referrals_html",
+  "attachments_tab",
+  "attachments_section",
+  "attachments_note_html",
+  "attachments_center_html",
+  "attachments",
+  "replies_tab",
+  "replies_section",
+  "replies_html",
+  "tracking_tab",
+  "tracking_links_section",
+  "links",
+  "tracking_html_section",
+  "tracking_html",
+  "activity_security_tab",
+  "activity_section",
+  "activities",
+  "security_section",
+  "current_holder",
+  "current_holder_user",
+  "originating_organization",
+  "registered_on",
+  "closed_on",
+  "record_sealed_on",
+  "record_sealed_by",
+  "seal_reason",
+  "reopen_reason",
+  "integrity_hash",
+  "reopened_on",
+  "reopened_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "data_tab",
+   "fieldtype": "Tab Break",
+   "label": "البيانات"
+  },
+  {
+   "fieldname": "overview_identity_section",
+   "fieldtype": "Section Break",
+   "label": "البيانات الأساسية"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Subject",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Internal",
+   "fieldname": "correspondence_direction",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Correspondence Direction",
+   "options": "Murasalat Correspondence Direction",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overview_classification_section",
+   "fieldtype": "Section Break",
+   "label": "التصنيف"
+  },
+  {
+   "default": "مذكرة",
+   "fieldname": "transaction_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Transaction Type",
+   "options": "Murasalat Transaction Type",
+   "reqd": 1
+  },
+  {
+   "default": "متوسط",
+   "fieldname": "importance",
+   "fieldtype": "Link",
+   "label": "Importance",
+   "options": "Murasalat Importance Level",
+   "reqd": 1
+  },
+  {
+   "default": "عام",
+   "fieldname": "confidentiality",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Confidentiality Level",
+   "options": "Murasalat Confidentiality Level",
+   "reqd": 1
+  },
+  {
+   "fieldname": "incoming_parties_section",
+   "fieldtype": "Section Break",
+   "label": "وارد — من / إلى",
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
+  },
+  {
+   "description": "External party that sent the correspondence.",
+   "fieldname": "incoming_source_entity",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Sender",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
+   "options": "Murasalat External Party"
+  },
+  {
+   "fieldname": "overview_party_column_in",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Internal department receiving the correspondence.",
+   "fieldname": "incoming_target_entry",
+   "fieldtype": "Link",
+   "label": "Receiving Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
+   "options": "Department"
+  },
+  {
+   "fieldname": "outgoing_parties_section",
+   "fieldtype": "Section Break",
+   "label": "صادر — من / إلى",
+   "depends_on": "eval:doc.correspondence_direction==\"Outgoing\""
+  },
+  {
+   "description": "Internal department sending the correspondence.",
+   "fieldname": "outgoing_source_entity",
+   "fieldtype": "Link",
+   "label": "Sending Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
+   "options": "Department"
+  },
+  {
+   "fieldname": "overview_party_column_out",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "External party receiving the correspondence.",
+   "fieldname": "outgoing_target_entry",
+   "fieldtype": "Link",
+   "label": "External Recipient",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
+   "options": "Murasalat External Party"
+  },
+  {
+   "fieldname": "internal_parties_section",
+   "fieldtype": "Section Break",
+   "label": "داخلي — من / إلى",
+   "depends_on": "eval:doc.correspondence_direction==\"Internal\""
+  },
+  {
+   "description": "Internal department sending the correspondence.",
+   "fieldname": "internal_source_entity",
+   "fieldtype": "Link",
+   "label": "From Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
+   "options": "Department"
+  },
+  {
+   "fieldname": "overview_party_column_internal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Internal department receiving the correspondence.",
+   "fieldname": "internal_target_entry",
+   "fieldtype": "Link",
+   "label": "To Department",
+   "mandatory_depends_on": "eval:doc.correspondence_direction==\"Internal\"",
+   "options": "Department"
+  },
+  {
+   "fieldname": "overview_dates_section",
+   "fieldtype": "Section Break",
+   "label": "البيانات الرسمية"
+  },
+  {
+   "fieldname": "external_letter_number",
+   "fieldtype": "Data",
+   "label": "External Letter Number"
+  },
+  {
+   "fieldname": "external_letter_date",
+   "fieldtype": "Date",
+   "label": "External Letter Date"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Due Date"
+  },
+  {
+   "fieldname": "overview_dates_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "page_count",
+   "fieldtype": "Int",
+   "label": "Pages"
+  },
+  {
+   "fieldname": "concerned_person",
+   "fieldtype": "Data",
+   "label": "Concerned Person"
+  },
+  {
+   "description": "نصّ الخطاب أو مضمون المعاملة. يُحسب داخل بصمة السلامة عند الختم.",
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Body"
+  },
+  {
+   "fieldname": "overview_tab",
+   "fieldtype": "Tab Break",
+   "label": "نظرة عامة"
+  },
+  {
+   "fieldname": "overview_summary_section",
+   "fieldtype": "Section Break",
+   "label": "ملخص المعاملة"
+  },
+  {
+   "fieldname": "overview_html",
+   "fieldtype": "HTML",
+   "label": "ملخص المعاملة"
+  },
+  {
+   "fieldname": "referrals_tab",
+   "fieldtype": "Tab Break",
+   "label": "الإحالات"
+  },
+  {
+   "fieldname": "referrals_summary_section",
+   "fieldtype": "Section Break",
+   "label": "إدارة الإحالات"
+  },
+  {
+   "fieldname": "referrals_html",
+   "fieldtype": "HTML",
+   "label": "ملخص الإحالات"
+  },
+  {
+   "fieldname": "attachments_tab",
+   "fieldtype": "Tab Break",
+   "label": "المرفقات"
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "مركز مرفقات المعاملة",
+   "description": "المرفقات الرسمية المرتبطة بهذه المعاملة. الملفات تدار عبر Frappe File وتخضع لصلاحيات المستند."
+  },
+  {
+   "fieldname": "attachments_note_html",
+   "fieldtype": "HTML",
+   "label": "إرشادات المرفقات",
+   "options": "<div style=\"direction:rtl;text-align:right;padding:8px 10px;border-right:3px solid #98b5ad;background:#f8fbfa;border-radius:6px;color:#63736e;font-size:12px;\">تُدار ملفات المعاملة عبر Frappe File والجدول الرسمي للمرفقات. الصلاحيات والحماية تطبّق على الخادم، ولا ينشئ Murasalat نظام ملفات بديلًا.</div>"
+  },
+  {
+   "fieldname": "attachments_center_html",
+   "fieldtype": "HTML",
+   "label": "مركز المرفقات"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Murasalat Attachment"
+  },
+  {
+   "fieldname": "replies_tab",
+   "fieldtype": "Tab Break",
+   "label": "الردود الرسمية",
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
+  },
+  {
+   "fieldname": "replies_section",
+   "fieldtype": "Section Break",
+   "label": "الردود المرتبطة بهذه المعاملة",
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
+  },
+  {
+   "fieldname": "replies_html",
+   "fieldtype": "HTML",
+   "label": "الردود الرسمية",
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
+  },
+  {
+   "fieldname": "tracking_tab",
+   "fieldtype": "Tab Break",
+   "label": "التتبع"
+  },
+  {
+   "fieldname": "tracking_links_section",
+   "fieldtype": "Section Break",
+   "label": "العلاقات والمعاملات المرتبطة"
+  },
+  {
+   "fieldname": "links",
+   "fieldtype": "Table",
+   "label": "Related Records",
+   "options": "Murasalat Correspondence Link"
+  },
+  {
+   "fieldname": "tracking_html_section",
+   "fieldtype": "Section Break",
+   "label": "البيانات الزمنية والاعتمادات"
+  },
+  {
+   "fieldname": "tracking_html",
+   "fieldtype": "HTML",
+   "label": "التتبع والاعتمادات"
+  },
+  {
+   "fieldname": "activity_security_tab",
+   "fieldtype": "Tab Break",
+   "label": "النشاط والسلامة"
+  },
+  {
+   "fieldname": "activity_section",
+   "fieldtype": "Section Break",
+   "label": "سجل النشاط"
+  },
+  {
+   "fieldname": "activities",
+   "fieldtype": "Table",
+   "label": "Activities",
+   "options": "Murasalat Correspondence Activity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "security_section",
+   "fieldtype": "Section Break",
+   "label": "الختم والسلامة",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "current_holder",
+   "fieldtype": "Link",
+   "label": "Current Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_holder_user",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Current User",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "originating_organization",
+   "fieldtype": "Link",
+   "label": "Originating Department",
+   "options": "Department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "registered_on",
+   "fieldtype": "Datetime",
+   "label": "Registered On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_on",
+   "fieldtype": "Datetime",
+   "label": "Closed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_sealed_on",
+   "fieldtype": "Datetime",
+   "label": "Sealed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_sealed_by",
+   "fieldtype": "Link",
+   "label": "Sealed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "seal_reason",
+   "fieldtype": "Small Text",
+   "label": "Seal Reason"
+  },
+  {
+   "description": "Required when reopening: reopening lifts the integrity seal and the reason is recorded in the activity trail.",
+   "fieldname": "reopen_reason",
+   "fieldtype": "Small Text",
+   "label": "Reopen Reason"
+  },
+  {
+   "description": "Deterministic SHA-256 integrity snapshot; read-only and safe to expose for audit verification.",
+   "fieldname": "integrity_hash",
+   "fieldtype": "Data",
+   "label": "Integrity Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_on",
+   "fieldtype": "Datetime",
+   "label": "Reopened On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopened_by",
+   "fieldtype": "Link",
+   "label": "Reopened By",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-29 12:05:43.042295",
+ "modified_by": "Administrator",
+ "module": "Murasalat Office",
+ "name": "Murasalat Correspondence",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "search_fields": "subject,external_letter_number",
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "subject",
+ "track_changes": 1
 }

@@ -575,6 +575,14 @@ def correspondence_overview(correspondence: str, section: str = "overview") -> d
 
     attachments = list(doc.attachments or [])
     secret_count = sum(1 for row in attachments if row.is_secret)
+    attachment_rows = _attachment_rows(doc)
+    attachment_types = {}
+    archive_locations = set()
+    for row in attachment_rows:
+        if row.get("attachment_type"):
+            attachment_types[row["attachment_type"]] = attachment_types.get(row["attachment_type"], 0) + 1
+        if row.get("archive_location"):
+            archive_locations.add(row["archive_location"])
 
     context = {
         "name": doc.name,
@@ -614,12 +622,17 @@ def correspondence_overview(correspondence: str, section: str = "overview") -> d
         "approvals": [dict(row) for row in approvals],
         "links": _link_rows(doc),
         "activity": _activity_rows(doc),
+        "attachments": attachment_rows,
         "attachments_total": len(attachments),
         "attachments_secret": secret_count,
+        "attachments_visible": len(attachments) - secret_count,
+        "attachments_type_count": len(attachment_types),
+        "attachments_archive_count": len(archive_locations),
+        "attachments_types": sorted(attachment_types.items(), key=lambda item: (-item[1], item[0]))[:8],
         "route": f"/app/murasalat-correspondence/{doc.name}",
     }
 
-    allowed_sections = {"overview", "referrals", "replies", "tracking", "activity"}
+    allowed_sections = {"overview", "referrals", "attachments", "replies", "tracking", "activity"}
     if section not in allowed_sections:
         section = "overview"
     context["experience_section"] = section
