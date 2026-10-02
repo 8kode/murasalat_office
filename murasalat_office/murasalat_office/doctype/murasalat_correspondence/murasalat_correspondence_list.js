@@ -30,18 +30,12 @@ frappe.listview_settings["Murasalat Correspondence"] = {
 
         const state = (doc.workflow_state || "").trim();
 
+        // Workflow is site-defined. Display the actual state chosen in Desk without
+        // mapping or naming any application-owned states.
         if (state) {
-            const colors = {
-                Draft: "orange",
-                Registered: "blue",
-                Review: "purple",
-                Closed: "gray",
-                Sealed: "green",
-            };
-            const color = colors[state] || "blue";
-            return [__(state), color, "workflow_state,=," + state];
+            return [__(state), "blue", "workflow_state,=," + state];
         }
 
-        return [__("Draft"), "orange", "workflow_state,is,not set"];
+        return [__("Workflow not set"), "gray", "workflow_state,is,not set"];
     },
 };

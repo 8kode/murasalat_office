@@ -72,50 +72,6 @@
   .mo-ov .mo-reply-latest { border-right: 3px solid #2f6b5f; background: #f7faf9; padding: 8px 10px; border-radius: 7px; margin-bottom: 9px; }
   .mo-ov .mo-reply-latest .t { font-weight: 700; color: #123c35; font-size: 12.5px; }
   .mo-ov .mo-reply-latest .m { color: #63736e; font-size: 11.5px; margin-top: 2px; }
-  .mo-ov .mo-attachment-grid {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr); gap: 10px;
-  }
-  .mo-ov .mo-attachment-list { display: grid; gap: 6px; }
-  .mo-ov .mo-attachment-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 8px 10px; border: 1px solid #e2eae7; border-radius: 7px; background: #fbfdfc;
-  }
-  .mo-ov .mo-attachment-meta { min-width: 0; }
-  .mo-ov .mo-attachment-name { font-weight: 700; color: #1b2a27; overflow-wrap: anywhere; }
-  .mo-ov .mo-attachment-sub { color: #86968f; font-size: 10.5px; margin-top: 2px; }
-  .mo-ov .mo-card-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
-  .mo-ov .mo-attachment-kpis { margin-top:10px; }
-  .mo-ov .mo-attachment-type-summary { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
-  .mo-ov .mo-attachment-actions { flex:0 0 auto; display:flex; align-items:center; gap:6px; }
-  .mo-ov .mo-attachment-action {
-    flex: 0 0 auto; border: 1px solid #c9d8d3; border-radius: 6px; padding: 5px 8px;
-    background: #fff; color: #1a5d8f; font-size: 11px; font-weight: 700; text-decoration: none;
-  }
-  .mo-ov .mo-preview-hint {
-    min-height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;
-    padding: 18px; border: 1px dashed #cbdad5; border-radius: 8px; background: #f8fbfa;
-    color: #63736e; font-size: 11.5px;
-  }
-  .mo-ov .mo-referral-toolbar { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin-bottom:10px; }
-  .mo-ov .mo-referral-stat { border:1px solid #e2eae7; background:#fbfdfc; border-radius:7px; padding:7px 10px; min-width:105px; }
-  .mo-ov .mo-referral-stat .n { font-size:16px; font-weight:800; color:#123c35; }
-  .mo-ov .mo-referral-stat .l { font-size:10.5px; color:#63736e; margin-top:1px; }
-  .mo-ov .mo-referral-stat.alert .n { color:#b03a2e; }
-  .mo-ov .mo-referral-stat.warn .n { color:#9a6a00; }
-  .mo-ov .mo-my-referrals { border-right:3px solid #2f6b5f; background:#f7faf9; }
-  .mo-ov .mo-referral-card-list { display:grid; gap:9px; }
-  .mo-ov .mo-referral-card { border:1px solid #e0e9e6; border-radius:8px; background:#fff; padding:10px; }
-  .mo-ov .mo-referral-card .head { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
-  .mo-ov .mo-referral-card .title { font-weight:800; color:#123c35; }
-  .mo-ov .mo-referral-card .meta { color:#63736e; font-size:11px; margin-top:3px; }
-  .mo-ov .mo-referral-card .instructions { margin-top:8px; padding:8px 9px; background:#f8fbfa; border-radius:6px; color:#3c4a45; white-space:pre-wrap; }
-  .mo-ov .mo-referral-card .actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
-  .mo-ov .mo-open-referral { display:inline-block; border:1px solid #c9d8d3; border-radius:6px; padding:5px 9px; background:#fff; color:#1a5d8f; font-size:11px; font-weight:700; text-decoration:none; }
-  .mo-ov .mo-referral-note { color:#63736e; font-size:11px; margin-top:7px; }
-  .mo-ov .mo-center-note {
-    padding: 7px 9px; margin: -3px 0 10px; border-right: 3px solid #98b5ad;
-    background: #f8fbfa; color: #63736e; font-size: 11px; border-radius: 5px;
-  }
 </style>
 <style>
   /* Mobile only: original desktop table presentation is retained exactly. */
@@ -143,11 +99,6 @@
     .mo-ov .mo-reply-table-wrap { border: 0; border-radius: 0; }
     .mo-ov .mo-table-wrap { border: 0; border-radius: 0; overflow: visible; }
   }
-  @media (max-width: 767px) {
-    .mo-ov .mo-attachment-grid { grid-template-columns: 1fr; }
-    .mo-ov .mo-preview-hint { min-height: 72px; }
-    .mo-ov .mo-attachment-row { align-items: flex-start; }
-  }
   @media (max-width: 420px) {
     .mo-ov .mo-kpi { flex-basis: 100%; }
     .mo-ov table.mo-tbl td { grid-template-columns: 78px minmax(0, 1fr); padding: 7px 6px; }
@@ -156,10 +107,8 @@
   }
 </style>
 
-
 <div class="mo-ov">
-{% if experience_section is not defined or experience_section == "overview" %}
-<div id="mo-section-overview" class="mo-section-anchor">
+
   <div class="mo-card mo-head">
     <div class="mo-title">{{ subject or "—" }}</div>
     <div class="mo-sub">
@@ -220,66 +169,20 @@
     </div>
   </div>
 
-  </div>
-
-  <div class="mo-card mo-latest-movements">
-    <h5 class="mo-sec">آخر الحركات</h5>
-    {% if activity %}
-    <div class="mo-timeline">
-      {% for e in activity[:5] %}
-      <div class="mo-ev">
-        <div class="mo-ev-h">{{ e.activity_type_ar }}</div>
-        <div class="mo-ev-m">{{ e.activity_on or "" }} · {{ e.actor or "—" }}{% if e.referral_number %} · {{ e.referral_number }}{% endif %}</div>
-        {% if e.details %}<div class="mo-ev-d">{{ e.details }}</div>{% endif %}
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="mo-empty">لا توجد حركات مسجّلة بعد.</div>
-    {% endif %}
-  </div>
-{% endif %}
-{% if experience_section is not defined or experience_section == "referrals" %}
-<div id="mo-section-referrals" class="mo-section-anchor">
   <div class="mo-card">
-    <h5 class="mo-sec">الإحالات على هذه المعاملة — مركز الإحالات</h5>
-    <div class="mo-referral-toolbar">
-      <div class="mo-referral-stat"><div class="n">{{ kpis.total }}</div><div class="l">إجمالي الإحالات</div></div>
-      <div class="mo-referral-stat"><div class="n">{{ kpis.draft }}</div><div class="l">مسوّدات</div></div>
-      <div class="mo-referral-stat"><div class="n">{{ kpis.open }}</div><div class="l">قيد التنفيذ</div></div>
-      <div class="mo-referral-stat{% if kpis.overdue %} alert{% endif %}"><div class="n">{{ kpis.overdue }}</div><div class="l">متأخرة</div></div>
-      <div class="mo-referral-stat{% if kpis.due_today %} warn{% endif %}"><div class="n">{{ kpis.due_today }}</div><div class="l">تستحق اليوم</div></div>
-      <div class="mo-referral-stat"><div class="n">{{ kpis.completed }}</div><div class="l">مكتملة</div></div>
-      <div class="mo-referral-stat"><div class="n">{{ cancelled_count }}</div><div class="l">ملغاة</div></div>
-    </div>
-
-    {% if my_referrals %}
-    <div class="mo-card mo-my-referrals" style="margin-bottom:10px;">
-      <h5 class="mo-sec">حالتي</h5>
-      <div class="mo-referral-note">إحالات موجهة مباشرة إلى المستخدم الحالي: {{ my_referrals|length }} · المفتوحة: {{ my_open }}{% if my_overdue %} · المتأخرة: {{ my_overdue }}{% endif %}</div>
-      <div class="mo-referral-card-list" style="margin-top:8px;">
-        {% for r in my_referrals %}
-        <div class="mo-referral-card">
-          <div class="head">
-            <div>
-              <div class="title"><a href="/app/murasalat-referral/{{ r.name }}">{{ r.referral_number or r.name }}</a></div>
-              <div class="meta">الاستحقاق: {{ r.due_date or "—" }}{% if r.is_open and r.days_left is not none %} · {% if r.days_left < 0 %}متأخرة {{ -r.days_left }} يومًا{% elif r.days_left == 0 %}تستحق اليوم{% else %}متبقٍ {{ r.days_left }} يومًا{% endif %}{% endif %}</div>
-            </div>
-            <span class="mo-chip{% if r.status_class == 'green' %} mo-green{% elif r.status_class == 'red' %} mo-red{% elif r.status_class == 'orange' %} mo-orange{% endif %}">{{ r.status_label }}</span>
-          </div>
-          {% if r.instructions %}<div class="instructions">{{ r.instructions }}</div>{% endif %}
-          <div class="actions"><a class="mo-open-referral" href="/app/murasalat-referral/{{ r.name }}">فتح الإحالة</a></div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
-
+    <h5 class="mo-sec">الإحالات على هذه المعاملة{% if referrals %} ({{ referrals | length }}){% endif %}</h5>
     {% if referrals %}
     <div class="mo-table-wrap"><table class="mo-tbl">
       <thead>
         <tr>
-          <th>الإحالة</th><th>الموجَّه إليه</th><th>الحالة</th><th>الاستحقاق</th><th>الإرسال</th><th>الاستلام</th><th>الإنجاز</th><th>النتيجة / الملاحظات</th><th>فتح</th>
+          <th>الإحالة</th>
+          <th>الموجَّه إليه</th>
+          <th>الحالة</th>
+          <th>الاستحقاق</th>
+          <th>أُرسلت</th>
+          <th>استُلمت</th>
+          <th>أُكملت</th>
+          <th>ملاحظات</th>
         </tr>
       </thead>
       <tbody>
@@ -287,13 +190,30 @@
         <tr>
           <td data-label="الإحالة"><span class="mo-cell-label">الإحالة</span><span class="mo-cell-value"><a href="/app/murasalat-referral/{{ r.name }}">{{ r.referral_number or r.name }}</a></span></td>
           <td data-label="الموجَّه إليه"><span class="mo-cell-label">الموجَّه إليه</span><span class="mo-cell-value">{{ r.recipient_label }} <span class="mo-muted">({{ r.recipient_type_ar }})</span></span></td>
-          <td data-label="الحالة"><span class="mo-cell-label">الحالة</span><span class="mo-cell-value"><span class="mo-chip{% if r.status_class == 'green' %} mo-green{% elif r.status_class == 'red' %} mo-red{% elif r.status_class == 'orange' %} mo-orange{% endif %}">{{ r.status_label }}</span>{% if r.state %} <span class="mo-muted">{{ r.state }}</span>{% endif %}</span></td>
-          <td data-label="الاستحقاق"><span class="mo-cell-label">الاستحقاق</span><span class="mo-cell-value">{{ r.due_date or "—" }}{% if r.is_open and r.days_left is not none %}<span class="mo-muted"> · {% if r.days_left < 0 %}متأخرة {{ -r.days_left }}ي{% elif r.days_left == 0 %}اليوم{% else %}متبقٍ {{ r.days_left }}ي{% endif %}</span>{% endif %}</span></td>
-          <td data-label="الإرسال" class="mo-muted"><span class="mo-cell-label">الإرسال</span><span class="mo-cell-value">{{ r.sent_on or "—" }}</span></td>
-          <td data-label="الاستلام" class="mo-muted"><span class="mo-cell-label">الاستلام</span><span class="mo-cell-value">{{ r.received_on or "—" }}</span></td>
-          <td data-label="الإنجاز" class="mo-muted"><span class="mo-cell-label">الإنجاز</span><span class="mo-cell-value">{{ r.completed_on or "—" }}{% if r.cancelled_on %}<br>إلغاء: {{ r.cancelled_on }}{% endif %}</span></td>
-          <td data-label="النتيجة / الملاحظات"><span class="mo-cell-label">النتيجة / الملاحظات</span><span class="mo-cell-value">{% if r.completion_result %}{{ r.completion_result }}{% elif r.cancel_reason %}سبب الإلغاء: {{ r.cancel_reason }}{% elif r.instructions %}{{ r.instructions }}{% else %}—{% endif %}{% if r.private_referral %} <span class="mo-chip mo-red">خاصة</span>{% endif %}{% if r.follow_up %} <span class="mo-chip">متابعة</span>{% endif %}</span></td>
-          <td data-label="فتح"><span class="mo-cell-label">فتح</span><span class="mo-cell-value"><a class="mo-open-referral" href="/app/murasalat-referral/{{ r.name }}">فتح</a></span></td>
+          <td data-label="الحالة">
+            <span class="mo-cell-label">الحالة</span><span class="mo-cell-value">
+              {% if r.is_completed %}<span class="mo-chip mo-green">مكتملة</span>
+              {% elif r.is_overdue %}<span class="mo-chip mo-red">متأخرة {{ -r.days_left }}ي</span>
+              {% elif r.is_due_today %}<span class="mo-chip mo-orange">تستحق اليوم</span>
+              {% elif r.is_open %}<span class="mo-chip">مفتوحة</span>
+              {% else %}<span class="mo-chip">مسوّدة</span>{% endif %}
+              {% if r.state %}<span class="mo-muted"> {{ r.state }}</span>{% endif %}
+            </span>
+          </td>
+          <td data-label="الاستحقاق"><span class="mo-cell-label">الاستحقاق</span><span class="mo-cell-value">{{ r.due_date or "—" }}
+            {% if r.is_open and r.days_left is not none and r.days_left > 0 %}<span class="mo-muted"> (متبقٍ {{ r.days_left }}ي)</span>{% endif %}</span>
+          </td>
+          <td data-label="أُرسلت" class="mo-muted"><span class="mo-cell-label">أُرسلت</span><span class="mo-cell-value">{{ r.sent_on or "—" }}</span></td>
+          <td data-label="استُلمت" class="mo-muted"><span class="mo-cell-label">استُلمت</span><span class="mo-cell-value">{{ r.received_on or "—" }}</span></td>
+          <td data-label="أُكملت" class="mo-muted"><span class="mo-cell-label">أُكملت</span><span class="mo-cell-value">{{ r.completed_on or "—" }}</span></td>
+          <td data-label="ملاحظات">
+            <span class="mo-cell-label">ملاحظات</span><span class="mo-cell-value">
+            {% if r.private_referral %}<span class="mo-chip mo-red">خاصة</span>{% endif %}
+            {% if r.follow_up %}<span class="mo-chip">متابعة</span>{% endif %}
+            {% if r.paper_copy %}<span class="mo-chip">ورقية</span>{% endif %}
+            {% if r.cc_copy %}<span class="mo-chip">صورة</span>{% endif %}
+            </span>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -301,65 +221,9 @@
     {% else %}
     <div class="mo-empty">لا توجد إحالات مسجّلة على هذه المعاملة بعد.</div>
     {% endif %}
-    <div class="mo-referral-note">الحالة التشغيلية أعلاه تعتمد على أدلة الإرسال والاستلام والإنجاز والإلغاء. أما حالة Workflow المعروضة بجانبها فتُقرأ كما عرّفتها المؤسسة دون افتراض أسماء أو ترتيب حالات.</div>
   </div>
-</div>
-{% endif %}
-{% if experience_section is not defined or experience_section == "attachments" %}
-<div id="mo-section-attachments" class="mo-section-anchor">
-  <div class="mo-card">
-    <div class="mo-card-head">
-      <div>
-        <h5 class="mo-sec">مركز المرفقات{% if attachments_total %} ({{ attachments_total }}){% endif %}</h5>
-        <div class="mo-center-note">المرفقات الرسمية تبقى داخل جدول <strong>Murasalat Attachment</strong> وتُدار ملفاتها عبر Frappe File. هذه الواجهة تلخّصها ولا تنشئ نظام ملفات بديلًا.</div>
-      </div>
-      {% if sealed %}<span class="mo-chip mo-green">المعاملة مختومة</span>{% endif %}
-    </div>
 
-    <div class="mo-kpi-grid mo-attachment-kpis">
-      <div class="mo-kpi"><div class="n">{{ attachments_total }}</div><div class="l">إجمالي المرفقات</div></div>
-      <div class="mo-kpi"><div class="n">{{ attachments_visible }}</div><div class="l">متاحة للعرض</div></div>
-      <div class="mo-kpi"><div class="n">{{ attachments_secret }}</div><div class="l">سرّية</div></div>
-      <div class="mo-kpi"><div class="n">{{ attachments_type_count }}</div><div class="l">أنواع مستخدمة</div></div>
-      <div class="mo-kpi"><div class="n">{{ attachments_archive_count }}</div><div class="l">مواقع أرشفة</div></div>
-    </div>
-
-    {% if attachments_types %}
-    <div class="mo-attachment-type-summary">
-      {% for item in attachments_types %}<span class="mo-chip">{{ item[0] }}: {{ item[1] }}</span>{% endfor %}
-    </div>
-    {% endif %}
-
-    {% if attachments %}
-      <div class="mo-attachment-grid">
-        <div class="mo-attachment-list">
-          {% for a in attachments %}
-          <div class="mo-attachment-row">
-            <div class="mo-attachment-meta">
-              <div class="mo-attachment-name">{{ a.label }}</div>
-              <div class="mo-attachment-sub">{{ a.attachment_type or "مرفق" }}{% if a.archive_location %} · أرشيف: {{ a.archive_location }}{% endif %}</div>
-            </div>
-            <div class="mo-attachment-actions">
-              {% if not a.is_secret and a.file %}
-              <a class="mo-attachment-action mo-preview-file" href="{{ a.file }}" target="_blank" rel="noopener">فتح / معاينة</a>
-              {% else %}
-              <span class="mo-chip mo-red">سرّي</span>
-              {% endif %}
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      <div class="mo-preview-hint">يمكن إضافة/تعديل المرفقات من جدول المرفقات الأصلي في هذا التبويب. عند الختم تُطبق الحماية من جهة الخادم؛ لا تعتمد الحماية على إخفاء أزرار الواجهة.</div>
-    {% else %}
-      <div class="mo-empty">لا توجد مرفقات مسجلة على هذه المعاملة.</div>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-{% if experience_section is not defined or experience_section == "replies" %}
-{% if direction == "Incoming" and replies is defined and reply_kpis is defined %}
-  <div id="mo-section-replies" class="mo-section-anchor">
+  {% if direction == "Incoming" and replies is defined and reply_kpis is defined %}
   <div class="mo-card">
     <h5 class="mo-sec">الردود الرسمية{% if replies %} ({{ replies | length }}){% endif %}</h5>
 
@@ -427,10 +291,24 @@
   </div>
   {% endif %}
 
+  {% if links %}
+  <div class="mo-card">
+    <h5 class="mo-sec">المعاملات المرتبطة ({{ links | length }})</h5>
+    <div class="mo-table-wrap"><table class="mo-tbl">
+      <thead><tr><th>المعاملة</th><th>نوع العلاقة</th><th>ملاحظات</th></tr></thead>
+      <tbody>
+        {% for l in links %}
+        <tr>
+          <td data-label="المعاملة"><span class="mo-cell-label">المعاملة</span><span class="mo-cell-value"><a href="/app/murasalat-correspondence/{{ l.correspondence }}">{{ l.correspondence }}</a></span></td>
+          <td data-label="نوع العلاقة"><span class="mo-cell-label">نوع العلاقة</span><span class="mo-cell-value">{{ l.relationship or "—" }}</span></td>
+          <td data-label="ملاحظات" class="mo-muted"><span class="mo-cell-label">ملاحظات</span><span class="mo-cell-value">{{ l.remarks or "—" }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
-{% endif %}
-{% if experience_section is not defined or experience_section == "tracking" %}
-<div id="mo-section-tracking" class="mo-section-anchor">
+  {% endif %}
+
   <div class="mo-grid">
     <div class="mo-card">
       <h5 class="mo-sec">البيانات الرسمية</h5>
@@ -479,9 +357,7 @@
       {% endif %}
     </div>
   </div>
-{% endif %}
-{% if experience_section is not defined or experience_section == "activity" %}
-<div id="mo-section-activity" class="mo-section-anchor">
+
   <div class="mo-grid" style="margin-top:10px">
     <div class="mo-card">
       <h5 class="mo-sec">آخر الحركات</h5>
@@ -515,6 +391,4 @@
     </div>
   </div>
 
-  </div>
-{% endif %}
 </div>

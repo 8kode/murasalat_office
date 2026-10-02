@@ -447,7 +447,7 @@ def test_open_referral_state_is_derived_not_stored():
     assert "not doc.sent_on" not in source
 
 
-def test_forms_carry_the_overview_panel_in_the_native_layout():
+def test_both_forms_carry_an_overview_field_first_in_the_layout():
     for slug in ("murasalat_correspondence", "murasalat_referral"):
         data = json.loads(
             (APP / f"murasalat_office/doctype/{slug}/{slug}.json").read_text()
@@ -456,12 +456,8 @@ def test_forms_carry_the_overview_panel_in_the_native_layout():
 
         assert "overview_html" in fields, slug
         assert fields["overview_html"]["fieldtype"] == "HTML", slug
-        if slug == "murasalat_correspondence":
-            # Correspondence now starts with the real Frappe Overview Tab.
-            assert data["field_order"][0] == "data_tab", slug
-            assert data["field_order"].index("overview_tab") < data["field_order"].index("overview_html"), slug
-        else:
-            assert data["field_order"][0] == "overview_html", slug
+        # the panel is the first thing on the form
+        assert data["field_order"][0] == "overview_html", slug
 
 
 def test_client_scripts_call_the_right_endpoints_and_field():
@@ -492,29 +488,3 @@ def test_overview_introduces_no_governance_or_doctype():
         if path.is_dir() and path.name == "murasalat_overview"
     ]
     assert new_doctypes == []
-
-
-def test_correspondence_attachment_center_is_native_and_secret_safe():
-    mod = _load_overview()
-    html = mod.render(
-        "correspondence.html",
-        **_correspondence_context(
-            mod,
-            attachments=[
-                {"label": "incoming-letter.pdf", "attachment_type": "خطاب", "archive_location": "A-01", "is_secret": False, "file": "/files/incoming-letter.pdf"},
-                {"label": "مرفق سرّي — يُطلب من الأرشيف", "attachment_type": "مستند سرّي", "archive_location": "S-01", "is_secret": True, "file": ""},
-            ],
-            attachments_total=2,
-            attachments_visible=1,
-            attachments_secret=1,
-            attachments_type_count=2,
-            attachments_archive_count=2,
-            attachments_types=[("خطاب", 1), ("مستند سرّي", 1)],
-        ),
-    )
-    assert "مركز المرفقات" in html
-    assert "إجمالي المرفقات" in html
-    assert "incoming-letter.pdf" in html
-    assert "/files/incoming-letter.pdf" in html
-    assert "مرفق سرّي — يُطلب من الأرشيف" in html
-    assert "/files/" not in html.split("مرفق سرّي — يُطلب من الأرشيف", 1)[1]

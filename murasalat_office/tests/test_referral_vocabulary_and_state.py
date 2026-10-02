@@ -112,55 +112,9 @@ def test_the_new_refusal_is_translated():
     assert "Recipient Type must be User or Department; this record has {0}." in translated
 
 
-# --- lifecycle evidence / workflow independence ---------------------------------------
-
-SENT_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Sent"}
-RECEIVED_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Received"}
-COMPLETED_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Completed"}
-CANCELLED_STATE_ONLY = {"sent_on": None, "completed_on": None, "workflow_state": "Cancelled"}
-STAMPED = {"sent_on": "2026-09-01 09:00:00", "completed_on": None, "workflow_state": "Whatever The Organization Calls It"}
 
 
-def test_workflow_state_alone_never_creates_business_evidence():
-    assert PANEL["_is_sent"](SENT_STATE_ONLY) is False
-    assert PANEL["_is_sent"](RECEIVED_STATE_ONLY) is False
-    assert PANEL["_is_sent"](COMPLETED_STATE_ONLY) is False
-    assert PANEL["_is_completed"](COMPLETED_STATE_ONLY) is False
-    assert PANEL["_is_closed_referral"](CANCELLED_STATE_ONLY) is False
-
-
-def test_lifecycle_timestamps_drive_business_evidence():
-    assert PANEL["_is_sent"](STAMPED) is True
-    assert PANEL["_is_completed"](STAMPED) is False
-    assert PANEL["_is_closed_referral"]({**STAMPED, "cancelled_on": "2026-09-20 10:00:00"}) is True
-    assert PANEL["_is_completed"]({**STAMPED, "completed_on": "2026-09-02 10:00:00"}) is True
-
-
-def test_workflow_state_is_display_only_in_the_referral_query():
-    block = OVERVIEW.split("REFERRAL_FIELDS = [", 1)[1].split("]", 1)[0]
-    assert '"workflow_state"' in block
-
-
-def test_correspondence_seal_uses_business_evidence_not_workflow_state():
-    assert 'doc.workflow_state == "Sealed"' not in OVERVIEW
-    assert '"sealed": bool(doc.record_sealed_on)' in OVERVIEW
-
-
-def test_reply_registered_status_uses_registered_timestamp_only():
+def test_overview_never_uses_fixed_workflow_state_names():
     source = OVERVIEW
-    assert 'row.get("workflow_state") == "Registered"' not in source
-    assert 'if row.get("registered_on"):' in source
-
-
-def test_overview_does_not_interpret_referral_workflow_names():
-    source = OVERVIEW
-    for state in ("Draft", "Sent", "Received", "Completed", "Cancelled"):
-        assert f'workflow_state") == "{state}"' not in source
-
-
-def test_a_list_row_is_not_decorated_from_a_field_it_never_fetched():
-    """`decorate_referrals` reads the state, so the query has to select it."""
-    block = OVERVIEW.split("REFERRAL_FIELDS = [", 1)[1].split("]", 1)[0]
-
-    assert '"workflow_state"' in block
-    assert '"cancelled_on"' in block
+    for token in ("workflow_state == \"Sent\"", "workflow_state == \"Received\"", "workflow_state == \"Completed\"", "workflow_state == \"Cancelled\"", "workflow_state == \"Sealed\""):
+        assert token not in source

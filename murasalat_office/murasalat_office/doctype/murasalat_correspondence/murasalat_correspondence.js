@@ -1,9 +1,10 @@
 // Copyright (c) 2026, Murasalat Office and contributors
 // For license information, please see license.txt
 //
-// The correspondence experience is laid out with native Frappe Tab Breaks.
-// Read-only panels inside those tabs are rendered server-side; this script only
-// fetches them and registers native Desk dashboard indicators.
+// النظرة الشاملة على المعاملة تظهر أعلى النموذج بمجرد فتحه.
+//
+// The panel markup is rendered server-side by services/overview.py, so this script is
+// only a connector: fetch, inject, and register the native Desk dashboard indicators.
 // Every value behind it was read through a permission-aware query.
 
 // Defined defensively here as well as in the referral script, because Desk may load
@@ -50,25 +51,12 @@ frappe.ui.form.on("Murasalat Correspondence", {
             return;
         }
 
-        const panel_method = "murasalat_office.api.operations.correspondence_overview";
-        const panels = [
-            ["overview_html", "overview"],
-            ["referrals_html", "referrals"],
-            ["attachments_center_html", "attachments"],
-            ["replies_html", "replies"],
-            ["tracking_html", "tracking"],
-        ];
-
-        panels.forEach(([fieldname, section]) => {
-            if (frm.get_field(fieldname)) {
-                window.murasalat_render_overview(
-                    frm,
-                    panel_method,
-                    { correspondence: frm.doc.name, section },
-                    fieldname,
-                );
-            }
-        });
+        window.murasalat_render_overview(
+            frm,
+            "murasalat_office.api.operations.correspondence_overview",
+            { correspondence: frm.doc.name },
+            "overview_html",
+        );
 
         if (frm.perm[0] && frm.perm[0].create) {
             frm.add_custom_button(
@@ -202,93 +190,72 @@ function murasalat_create_reply(frm) {
 		method: "murasalat_office.api.operations.get_reply_context",
 		args: { correspondence: frm.doc.name },
 	}).then((r) => {
-			const context = r && r.message;
-			if (!context) {
-				frappe.msgprint({
-					title: __("Create Reply"),
-					message: __("Unable to load the reply context."),
-					indicator: "red",
-				});
-				return;
-			}
-
-			if (!context.can_create_reply) {
-				frappe.msgprint({
-					title: __("Reply cannot be created"),
-					message: (context.blockers || []).join("<br>"),
-					indicator: "orange",
-				});
-				return;
-			}
-
-			const dialog = new frappe.ui.Dialog({
-				title: __("Create Official Reply"),
-				fields: [
-					{
-						fieldname: "source_correspondence",
-						fieldtype: "Data",
-						label: __("Reply To"),
-						default: context.incoming.name,
-						read_only: 1,
-					},
-					{
-						fieldname: "recipient",
-						fieldtype: "Link",
-						options: "Murasalat External Party",
-						label: __("External Recipient"),
-						default: context.default_target_external_party,
-						read_only: 1,
-					},
-					{
-						fieldname: "source_department",
-						fieldtype: "Link",
-						options: "Department",
-						label: __("Sending Department"),
-						default: context.default_source_department,
-						read_only: 1,
-					},
-					{
-						fieldname: "subject",
-						fieldtype: "Data",
-						label: __("Subject"),
-						reqd: 1,
-						default: __("Reply: {0}", [context.incoming.subject || ""]),
-					},
-					{
-						fieldname: "notes",
-						fieldtype: "Small Text",
-						label: __("Reply Body"),
-						description: __("Draft only. Review the content and complete the normal approval/dispatch process."),
-					},
-				],
-				primary_action_label: __("Create Draft"),
-				primary_action(values) {
-					frappe.call({
-						method: "murasalat_office.api.operations.create_reply_draft",
-						args: {
-							correspondence: frm.doc.name,
-							subject: values.subject,
-							notes: values.notes,
-							source_department: values.source_department,
-						},
-						freeze: true,
-						freeze_message: __("Creating reply draft…"),
-					}).then((response) => {
-						const result = response && response.message;
-						if (!result || !result.name) {
-							return;
-						}
-
-						dialog.hide();
-						frappe.show_alert({
-							message: __("Reply draft {0} created.", [result.name]),
-							indicator: "green",
-						});
-						frappe.set_route("Form", "Murasalat Correspondence", result.name);
-					});
-				},
+		const context = r && r.message;
+		if (!context) {
+			frappe.msgprint({ title: __("Create Official Reply"), message: __("Unable to load the reply context."), indicator: "red" });
+			return;
+		}
+		if (!context.can_create_reply) {
+			frappe.msgprint({
+				title: __("Reply cannot be created"),
+				message: (context.blockers || []).join("<br>"),
+				indicator: "orange",
 			});
+			return;
+		}
 
-			dialog.show();
+		const dialog = new frappe.ui.Dialog({
+			title: __("Reply by Letter"),
+			size: "extra-large",
+			fields: [
+				{ fieldtype: "Section Break", label: __("Reply Reference") },
+				{ fieldname: "source_correspondence", fieldtype: "Data", label: __("Reply To"), default: context.incoming.name, read_only: 1 },
+				{ fieldname: "recipient", fieldtype: "Link", options: "Murasalat External Party", label: __("Recipient"), default: context.default_target_external_party, read_only: 1 },
+				{ fieldname: "source_department", fieldtype: "Link", options: "Department", label: __("Preparation Department"), default: context.default_source_department, read_only: 1 },
+				{ fieldname: "subject", fieldtype: "Data", label: __("Subject"), reqd: 1, default: __("Reply: {0}", [context.incoming.subject || ""]) },
+				{ fieldname: "salutation", fieldtype: "Data", label: __("Salutation"), default: __("السادة/") },
+				{ fieldtype: "Section Break", label: __("Letter Body") },
+				{ fieldname: "notes", fieldtype: "Text Editor", label: __("Body"), reqd: 1 },
+				{ fieldname: "closing_phrase", fieldtype: "Data", label: __("Closing Phrase"), default: __("وتفضلوا بقبول خالص التحية والتقدير") },
+				{ fieldtype: "Section Break", label: __("Signature & Approval") },
+				{ fieldname: "signatory_name", fieldtype: "Data", label: __("Signatory Name") },
+				{ fieldname: "signatory_position", fieldtype: "Data", label: __("Signatory Position") },
+				{ fieldname: "approval_entity", fieldtype: "Link", options: "Department", label: __("Approval Entity") },
+				{ fieldname: "preparation_entity", fieldtype: "Link", options: "Department", label: __("Preparation Entity"), default: context.default_source_department },
+				{ fieldname: "prepared_on", fieldtype: "Date", label: __("Preparation Date"), default: frappe.datetime.get_today() },
+			],
+		primary_action_label: __("Create Letter Draft"),
+		primary_action(values) {
+			if (!values.notes || !String(values.notes).trim()) {
+				frappe.msgprint({ title: __("Letter Body Required"), message: __("Enter the official letter body before creating the draft."), indicator: "orange" });
+				return;
+			}
+			frappe.call({
+				method: "murasalat_office.api.operations.create_reply_draft",
+				args: {
+					correspondence: frm.doc.name,
+					subject: values.subject,
+					notes: values.notes,
+					source_department: values.source_department,
+					salutation: values.salutation,
+					closing_phrase: values.closing_phrase,
+					signatory_name: values.signatory_name,
+					signatory_position: values.signatory_position,
+					approval_entity: values.approval_entity,
+					preparation_entity: values.preparation_entity,
+					prepared_on: values.prepared_on,
+				},
+				freeze: true,
+				freeze_message: __("Creating official reply draft…"),
+			}).then((response) => {
+				const result = response && response.message;
+				if (!result || !result.name) return;
+				dialog.hide();
+				frappe.show_alert({ message: __("Official reply draft {0} created.", [result.name]), indicator: "green" });
+				frappe.set_route("Form", "Murasalat Correspondence", result.name);
+			});
+		},
+	});
+	dialog.show();
 	});
 }

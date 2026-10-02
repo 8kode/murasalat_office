@@ -6,81 +6,77 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "data_tab",
-  "overview_identity_section",
+  "overview_html",
+  "naming_section",
   "subject",
+  "column_break_fxzw",
   "correspondence_direction",
-  "workflow_state",
-  "overview_classification_section",
+  "tobic_section",
+  "notes",
+  "classification_section",
   "transaction_type",
+  "column_break_tymi",
   "importance",
+  "column_break_fgrn",
   "confidentiality",
   "incoming_parties_section",
   "incoming_source_entity",
-  "overview_party_column_in",
+  "column_break_qvcj",
   "incoming_target_entry",
   "outgoing_parties_section",
   "outgoing_source_entity",
-  "overview_party_column_out",
+  "column_break_gfmp",
   "outgoing_target_entry",
   "internal_parties_section",
   "internal_source_entity",
-  "overview_party_column_internal",
+  "column_break_vfwa",
   "internal_target_entry",
-  "overview_dates_section",
-  "external_letter_number",
-  "external_letter_date",
+  "section_break_yxsi",
   "due_date",
-  "overview_dates_column",
+  "column_break_jnxu",
+  "external_letter_number",
+  "dates_section",
+  "external_letter_date",
+  "column_break_qncl",
   "page_count",
+  "column_break_tmju",
   "concerned_person",
-  "notes",
-  "overview_tab",
-  "overview_summary_section",
-  "overview_html",
-  "referrals_tab",
-  "referrals_summary_section",
-  "referrals_html",
+  "links_section",
+  "links",
+  "overview_tab_tab",
   "attachments_tab",
   "attachments_section",
-  "attachments_note_html",
-  "attachments_center_html",
   "attachments",
-  "replies_tab",
-  "replies_section",
-  "replies_html",
-  "tracking_tab",
-  "tracking_links_section",
-  "links",
-  "tracking_html_section",
-  "tracking_html",
-  "activity_security_tab",
-  "activity_section",
-  "activities",
+  "audit_security_tab",
   "security_section",
   "current_holder",
   "current_holder_user",
   "originating_organization",
   "registered_on",
   "closed_on",
+  "activity_section",
+  "activities",
   "record_sealed_on",
   "record_sealed_by",
   "seal_reason",
   "reopen_reason",
   "integrity_hash",
   "reopened_on",
-  "reopened_by"
+  "reopened_by",
+  "section_break_qtbc",
+  "workflow_state"
  ],
  "fields": [
   {
-   "fieldname": "data_tab",
-   "fieldtype": "Tab Break",
-   "label": "البيانات"
+   "fieldname": "overview_html",
+   "fieldtype": "HTML",
+   "label": "نظرة شاملة على المعاملة",
+   "no_copy": 1
   },
   {
-   "fieldname": "overview_identity_section",
+   "fieldname": "naming_section",
    "fieldtype": "Section Break",
-   "label": "البيانات الأساسية"
+   "label": "Basic Information"
   },
   {
    "fieldname": "subject",
@@ -92,17 +88,6 @@
    "search_index": 1
   },
   {
-   "default": "Internal",
-   "fieldname": "correspondence_direction",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Correspondence Direction",
-   "options": "Murasalat Correspondence Direction",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "workflow_state",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -110,9 +95,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "overview_classification_section",
+   "fieldname": "classification_section",
    "fieldtype": "Section Break",
-   "label": "التصنيف"
+   "label": "Classification"
   },
   {
    "default": "مذكرة",
@@ -125,14 +110,6 @@
    "reqd": 1
   },
   {
-   "default": "متوسط",
-   "fieldname": "importance",
-   "fieldtype": "Link",
-   "label": "Importance",
-   "options": "Murasalat Importance Level",
-   "reqd": 1
-  },
-  {
    "default": "عام",
    "fieldname": "confidentiality",
    "fieldtype": "Link",
@@ -142,10 +119,18 @@
    "reqd": 1
   },
   {
+   "default": "متوسط",
+   "fieldname": "importance",
+   "fieldtype": "Link",
+   "label": "Importance",
+   "options": "Murasalat Importance Level",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.correspondence_direction==\"Incoming\"",
    "fieldname": "incoming_parties_section",
    "fieldtype": "Section Break",
-   "label": "وارد — من / إلى",
-   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
+   "label": "Incoming — From / To"
   },
   {
    "description": "External party that sent the correspondence.",
@@ -157,10 +142,6 @@
    "options": "Murasalat External Party"
   },
   {
-   "fieldname": "overview_party_column_in",
-   "fieldtype": "Column Break"
-  },
-  {
    "description": "Internal department receiving the correspondence.",
    "fieldname": "incoming_target_entry",
    "fieldtype": "Link",
@@ -169,10 +150,10 @@
    "options": "Department"
   },
   {
+   "depends_on": "eval:doc.correspondence_direction==\"Outgoing\"",
    "fieldname": "outgoing_parties_section",
    "fieldtype": "Section Break",
-   "label": "صادر — من / إلى",
-   "depends_on": "eval:doc.correspondence_direction==\"Outgoing\""
+   "label": "Outgoing — From / To"
   },
   {
    "description": "Internal department sending the correspondence.",
@@ -183,10 +164,6 @@
    "options": "Department"
   },
   {
-   "fieldname": "overview_party_column_out",
-   "fieldtype": "Column Break"
-  },
-  {
    "description": "External party receiving the correspondence.",
    "fieldname": "outgoing_target_entry",
    "fieldtype": "Link",
@@ -195,10 +172,10 @@
    "options": "Murasalat External Party"
   },
   {
+   "depends_on": "eval:doc.correspondence_direction==\"Internal\"",
    "fieldname": "internal_parties_section",
    "fieldtype": "Section Break",
-   "label": "داخلي — من / إلى",
-   "depends_on": "eval:doc.correspondence_direction==\"Internal\""
+   "label": "Internal — From / To"
   },
   {
    "description": "Internal department sending the correspondence.",
@@ -209,10 +186,6 @@
    "options": "Department"
   },
   {
-   "fieldname": "overview_party_column_internal",
-   "fieldtype": "Column Break"
-  },
-  {
    "description": "Internal department receiving the correspondence.",
    "fieldname": "internal_target_entry",
    "fieldtype": "Link",
@@ -221,9 +194,8 @@
    "options": "Department"
   },
   {
-   "fieldname": "overview_dates_section",
-   "fieldtype": "Section Break",
-   "label": "البيانات الرسمية"
+   "fieldname": "dates_section",
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "external_letter_number",
@@ -242,10 +214,6 @@
    "label": "Due Date"
   },
   {
-   "fieldname": "overview_dates_column",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "page_count",
    "fieldtype": "Int",
    "label": "Pages"
@@ -262,90 +230,58 @@
    "label": "Body"
   },
   {
-   "fieldname": "overview_tab",
-   "fieldtype": "Tab Break",
-   "label": "نظرة عامة"
-  },
-  {
-   "fieldname": "overview_summary_section",
+   "fieldname": "official_reply_section",
    "fieldtype": "Section Break",
-   "label": "ملخص المعاملة"
+   "label": "Official Letter"
   },
   {
-   "fieldname": "overview_html",
-   "fieldtype": "HTML",
-   "label": "ملخص المعاملة"
+   "fieldname": "salutation",
+   "fieldtype": "Data",
+   "label": "Salutation",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "referrals_tab",
-   "fieldtype": "Tab Break",
-   "label": "الإحالات"
+   "fieldname": "closing_phrase",
+   "fieldtype": "Data",
+   "label": "Closing Phrase",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "referrals_summary_section",
-   "fieldtype": "Section Break",
-   "label": "إدارة الإحالات"
+   "fieldname": "signatory_name",
+   "fieldtype": "Data",
+   "label": "Signatory Name",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "referrals_html",
-   "fieldtype": "HTML",
-   "label": "ملخص الإحالات"
+   "fieldname": "signatory_position",
+   "fieldtype": "Data",
+   "label": "Signatory Position",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "attachments_tab",
-   "fieldtype": "Tab Break",
-   "label": "المرفقات"
+   "fieldname": "approval_entity",
+   "fieldtype": "Link",
+   "options": "Department",
+   "label": "Approval Entity",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "attachments_section",
-   "fieldtype": "Section Break",
-   "label": "مركز مرفقات المعاملة",
-   "description": "المرفقات الرسمية المرتبطة بهذه المعاملة. الملفات تدار عبر Frappe File وتخضع لصلاحيات المستند."
+   "fieldname": "preparation_entity",
+   "fieldtype": "Link",
+   "options": "Department",
+   "label": "Preparation Entity",
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "attachments_note_html",
-   "fieldtype": "HTML",
-   "label": "إرشادات المرفقات",
-   "options": "<div style=\"direction:rtl;text-align:right;padding:8px 10px;border-right:3px solid #98b5ad;background:#f8fbfa;border-radius:6px;color:#63736e;font-size:12px;\">تُدار ملفات المعاملة عبر Frappe File والجدول الرسمي للمرفقات. الصلاحيات والحماية تطبّق على الخادم، ولا ينشئ Murasalat نظام ملفات بديلًا.</div>"
+   "fieldname": "prepared_on",
+   "fieldtype": "Date",
+   "label": "Preparation Date",
+   "read_only": 1,
+   "depends_on": "eval:doc.correspondence_direction == 'Outgoing'"
   },
   {
-   "fieldname": "attachments_center_html",
-   "fieldtype": "HTML",
-   "label": "مركز المرفقات"
-  },
-  {
-   "fieldname": "attachments",
-   "fieldtype": "Table",
-   "label": "Attachments",
-   "options": "Murasalat Attachment"
-  },
-  {
-   "fieldname": "replies_tab",
-   "fieldtype": "Tab Break",
-   "label": "الردود الرسمية",
-   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-  },
-  {
-   "fieldname": "replies_section",
-   "fieldtype": "Section Break",
-   "label": "الردود المرتبطة بهذه المعاملة",
-   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-  },
-  {
-   "fieldname": "replies_html",
-   "fieldtype": "HTML",
-   "label": "الردود الرسمية",
-   "depends_on": "eval:doc.correspondence_direction==\"Incoming\""
-  },
-  {
-   "fieldname": "tracking_tab",
-   "fieldtype": "Tab Break",
-   "label": "التتبع"
-  },
-  {
-   "fieldname": "tracking_links_section",
-   "fieldtype": "Section Break",
-   "label": "العلاقات والمعاملات المرتبطة"
+   "fieldname": "links_section",
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "links",
@@ -354,37 +290,23 @@
    "options": "Murasalat Correspondence Link"
   },
   {
-   "fieldname": "tracking_html_section",
+   "collapsible": 1,
+   "description": "The record's files, in one place. Upload here; the file's SHA-256 is recorded automatically and checked whenever the record is verified.",
+   "fieldname": "attachments_section",
    "fieldtype": "Section Break",
-   "label": "البيانات الزمنية والاعتمادات"
+   "label": "Attachments"
   },
   {
-   "fieldname": "tracking_html",
-   "fieldtype": "HTML",
-   "label": "التتبع والاعتمادات"
-  },
-  {
-   "fieldname": "activity_security_tab",
-   "fieldtype": "Tab Break",
-   "label": "النشاط والسلامة"
-  },
-  {
-   "fieldname": "activity_section",
-   "fieldtype": "Section Break",
-   "label": "سجل النشاط"
-  },
-  {
-   "fieldname": "activities",
+   "fieldname": "attachments",
    "fieldtype": "Table",
-   "label": "Activities",
-   "options": "Murasalat Correspondence Activity",
-   "read_only": 1
+   "label": "Attachments",
+   "options": "Murasalat Attachment"
   },
   {
+   "collapsible": 1,
    "fieldname": "security_section",
    "fieldtype": "Section Break",
-   "label": "الختم والسلامة",
-   "collapsible": 1
+   "label": "Audit & Security"
   },
   {
    "fieldname": "current_holder",
@@ -418,6 +340,18 @@
    "fieldname": "closed_on",
    "fieldtype": "Datetime",
    "label": "Closed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "activity_section",
+   "fieldtype": "Section Break",
+   "label": "Activity History"
+  },
+  {
+   "fieldname": "activities",
+   "fieldtype": "Table",
+   "label": "Activities",
+   "options": "Murasalat Correspondence Activity",
    "read_only": 1
   },
   {
@@ -463,6 +397,80 @@
    "label": "Reopened By",
    "options": "User",
    "read_only": 1
+  },
+  {
+   "default": "Internal",
+   "fieldname": "correspondence_direction",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Correspondence Direction",
+   "options": "Murasalat Correspondence Direction",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_tymi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qncl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_qtbc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "tobic_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_fxzw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qvcj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_gfmp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vfwa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fgrn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_yxsi",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_jnxu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attachments_tab",
+   "fieldtype": "Tab Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "audit_security_tab",
+   "fieldtype": "Tab Break",
+   "label": "Audit Security"
+  },
+  {
+   "fieldname": "column_break_tmju",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "overview_tab_tab",
+   "fieldtype": "Tab Break",
+   "label": "Overview Tab"
   }
  ],
  "links": [],
