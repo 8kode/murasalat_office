@@ -114,7 +114,7 @@ def operational_summary(correspondence):
 
 
 @frappe.whitelist()
-def correspondence_overview(correspondence):
+def correspondence_overview(correspondence, section="overview"):
     """Read-only overview panel for one correspondence.
 
     The panel markup is rendered server-side so it can be tested; access is decided by
@@ -122,7 +122,7 @@ def correspondence_overview(correspondence):
     """
     from murasalat_office.services.overview import correspondence_overview as build
 
-    return build(correspondence)
+    return build(correspondence, section=section)
 
 
 @frappe.whitelist()
@@ -142,11 +142,7 @@ def get_reply_context(correspondence):
 
 
 @frappe.whitelist()
-def create_reply_draft(
-    correspondence, subject=None, notes=None, source_department=None, salutation=None,
-    closing_phrase=None, signatory_name=None, signatory_position=None, approval_entity=None,
-    preparation_entity=None, prepared_on=None,
-):
+def create_reply_draft(correspondence, subject=None, notes=None, source_department=None):
     """Create a new Outgoing correspondence as a draft reply to an Incoming record."""
     from murasalat_office.services.reply import create_reply_draft as create
 
@@ -155,11 +151,4 @@ def create_reply_draft(
         subject=subject,
         notes=notes,
         source_department=source_department,
-        salutation=salutation,
-        closing_phrase=closing_phrase,
-        signatory_name=signatory_name,
-        signatory_position=signatory_position,
-        approval_entity=approval_entity,
-        preparation_entity=preparation_entity,
-        prepared_on=prepared_on,
     )

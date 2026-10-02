@@ -76,36 +76,51 @@ PERMISSION_PLAN = {
     },
 }
 
-# Workflow design is intentionally absent. Each institution owns the Workflow for
-# Murasalat Correspondence and Murasalat Referral in Frappe Desk. The application exposes
-# lifecycle methods as optional native Workflow Transition Tasks, but never dictates states,
-# transition names, roles, ordering, or workflow names.
+# Workflow shape only. The application creates none of this; the administrator does,
+# in Desk, following docs/WORKFLOW_GOVERNANCE.md. The ``task`` values are the exact
+# workflow_methods hook names — a typo there stops every transition that uses it.
 WORKFLOW_PLAN = {
     "Murasalat Correspondence": {
-        "workflow_name": None,
+        "workflow_name": "Murasalat Correspondence Lifecycle",
         "workflow_state_field": "workflow_state",
-        "site_defined": True,
-        "transition_task_catalog": [
-            "Register Correspondence", "Close Correspondence", "Seal Correspondence",
-            "Reopen Correspondence",
+        "states": ["Draft", "Registered", "Closed", "Sealed"],
+        "transitions": [
+            {"action": "Register", "state": "Draft", "next_state": "Registered",
+             "allowed": "Correspondence Clerk", "task": "Register Correspondence"},
+            {"action": "Close", "state": "Registered", "next_state": "Closed",
+             "allowed": "Correspondence Supervisor", "task": "Close Correspondence"},
+            {"action": "Seal", "state": "Closed", "next_state": "Sealed",
+             "allowed": "Correspondence Supervisor", "task": "Seal Correspondence"},
+            {"action": "Reopen", "state": "Sealed", "next_state": "Registered",
+             "allowed": "Correspondence Supervisor", "task": "Reopen Correspondence"},
         ],
     },
     "Murasalat Referral": {
-        "workflow_name": None,
+        "workflow_name": "Murasalat Referral Lifecycle",
         "workflow_state_field": "workflow_state",
-        "site_defined": True,
-        "transition_task_catalog": [
-            "Send Referral", "Receive Referral", "Complete Referral", "Cancel Referral",
+        "states": ["Draft", "Sent", "Received", "Completed"],
+        "transitions": [
+            {"action": "Send", "state": "Draft", "next_state": "Sent",
+             "allowed": "Correspondence Clerk", "task": "Send Referral"},
+            {"action": "Receive", "state": "Sent", "next_state": "Received",
+             "allowed": "Correspondence Clerk", "task": "Receive Referral"},
+            {"action": "Complete", "state": "Received", "next_state": "Completed",
+             "allowed": "Correspondence Clerk", "task": "Complete Referral"},
         ],
     },
 }
 
+# Cannot be automated safely: creating Workflow Document State rows needs field names
+# this module has not verified against the framework source, and guessing them on a
+# production launch is worse than doing it by hand.
 MANUAL_STEPS = [
-    "Create or configure the Murasalat Correspondence Workflow in Desk according to the institution's policy.",
-    "Create or configure the Murasalat Referral Workflow in Desk according to the institution's policy.",
-    "Attach only the lifecycle Transition Tasks that the institution's chosen transitions require.",
-    "Configure roles and permissions in Role Permission Manager.",
+    "Create the Workflow States in Desk (Draft, Registered, Closed, Sealed, Sent, Received, Completed).",
+    "Create the two Workflows and their transitions from the plan below.",
+    "Create one 'Workflow Transition Tasks' document holding the seven task rows, then attach it to every transition that writes lifecycle fields.",
+    "Tick the roles on the reports and number cards you want each role to see.",
+    "See docs/WORKFLOW_GOVERNANCE.md for the exact task names and the asynchronous trap.",
 ]
+
 
 def plan():
     """Return the full governance plan as data. Reads nothing, writes nothing."""
@@ -135,10 +150,16 @@ def describe(apply=False):
         rights = ", ".join(sorted(k for k, v in entry["rights"].items() if v))
         lines.append(f"  • {entry['role']}  →  {entry['doctype']}: {rights}")
 
-    lines += ["", "Workflow governance (site-defined):"]
+    lines += ["", "Workflows to create in Desk:"]
     for doctype, spec in data["workflows"].items():
-        lines.append(f"  • {doctype}: the institution defines the Workflow, states, transitions, roles and names.")
-        lines.append(f"      optional Transition Tasks: {', '.join(spec['transition_task_catalog'])}")
+        lines.append(f"  • {spec['workflow_name']}  (on {doctype})")
+        lines.append(f"      states: {', '.join(spec['states'])}")
+        for transition in spec["transitions"]:
+            lines.append(
+                f"      {transition['state']} --{transition['action']}--> "
+                f"{transition['next_state']}   [{transition['allowed']}]   "
+                f"task: {transition['task']}"
+            )
 
     lines += ["", "Manual steps (the application does none of these):"]
     lines += [f"  {index}. {step}" for index, step in enumerate(data["manual_steps"], 1)]

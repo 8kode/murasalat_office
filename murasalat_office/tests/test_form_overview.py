@@ -447,7 +447,7 @@ def test_open_referral_state_is_derived_not_stored():
     assert "not doc.sent_on" not in source
 
 
-def test_both_forms_carry_an_overview_field_first_in_the_layout():
+def test_forms_carry_the_overview_panel_in_the_native_layout():
     for slug in ("murasalat_correspondence", "murasalat_referral"):
         data = json.loads(
             (APP / f"murasalat_office/doctype/{slug}/{slug}.json").read_text()
@@ -456,8 +456,12 @@ def test_both_forms_carry_an_overview_field_first_in_the_layout():
 
         assert "overview_html" in fields, slug
         assert fields["overview_html"]["fieldtype"] == "HTML", slug
-        # the panel is the first thing on the form
-        assert data["field_order"][0] == "overview_html", slug
+        if slug == "murasalat_correspondence":
+            # Correspondence now starts with the real Frappe Overview Tab.
+            assert data["field_order"][0] == "data_tab", slug
+            assert data["field_order"].index("overview_tab") < data["field_order"].index("overview_html"), slug
+        else:
+            assert data["field_order"][0] == "overview_html", slug
 
 
 def test_client_scripts_call_the_right_endpoints_and_field():

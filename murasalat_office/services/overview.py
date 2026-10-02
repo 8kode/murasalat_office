@@ -66,6 +66,9 @@ REFERRAL_FIELDS = [
     "paper_copy",
     "cc_copy",
     "cancelled_on",
+    "cancel_reason",
+    "instructions",
+    "creation",
 ]
 
 APPROVAL_FIELDS = [
@@ -137,12 +140,11 @@ def _approval_summary(rows: Iterable[dict]) -> dict[str, Any]:
 
     for row in rows:
         total += 1
-        if row.get("approved_on"):
+        state = (row.get("workflow_state") or "").strip().lower()
+        if state == "approved" or row.get("approved_on"):
             approved += 1
-        elif row.get("decision_note") and not row.get("approved_on"):
-            # A decision note is evidence that review occurred; whether the outcome is
-            # approval or rejection remains the site's own Approval Workflow semantics.
-            pending += 1
+        elif state == "rejected":
+            rejected += 1
         else:
             pending += 1
 
@@ -366,21 +368,19 @@ def _attachment_rows(doc):
 def _is_sent(row) -> bool:
     """Whether a referral counts as sent.
 
-    Two sources, one answer. The lifecycle stamps ``sent_on``; a migrated row carries only the
-    workflow state, because the child table it came from had no timestamp to carry. Reading the
-    state as well is what keeps a panel from contradicting the badge printed beside it - the
-    symptom that made a sent referral read as "لم تُرسل".
+    The lifecycle evidence is the timestamp itself. Workflow state is intentionally not
+    interpreted here because each organization may define its own Referral Workflow.
     """
     return bool(row.get("sent_on"))
 
 
 def _is_completed(row) -> bool:
-    """Whether a referral counts as finished, by the same two sources."""
+    """Whether a referral has a recorded completion event."""
     return bool(row.get("completed_on"))
 
 
 def _is_closed_referral(row) -> bool:
-    """Cancelled work is closed work: it stops counting as open, and keeps its place in the log."""
+    """A cancellation timestamp closes referral work without interpreting Workflow state."""
     return bool(row.get("cancelled_on"))
 
 
@@ -404,9 +404,33 @@ def decorate_referrals(rows: Iterable[dict], today_date: date) -> list[dict]:
         item["recipient_type_ar"] = RECIPIENT_TYPE_AR.get(
             row.get("recipient_type"), row.get("recipient_type") or "—"
         )
+        item = _decorate_referral_status(item)
         decorated.append(item)
 
     return decorated
+
+
+def _decorate_referral_status(item: dict) -> dict:
+    """Add neutral lifecycle presentation without interpreting Workflow states."""
+    if item.get("cancelled_on"):
+        item["status_label"] = "ملغاة"
+        item["status_class"] = "red"
+    elif item.get("completed_on"):
+        item["status_label"] = "مكتملة"
+        item["status_class"] = "green"
+    elif not item.get("sent_on"):
+        item["status_label"] = "مسوّدة"
+        item["status_class"] = "gray"
+    elif item.get("is_overdue"):
+        item["status_label"] = "متأخرة"
+        item["status_class"] = "red"
+    elif item.get("is_due_today"):
+        item["status_label"] = "تستحق اليوم"
+        item["status_class"] = "orange"
+    else:
+        item["status_label"] = "قيد التنفيذ"
+        item["status_class"] = "blue"
+    return item
 
 
 def _activity_rows(doc, limit: int = 15, referral_numbers: set | None = None) -> list[dict]:
@@ -505,8 +529,8 @@ def _link_rows(doc) -> list[dict]:
     ]
 
 
-def correspondence_overview(correspondence: str) -> dict:
-    """Everything recorded against one correspondence, for a non-Administrator user."""
+def correspondence_overview(correspondence: str, section: str = "overview") -> dict:
+    """Render one native DocType-tab panel for a correspondence, for a non-Administrator user."""
     doc = frappe.get_doc("Murasalat Correspondence", correspondence)
     doc.check_permission("read")
 
@@ -532,6 +556,14 @@ def correspondence_overview(correspondence: str) -> dict:
 
     decorated = decorate_referrals(referrals, today_date)
     kpis = referral_kpis(referrals, today_date)
+
+    # "حالتي" is intentionally limited to a direct user recipient. Department-level
+    # membership is organization-specific and must not be guessed by this UI.
+    current_user = frappe.session.user
+    cancelled_count = sum(1 for row in decorated if row.get("cancelled_on"))
+    my_referrals = [row for row in decorated if row.get("recipient_user") == current_user]
+    my_open = [row for row in my_referrals if row.get("is_open")]
+    my_overdue = [row for row in my_open if row.get("is_overdue")]
 
     # Replies are reverse-linked through the existing Reply To child-table row.
     # They are displayed only for Incoming correspondence.
@@ -563,8 +595,6 @@ def correspondence_overview(correspondence: str) -> dict:
         "registered_on": doc.registered_on,
         "closed_on": doc.closed_on,
         "reopened_on": doc.reopened_on,
-        # Same two-source rule as a referral's sent state: the lifecycle stamps the field, and
-        # a migrated record may carry only the state.
         "sealed": bool(doc.record_sealed_on),
         "sealed_on": doc.record_sealed_on,
         "sealed_by": doc.record_sealed_by,
@@ -572,6 +602,10 @@ def correspondence_overview(correspondence: str) -> dict:
         "seal_reason": doc.seal_reason,
         "kpis": kpis,
         "referrals": decorated,
+        "my_referrals": my_referrals,
+        "cancelled_count": cancelled_count,
+        "my_open": len(my_open),
+        "my_overdue": len(my_overdue),
         "replies": replies,
         "reply_kpis": reply_kpis,
         "approval_summary": approval_summary,
@@ -584,6 +618,11 @@ def correspondence_overview(correspondence: str) -> dict:
         "attachments_secret": secret_count,
         "route": f"/app/murasalat-correspondence/{doc.name}",
     }
+
+    allowed_sections = {"overview", "referrals", "replies", "tracking", "activity"}
+    if section not in allowed_sections:
+        section = "overview"
+    context["experience_section"] = section
 
     return {
         "html": render("correspondence.html", **context),
@@ -606,7 +645,12 @@ def _correspondence_indicators(kpis: dict, approvals: list, sealed: bool) -> lis
     if kpis["due_today"]:
         indicators.append({"label": f"تستحق اليوم: {kpis['due_today']}", "color": "orange"})
 
-    pending = [row for row in approvals if not row.get("approved_on")]
+    pending = [
+        row
+        for row in approvals
+        if (row.get("workflow_state") or "").lower() not in {"approved", "rejected"}
+        and not row.get("approved_on")
+    ]
     if pending:
         indicators.append({"label": f"طلبات اعتماد معلّقة: {len(pending)}", "color": "orange"})
 

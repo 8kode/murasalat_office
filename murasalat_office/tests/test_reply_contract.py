@@ -66,9 +66,6 @@ def test_reply_service_uses_permission_aware_referral_reads_for_user_visible_dat
     assert "frappe.get_list(" in source
     assert "completion_result" in source
     assert 'frappe.has_permission(doc, ptype="create_reply")' in source
-    assert 'reply.signatory_name' in source
-    assert 'reply.signatory_position' in source
-    assert 'reply.closing_phrase' in source
     assert 'frappe.has_permission(CORRESPONDENCE, ptype="create")' in source
     assert "ignore_permissions=True" not in source
     assert '"open_referrals": open_referrals' not in source
