@@ -19,8 +19,6 @@ EXPECTED_TASKS = [
     ('Send Referral', 'send_referral', 'Murasalat Referral'),
     ('Receive Referral', 'receive_referral', 'Murasalat Referral'),
     ('Complete Referral', 'complete_referral', 'Murasalat Referral'),
-    ('Stamp Approval', 'stamp_approval', 'Murasalat Approval Request'),
-    ('Clear Approval', 'clear_approval', 'Murasalat Approval Request'),
     ('Cancel Referral', 'cancel_referral', 'Murasalat Referral'),
 ]
 

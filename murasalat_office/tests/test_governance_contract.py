@@ -30,8 +30,8 @@ def test_governance_service_is_read_only():
 def test_package_version_matches_release():
     pyproject = (ROOT.parent / "pyproject.toml").read_text()
     app_init = (ROOT / "__init__.py").read_text()
-    assert 'version = "0.27.3"' in pyproject
-    assert '__version__ = "0.27.3"' in app_init
+    assert 'version = "0.27.4"' in pyproject
+    assert '__version__ = "0.27.4"' in app_init
 
 
 def test_eslint_configuration_is_valid_json():
@@ -41,7 +41,7 @@ def test_eslint_configuration_is_valid_json():
 
 def test_setup_version_matches_release():
     setup = (ROOT.parent / "setup.py").read_text()
-    assert "version='0.27.3'" in setup
+    assert "version='0.27.4'" in setup
 
 
 def test_sealed_attachment_changes_are_rejected():

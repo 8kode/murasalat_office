@@ -118,11 +118,6 @@ def _lifecycle():
     return _load("murasalat_lifecycle_under_test", "services/lifecycle.py")
 
 
-def _approval_module():
-    return _load(
-        "murasalat_approval_under_test",
-        "murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request.py",
-    )
 
 
 def _sealed_correspondence(**overrides):
@@ -280,73 +275,18 @@ def test_the_unsealed_activity_is_a_valid_select_option():
     pytest.fail("activity_type is not a Select; the option list assertion does not apply")
 
 
-# ------------------------------------------------------------------ approval record
 
 
-def _approval(before=None, **overrides):
-    document = _approval_module().MurasalatApprovalRequest()
-    document.is_new = lambda: False
-    document.get_doc_before_save = lambda: before
-    document.correspondence = "CORR-1"
-    document.approval_level = 1
-    document.requested_by = "creator@example.com"
-    document.requested_on = "2026-09-10 08:00:00"
-    document.workflow_state = "Pending"
-    document.decision_note = None
-    document.approved_by = None
-    document.approved_on = None
-    for key, value in overrides.items():
-        setattr(document, key, value)
-    return document
 
 
-def test_the_decision_is_stamped_with_the_acting_user_and_the_server_time():
-    document = _approval(approved_by="tester@example.com")
-
-    document.validate()
-
-    assert document.approved_by == "tester@example.com"
-    assert document.approved_on is not None
 
 
-def test_the_decision_cannot_name_another_user():
-    document = _approval(approved_by="someone.else@example.com")
-
-    with pytest.raises(MurasalatThrow):
-        document.validate()
 
 
-def test_a_recorded_decision_cannot_be_rewritten_or_backdated():
-    recorded = types.SimpleNamespace(
-        approved_by="approver@example.com",
-        approved_on="2026-09-12 10:00:00",
-        requested_by="creator@example.com",
-        correspondence="CORR-1",
-    )
-
-    rewritten = _approval(before=recorded, approved_by="approver@example.com", approved_on="2020-01-01 00:00:00")
-    with pytest.raises(MurasalatThrow):
-        rewritten.validate()
-
-    reassigned = _approval(before=recorded, approved_by="tester@example.com", approved_on="2026-09-12 10:00:00")
-    with pytest.raises(MurasalatThrow):
-        reassigned.validate()
 
 
-def test_a_decision_without_an_approver_is_refused():
-    document = _approval(approved_on="2026-09-12 10:00:00")
-
-    with pytest.raises(MurasalatThrow):
-        document.validate()
 
 
-def test_a_request_cannot_be_created_already_approved():
-    document = _approval(approved_by="tester@example.com")
-    document.is_new = lambda: True
-    document.requested_on = None
-
-    with pytest.raises(MurasalatThrow):
-        document.validate()
 
 
 # ------------------------------------------------------------------ translation file

@@ -164,9 +164,6 @@
     <div class="mo-kpi">
       <div class="n">{{ correspondence_age.days if correspondence_age.days is not none else "—" }}</div><div class="l">عمر المعاملة (يوم)</div>
     </div>
-    <div class="mo-kpi{% if approval_summary.pending %} mo-warn{% elif approval_summary.rejected %} mo-alert{% elif approval_summary.approved %} mo-ok{% endif %}">
-      <div class="n">{{ approval_summary.pending if approval_summary.pending else approval_summary.approved if approval_summary.approved else approval_summary.rejected }}</div><div class="l">{{ approval_summary.label }}</div>
-    </div>
   </div>
 
   <div class="mo-card">
@@ -322,40 +319,6 @@
       {% if reopened_on %}<div class="mo-kv"><span class="k">أُعيد فتحها</span><span class="v">{{ reopened_on }}</span></div>{% endif %}
     </div>
 
-    <div class="mo-card">
-      <h5 class="mo-sec">طلبات الاعتماد{% if approvals %} ({{ approvals | length }}){% endif %}</h5>
-      <div class="mo-reply-summary">
-        <span class="mo-chip{% if approval_summary.css == 'green' %} mo-green{% elif approval_summary.css == 'orange' %} mo-orange{% elif approval_summary.css == 'red' %} mo-red{% endif %}">
-          {{ approval_summary.label }}
-        </span>
-        {% if approval_summary.pending %}<span class="mo-chip mo-orange">معلّقة: {{ approval_summary.pending }}</span>{% endif %}
-        {% if approval_summary.approved %}<span class="mo-chip mo-green">معتمدة: {{ approval_summary.approved }}</span>{% endif %}
-        {% if approval_summary.rejected %}<span class="mo-chip mo-red">مرفوضة: {{ approval_summary.rejected }}</span>{% endif %}
-      </div>
-      {% if approvals %}
-      <div class="mo-table-wrap"><table class="mo-tbl">
-        <thead><tr><th>الطلب</th><th>المستوى</th><th>الحالة</th><th>مقدَّم</th><th>القرار</th></tr></thead>
-        <tbody>
-          {% for a in approvals %}
-          <tr>
-            <td data-label="الطلب"><span class="mo-cell-label">الطلب</span><span class="mo-cell-value"><a href="/app/murasalat-approval-request/{{ a.name }}">{{ a.name }}</a></span></td>
-            <td data-label="المستوى"><span class="mo-cell-label">المستوى</span><span class="mo-cell-value">{{ a.approval_level or "—" }}</span></td>
-            <td data-label="الحالة"><span class="mo-cell-label">الحالة</span><span class="mo-cell-value">{{ a.workflow_state or "—" }}</span></td>
-            <td data-label="مقدَّم" class="mo-muted"><span class="mo-cell-label">مقدَّم</span><span class="mo-cell-value">{{ a.requested_by or "—" }}<br>{{ a.requested_on or "" }}</span></td>
-            <td data-label="القرار" class="mo-muted">
-              <span class="mo-cell-label">القرار</span><span class="mo-cell-value">
-              {% if a.approved_on %}{{ a.approved_by or "—" }}<br>{{ a.approved_on }}
-              {% else %}<span class="mo-chip mo-orange">بانتظار القرار</span>{% endif %}
-              </span>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <div class="mo-empty">لا توجد طلبات اعتماد.</div>
-      {% endif %}
-    </div>
   </div>
 
   <div class="mo-grid" style="margin-top:10px">

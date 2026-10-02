@@ -58,11 +58,6 @@ def test_subject_and_body_do_not_carry_the_same_label():
     assert body_label not in {"الموضوع", "Subject"}, body_label
 
 
-def test_the_retired_holder_projection_is_hidden_from_users():
-    """current_holder_user is always cleared, so showing it misleads."""
-    fields = _fields(_meta("murasalat_correspondence"))
-
-    assert fields["current_holder_user"].get("hidden") == 1
 
 
 def test_audit_section_is_collapsible():
@@ -81,14 +76,6 @@ def test_referral_prefills_from_the_parent_correspondence():
     assert fields["due_date"].get("fetch_if_empty") == 1
 
 
-def test_approval_request_shows_a_readable_link_title():
-    fields = _fields(_meta("murasalat_approval_request"))
-    meta = _meta("murasalat_approval_request")
-
-    assert fields["subject"].get("fetch_from") == "correspondence.subject"
-    assert fields["subject"].get("fetch_if_empty") == 1
-    assert meta.get("title_field") == "subject"
-    assert meta.get("show_title_field_in_link") == 1
 
 
 # ------------------------------------------------------------------------ list views
@@ -107,13 +94,6 @@ def test_correspondence_list_indicator_describes_the_document_state():
     assert "No Due Date" not in source
 
 
-def test_correspondence_list_does_not_load_the_retired_field():
-    source = (
-        APP
-        / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence_list.js"
-    ).read_text()
-
-    assert "current_holder_user" not in source
 
 
 def test_referral_list_indicator_separates_completed_draft_and_overdue():
@@ -168,6 +148,6 @@ def test_ux_changes_introduce_no_governance():
     hooks = (APP / "hooks.py").read_text()
     assert "fixtures = [" not in hooks
 
-    for slug in ("murasalat_correspondence", "murasalat_referral", "murasalat_approval_request"):
+    for slug in ("murasalat_correspondence", "murasalat_referral"):
         meta = _meta(slug)
         assert not meta.get("permissions"), slug

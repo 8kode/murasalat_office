@@ -1,8 +1,7 @@
 ## v0.27.3
 
 - Remediated the expert review findings while preserving Native-First governance.
-- Added readable Approval Request (`MAR-.#####`) and Membership (`MOM-.#####`) naming for new records.
-- Added Delegation change tracking and a composite membership uniqueness guard.
+- Added Delegation change tracking.
 - Exposed governance health through a System Manager-only API.
 - Extended delegated Inbox handling to explicit organization-targeted referrals.
 - Added real Correspondence lifecycle activity events and removed dead activity types.
@@ -50,16 +49,11 @@ The app exposes standard Frappe views and navigation:
 
 | Document | For |
 | --- | --- |
-| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | the people who use it daily - Arabic, the full lifecycle |
-| [`docs/LAUNCH_SETUP.md`](docs/LAUNCH_SETUP.md) | the site administrator - preparing a site, in one command |
-| [`docs/ATTACHMENTS.md`](docs/ATTACHMENTS.md) | how attachments work, and what the framework already does |
-| [`docs/PRINT_FORMATS.md`](docs/PRINT_FORMATS.md) | the two shipped print formats |
-| [`docs/SEAL_INTEGRITY.md`](docs/SEAL_INTEGRITY.md) | the auditor - how the seal is computed and checked |
-| [`docs/WORKFLOW_GOVERNANCE.md`](docs/WORKFLOW_GOVERNANCE.md) | the administrator - workflows and transition tasks |
-| [`docs/MANAGEMENT_REPORTS.md`](docs/MANAGEMENT_REPORTS.md) | the general manager and department heads - the three reports, in Arabic |
+| [`docs/ATTACHMENTS.md`](docs/ATTACHMENTS.md) | attachment governance and native File integration |
+| [`docs/WORKFLOW_GOVERNANCE.md`](docs/WORKFLOW_GOVERNANCE.md) | administrator workflow and transition-task guidance |
 
 ## Version
 
 v0.27.3 — Expert-review remediation release, preserving Native-First governance.
 
-Target baseline: Frappe 16.33.x. ERPNext 16.34.x is supported when present, but is not a runtime dependency.
+Target baseline: Frappe 16.36.x. ERPNext 16.36.x is supported when present; the app does not ship ERPNext as a Python dependency.

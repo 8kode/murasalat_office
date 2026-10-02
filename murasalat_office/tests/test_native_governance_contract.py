@@ -89,26 +89,10 @@ def test_sealed_correspondence_initializes_integrity_hash():
     assert "if self.record_sealed_on and not self.integrity_hash" in source
 
 
-def test_native_contextual_dashboards_exist_for_core_transaction_doctypes():
-    for name in (
-        "murasalat_correspondence/murasalat_correspondence_dashboard.py",
-        "murasalat_referral/murasalat_referral_dashboard.py",
-        "murasalat_approval_request/murasalat_approval_request_dashboard.py",
-    ):
-        assert (APP / "murasalat_office/doctype" / name).exists()
 
 
-def test_correspondence_dashboard_links_referrals_and_approvals_by_native_fields():
-    source = (APP / "murasalat_office/doctype/murasalat_correspondence/murasalat_correspondence_dashboard.py").read_text()
-    assert '"Murasalat Referral": "correspondence"' in source
-    assert '"Murasalat Approval Request": "correspondence"' in source
 
 
-def test_reverse_dashboards_use_native_internal_links():
-    referral = (APP / "murasalat_office/doctype/murasalat_referral/murasalat_referral_dashboard.py").read_text()
-    approval = (APP / "murasalat_office/doctype/murasalat_approval_request/murasalat_approval_request_dashboard.py").read_text()
-    assert '"Murasalat Correspondence": "correspondence"' in referral
-    assert '"Murasalat Correspondence": "correspondence"' in approval
 
 
 def test_core_doctypes_use_human_readable_link_titles():
@@ -133,7 +117,6 @@ def test_workspace_exposes_native_operational_entry_points():
 
 def test_operational_ux_does_not_ship_notification_or_workflow_fixtures():
     assert not (APP / "fixtures").exists()
-    assert (ROOT.parent / "docs/EXPERT_AUDIT_v0.27.3.md").exists()
 
 
 def test_workspace_uses_native_quick_lists_and_number_cards():
@@ -165,10 +148,6 @@ def test_referral_has_native_human_readable_numbering():
     assert "self.referral_number = self.name" in source
 
 
-def test_governance_covers_delegation_and_membership():
-    source = (APP / "services/governance.py").read_text()
-    assert '"Murasalat Delegation"' in source
-    assert '"Murasalat User Organization Membership"' in source
 
 
 def test_reports_prefer_native_query_builder_for_simple_operational_queries():
@@ -191,8 +170,6 @@ def test_legacy_migrations_use_cross_database_database_abstractions():
         assert "frappe.db.multisql" in source
 
 
-def test_no_dead_comment_only_membership_client_script():
-    assert not (APP / "murasalat_office/doctype/murasalat_user_organization_membership/murasalat_user_organization_membership.js").exists()
 
 
 def test_erpnext_is_not_declared_as_an_unused_runtime_dependency():

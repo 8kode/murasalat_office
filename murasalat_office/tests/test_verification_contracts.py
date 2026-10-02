@@ -116,21 +116,6 @@ def test_attach_accepts_the_action_label_a_user_can_see():
     assert "transition = transition_doc.name" in source
 
 
-def test_the_approval_decision_has_a_writer_not_only_a_guard():
-    """Without a writer the read-only fields can never be stamped at all."""
-    hooks_source = _source(ROOT / "hooks.py")
-    approvals = _source(ROOT / "services/approvals.py")
-
-    assert '"name": "Stamp Approval"' in hooks_source
-    assert '"name": "Clear Approval"' in hooks_source
-    assert "murasalat_office.services.approvals.stamp_approval" in hooks_source
-    assert "murasalat_office.services.approvals.clear_approval" in hooks_source
-
-    assert "def stamp_approval(doc)" in approvals
-    assert "def clear_approval(doc)" in approvals
-    # the stamp names the acting user and nothing else, and only once
-    assert "doc.approved_by = frappe.session.user" in approvals
-    assert 'if doc.get("approved_by"):' in approvals
 
 def test_every_hook_declared_in_hooks_py_is_a_real_function():
     hooks_source = _source(ROOT / "hooks.py")

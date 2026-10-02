@@ -50,7 +50,6 @@
   "audit_security_tab",
   "security_section",
   "current_holder",
-  "current_holder_user",
   "originating_organization",
   "registered_on",
   "closed_on",
@@ -313,14 +312,6 @@
    "fieldtype": "Link",
    "label": "Current Department",
    "options": "Department",
-   "read_only": 1
-  },
-  {
-   "fieldname": "current_holder_user",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Current User",
-   "options": "User",
    "read_only": 1
   },
   {

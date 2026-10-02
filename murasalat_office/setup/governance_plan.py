@@ -48,11 +48,7 @@ PERMISSION_PLAN = {
             "read": 1, "write": 1, "create": 1, "report": 1, "print": 1, "email": 1,
             "share": 1, "export": 1, "import": 1, "amend": 1,
         },
-        "Murasalat Approval Request": {"read": 1, "write": 1, "create": 1, "report": 1},
         "Murasalat Delegation": {"read": 1, "write": 1, "create": 1, "report": 1},
-        "Murasalat User Organization Membership": {
-            "read": 1, "write": 1, "create": 1, "report": 1,
-        },
         "Murasalat Attachment": {"read": 1, "write": 1, "create": 1},
         "Murasalat Correspondence Activity": {"read": 1, "write": 1, "create": 1},
         "Murasalat Transaction Type": {"read": 1, "create": 1, "write": 1},
@@ -67,9 +63,7 @@ PERMISSION_PLAN = {
         # Read-only by design: an auditor must never be able to alter a sealed record.
         "Murasalat Correspondence": {"read": 1, "report": 1, "print": 1, "export": 1},
         "Murasalat Referral": {"read": 1, "report": 1, "print": 1, "export": 1},
-        "Murasalat Approval Request": {"read": 1, "report": 1},
         "Murasalat Delegation": {"read": 1, "report": 1},
-        "Murasalat User Organization Membership": {"read": 1, "report": 1},
         "Murasalat Attachment": {"read": 1},
         "Murasalat Correspondence Activity": {"read": 1},
         "Murasalat External Party": {"read": 1},

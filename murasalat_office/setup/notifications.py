@@ -12,8 +12,7 @@ What each question a user has gets, and the native surface that answers it:
        driven by the daily ``trigger_daily_alerts`` job and delivered to the in-app bell.
 5. *is a formal action waiting for me*
        Nothing added. Frappe's own Workflow Action list shows the transitions a user's role
-       may act on - and ``provision`` now creates the Approval Workflow, so an approval
-       waiting for a supervisor appears in that list like any other pending transition.
+       may act on, so any pending transition appears there like any other governed action.
 
 Plus one notice that closes the loop in the other direction: whoever sent a referral is told
 when it is received and when it is completed, through native **Value Change** rules on the

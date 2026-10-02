@@ -103,10 +103,6 @@ def register_correspondence(doc):
     doc.registered_on = now_datetime()
     doc.current_holder = initial_holder
 
-    # current_holder_user is retained only as a legacy/deprecated projection
-    # during migration. It is not populated from ToDo anymore.
-    if hasattr(doc, "current_holder_user"):
-        doc.current_holder_user = None
 
     _append_activity(
         doc,
@@ -336,10 +332,6 @@ def receive_referral(doc):
 
     correspondence.current_holder = doc.recipient_department
 
-    # Legacy/deprecated projection must never be used as a user assignment
-    # source of truth.
-    if hasattr(correspondence, "current_holder_user"):
-        correspondence.current_holder_user = None
 
     correspondence.save()
 

@@ -176,7 +176,6 @@ def _correspondence_context(mod, **overrides):
                 "cc_copy": 0,
             }
         ],
-        "approvals": [],
         "links": [],
         "activity": [
             {
@@ -208,7 +207,6 @@ def test_correspondence_panel_shows_referrals_kpis_and_trail():
     assert "متأخرة" in html
     assert "آخر الحركات" in html
     assert "المعاملات المرتبطة" not in html  # no links were supplied
-    assert "طلبات الاعتماد" in html
 
 
 def test_correspondence_panel_marks_a_sealed_record():
@@ -282,7 +280,6 @@ def _referral_context(mod, **overrides):
         },
         "parent_direction_ar": "وارد",
         "siblings": [],
-        "approvals": [],
         "activity": [
             {
                 "activity_type": "Referral Sent",
@@ -358,7 +355,7 @@ def test_both_panels_are_right_to_left_and_self_contained():
 
 
 def test_panels_render_without_any_optional_data():
-    """A brand-new record with no referrals, approvals, links or activity must render."""
+    """A brand-new record with no referrals, links or activity must render."""
     mod = _load_overview()
 
     empty_kpis = {"total": 0, "draft": 0, "open": 0, "overdue": 0, "due_today": 0, "completed": 0}
@@ -366,7 +363,7 @@ def test_panels_render_without_any_optional_data():
     correspondence = mod.render(
         "correspondence.html",
         **_correspondence_context(
-            mod, kpis=empty_kpis, referrals=[], approvals=[], links=[], activity=[],
+            mod, kpis=empty_kpis, referrals=[], links=[], activity=[],
             attachments_total=0, attachments_secret=0, sealed=False,
         ),
     )
@@ -389,9 +386,7 @@ def test_indicators_are_native_frappe_colors():
 
     allowed = {"green", "orange", "red", "blue", "gray", "purple", "pink", "yellow"}
     kpis = {"total": 3, "draft": 1, "open": 2, "overdue": 1, "due_today": 1, "completed": 0}
-    approvals = [{"name": "MAR-1", "workflow_state": "Pending", "approved_on": None}]
-
-    indicators = mod._correspondence_indicators(kpis, approvals, sealed=True)
+    indicators = mod._correspondence_indicators(kpis, sealed=True)
 
     for indicator in indicators:
         assert indicator["color"] in allowed

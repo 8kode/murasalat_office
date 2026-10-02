@@ -68,17 +68,6 @@ REFERRAL_FIELDS = [
     "cancelled_on",
 ]
 
-APPROVAL_FIELDS = [
-    "name",
-    "approval_level",
-    "workflow_state",
-    "requested_by",
-    "requested_on",
-    "approved_by",
-    "approved_on",
-    "decision_note",
-]
-
 
 REPLY_LINK_FIELDS = [
     "parent",
@@ -128,52 +117,10 @@ def _reply_kpis(rows: Iterable[dict]) -> dict[str, int]:
     return kpis
 
 
-def _approval_summary(rows: Iterable[dict]) -> dict[str, Any]:
-    """Summarize approval state without inventing a second approval system."""
-    total = 0
-    pending = 0
-    approved = 0
-    rejected = 0
-
-    for row in rows:
-        total += 1
-        if row.get("approved_on"):
-            approved += 1
-        elif row.get("decision_note") and not row.get("approved_on"):
-            # A decision note is evidence that review occurred; whether the outcome is
-            # approval or rejection remains the site's own Approval Workflow semantics.
-            pending += 1
-        else:
-            pending += 1
-
-    if pending:
-        label = "بانتظار الاعتماد"
-        css = "orange"
-    elif rejected:
-        label = "مرفوض"
-        css = "red"
-    elif approved and total:
-        label = "معتمد"
-        css = "green"
-    else:
-        label = "لا يوجد اعتماد"
-        css = "gray"
-
-    return {
-        "total": total,
-        "pending": pending,
-        "approved": approved,
-        "rejected": rejected,
-        "label": label,
-        "css": css,
-    }
-
-
 def _operational_status(
     doc,
     referral_kpis: dict,
     reply_kpis: dict,
-    approval_summary: dict,
     today_date: date,
 ) -> dict[str, str]:
     """Derive a read-only operational state from existing native records."""
@@ -198,12 +145,6 @@ def _operational_status(
             days = -due_left
             return {"key": "correspondence_overdue", "label": "المعاملة متأخرة", "css": "red", "detail": f"تجاوزت الموعد النهائي بمقدار {days} يومًا."}
         return {"key": "ready_for_reply", "label": "جاهزة لإنشاء الرد", "css": "green", "detail": "لا توجد إحالات مفتوحة ويمكن إنشاء رد رسمي."}
-
-    if approval_summary["rejected"]:
-        return {"key": "approval_rejected", "label": "الاعتماد مرفوض", "css": "red", "detail": "يوجد طلب اعتماد مرفوض يحتاج إلى معالجة."}
-
-    if approval_summary["pending"]:
-        return {"key": "approval_pending", "label": "بانتظار الاعتماد", "css": "orange", "detail": f"يوجد {approval_summary['pending']} طلب اعتماد معلّق."}
 
     return {"key": "in_progress", "label": "قيد المعالجة", "css": "blue", "detail": "المعاملة قيد المعالجة."}
 
@@ -455,9 +396,7 @@ def render(template_name: str, **context) -> str:
             "completed": 0,
         }
         replies = context.get("replies") or []
-        approvals = context.get("approvals") or []
         context.setdefault("reply_kpis", _reply_kpis(replies))
-        context.setdefault("approval_summary", _approval_summary(approvals))
 
         if "operational_status" not in context:
             class _FallbackDoc:
@@ -476,7 +415,6 @@ def render(template_name: str, **context) -> str:
                 _FallbackDoc(),
                 kpis,
                 context["reply_kpis"],
-                context["approval_summary"],
                 fallback_today,
             )
 
@@ -521,14 +459,6 @@ def correspondence_overview(correspondence: str) -> dict:
         order_by="due_date asc, creation asc",
     )
 
-    approvals = frappe.get_list(
-        "Murasalat Approval Request",
-        filters={"correspondence": doc.name},
-        fields=APPROVAL_FIELDS,
-        ignore_permissions=False,
-        limit_page_length=0,
-        order_by="approval_level asc, creation asc",
-    )
 
     decorated = decorate_referrals(referrals, today_date)
     kpis = referral_kpis(referrals, today_date)
@@ -537,8 +467,7 @@ def correspondence_overview(correspondence: str) -> dict:
     # They are displayed only for Incoming correspondence.
     replies = _get_replies(doc.name) if doc.correspondence_direction == "Incoming" else []
     reply_kpis = _reply_kpis(replies)
-    approval_summary = _approval_summary(approvals)
-    operational_status = _operational_status(doc, kpis, reply_kpis, approval_summary, today_date)
+    operational_status = _operational_status(doc, kpis, reply_kpis, today_date)
     correspondence_age = _correspondence_age(doc, today_date)
 
     attachments = list(doc.attachments or [])
@@ -574,10 +503,8 @@ def correspondence_overview(correspondence: str) -> dict:
         "referrals": decorated,
         "replies": replies,
         "reply_kpis": reply_kpis,
-        "approval_summary": approval_summary,
         "operational_status": operational_status,
         "correspondence_age": correspondence_age,
-        "approvals": [dict(row) for row in approvals],
         "links": _link_rows(doc),
         "activity": _activity_rows(doc),
         "attachments_total": len(attachments),
@@ -587,12 +514,12 @@ def correspondence_overview(correspondence: str) -> dict:
 
     return {
         "html": render("correspondence.html", **context),
-        "indicators": _correspondence_indicators(kpis, approvals, context["sealed"]),
+        "indicators": _correspondence_indicators(kpis, context["sealed"]),
         "kpis": kpis,
     }
 
 
-def _correspondence_indicators(kpis: dict, approvals: list, sealed: bool) -> list[dict]:
+def _correspondence_indicators(kpis: dict, sealed: bool) -> list[dict]:
     indicators = []
 
     if kpis["open"]:
@@ -606,9 +533,6 @@ def _correspondence_indicators(kpis: dict, approvals: list, sealed: bool) -> lis
     if kpis["due_today"]:
         indicators.append({"label": f"تستحق اليوم: {kpis['due_today']}", "color": "orange"})
 
-    pending = [row for row in approvals if not row.get("approved_on")]
-    if pending:
-        indicators.append({"label": f"طلبات اعتماد معلّقة: {len(pending)}", "color": "orange"})
 
     if sealed:
         indicators.append({"label": "مختومة", "color": "green"})
@@ -646,7 +570,6 @@ def referral_overview(referral: str) -> dict:
         parent = dict(rows[0]) if rows else None
 
     siblings = []
-    approvals = []
     activity = []
 
     if doc.correspondence:
@@ -659,14 +582,6 @@ def referral_overview(referral: str) -> dict:
             order_by="due_date asc, creation asc",
         )
 
-        approvals = frappe.get_list(
-            "Murasalat Approval Request",
-            filters={"correspondence": doc.correspondence},
-            fields=APPROVAL_FIELDS,
-            ignore_permissions=False,
-            limit_page_length=0,
-            order_by="approval_level asc, creation asc",
-        )
 
         if parent:
             parent_doc = frappe.get_doc("Murasalat Correspondence", doc.correspondence)
@@ -712,7 +627,6 @@ def referral_overview(referral: str) -> dict:
             else None
         ),
         "siblings": decorate_referrals(siblings, today_date),
-        "approvals": [dict(row) for row in approvals],
         "activity": activity,
         "route": f"/app/murasalat-referral/{doc.name}",
     }

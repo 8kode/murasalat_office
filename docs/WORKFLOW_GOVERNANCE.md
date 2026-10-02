@@ -12,8 +12,6 @@ The application exposes these optional native Workflow Transition Task methods:
 - Receive Referral
 - Complete Referral
 - Cancel Referral
-- Stamp Approval
-- Clear Approval
 
 Attach a task only to the transition where the institution wants that business action to occur. The task names do not define or constrain the Workflow state names.
 

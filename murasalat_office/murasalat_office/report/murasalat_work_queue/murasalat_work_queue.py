@@ -8,8 +8,7 @@ from murasalat_office.services.lifecycle import OPEN_REFERRAL_FILTERS
 def execute(filters=None):
     """Open referral work queue.
 
-    This report intentionally operates on Murasalat Referral rather than
-    Correspondence.current_holder_user.
+    This report intentionally operates on Murasalat Referral rather than a user-holder projection on Correspondence.
 
     Department work:
         recipient_type = Department

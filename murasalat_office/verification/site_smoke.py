@@ -85,11 +85,9 @@ def _check_doctypes():
     for doctype in (
         CORRESPONDENCE,
         "Murasalat Referral",
-        "Murasalat Approval Request",
         "Murasalat Correspondence Activity",
         "Murasalat Correspondence Link",
         "Murasalat Attachment",
-        "Murasalat User Organization Membership",
     ):
         if frappe.db.exists("DocType", doctype):
             _pass(doctype)
@@ -307,6 +305,6 @@ def run():
 
     print("=" * 40)
     print(f"{STATUS['pass']} passed, {STATUS['warn']} warned, {STATUS['fail']} failed")
-    print("Rendering still has to be eyeballed: see docs/VERIFICATION.md")
+    print("Rendering still requires a manual visual check in Desk.")
 
     return STATUS["fail"]

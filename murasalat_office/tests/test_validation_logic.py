@@ -221,70 +221,10 @@ def test_delegation_validation():
         raise AssertionError("Self-delegation was accepted")
 
 
-def test_approval_request_initialization_and_immutability():
-    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_approval_request.murasalat_approval_request")
-    new_doc = object.__new__(mod.MurasalatApprovalRequest)
-    new_doc.requested_by = None
-    new_doc.requested_on = None
-    new_doc.correspondence = "CORR-001"
-    new_doc.approval_level = 1
-    new_doc.is_new = lambda: True
-    new_doc.get_doc_before_save = lambda: None
-    mod.MurasalatApprovalRequest.validate(new_doc)
-    assert new_doc.requested_by == "tester@example.com"
-    assert new_doc.requested_on is not None
-
-    changed = object.__new__(mod.MurasalatApprovalRequest)
-    changed.requested_by = "other@example.com"
-    changed.requested_on = datetime(2026, 9, 9, 12, 0, 0)
-    changed.correspondence = "CORR-001"
-    changed.approval_level = 1
-    changed.is_new = lambda: False
-    changed.get_doc_before_save = lambda: _obj(requested_by="tester@example.com", correspondence="CORR-001")
-    try:
-        mod.MurasalatApprovalRequest.validate(changed)
-    except PermissionError:
-        pass
-    else:
-        raise AssertionError("requested_by immutability was bypassed")
 
 
-def test_membership_date_validation_and_duplicate_contract():
-    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_user_organization_membership.murasalat_user_organization_membership")
-    good = object.__new__(mod.MurasalatUserOrganizationMembership)
-    good.valid_from = "2026-09-09"
-    good.valid_to = "2026-09-10"
-    good.user = "user@example.com"
-    good.organization = "ORG-001"
-    good.name = "MEM-001"
-    good.doctype = "Murasalat User Organization Membership"
-    mod.MurasalatUserOrganizationMembership.validate(good)
-
-    bad = object.__new__(mod.MurasalatUserOrganizationMembership)
-    bad.valid_from = "2026-09-11"
-    bad.valid_to = "2026-09-10"
-    bad.user = "user@example.com"
-    bad.organization = "ORG-001"
-    bad.name = "MEM-002"
-    bad.frappe = None
-    try:
-        mod.MurasalatUserOrganizationMembership.validate(bad)
-    except ValidationError:
-        pass
-    else:
-        raise AssertionError("Invalid membership date range was accepted")
 
 
-def test_membership_future_start_is_valid_data_but_excluded_by_inbox_scope():
-    mod = _load("murasalat_office.murasalat_office.doctype.murasalat_user_organization_membership.murasalat_user_organization_membership")
-    doc = object.__new__(mod.MurasalatUserOrganizationMembership)
-    doc.valid_from = "2026-09-11"
-    doc.valid_to = "2026-09-20"
-    doc.user = "user@example.com"
-    doc.organization = "ORG-001"
-    doc.name = "MEM-003"
-    doc.doctype = "Murasalat User Organization Membership"
-    mod.MurasalatUserOrganizationMembership.validate(doc)
 
 
 def test_attachment_hash_is_not_recomputed_when_file_is_unchanged():
@@ -446,13 +386,6 @@ def test_records_use_sealing_terminology_and_shared_file_hash():
     assert "from murasalat_office.services.records import hash_file_url" in attachment
 
 
-def test_membership_dead_clearance_fields_are_removed_and_unique_index_is_declared():
-    root = Path(__file__).resolve().parents[1]
-    source = (root / "murasalat_office/doctype/murasalat_user_organization_membership/murasalat_user_organization_membership.json").read_text()
-    repair = (root / "patches/schema_repair.py").read_text()
-    assert "access_level" not in source
-    assert "max_clearance_rank" not in source
-    assert "murasalat_user_org_unique_idx" in repair
 
 
 
@@ -462,11 +395,6 @@ def test_integrity_verification_fails_closed_when_attachment_hash_is_missing():
     assert mod.verify_integrity(doc) is False
 
 
-def test_membership_audit_trail_is_enabled():
-    import json
-    root = Path(__file__).resolve().parents[1]
-    source = json.loads((root / "murasalat_office/doctype/murasalat_user_organization_membership/murasalat_user_organization_membership.json").read_text())
-    assert source["track_changes"] == 1
 
 def test_permission_aware_reporting_uses_restricted_subject_placeholder():
     root = Path(__file__).resolve().parents[1]

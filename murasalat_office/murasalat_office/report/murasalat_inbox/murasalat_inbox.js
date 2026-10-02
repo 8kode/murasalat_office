@@ -4,7 +4,7 @@ frappe.query_reports["Murasalat Inbox"] = {
       fieldname: "scope",
       label: __("Scope"),
       fieldtype: "Select",
-      options: ["My Work", "My Organization", "Delegated to Me", "All Visible"],
+      options: ["My Work", "Delegated to Me", "All Visible"],
       default: "My Work",
       reqd: 1,
     },

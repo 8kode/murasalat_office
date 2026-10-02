@@ -96,9 +96,6 @@ def operational_summary(correspondence):
         "name": doc.name,
         "workflow_state": doc.workflow_state,
         "current_holder": doc.current_holder,
-        # Deprecated field retained only for compatibility with the current
-        # schema. It is NOT used to determine personal work ownership.
-        "current_holder_user": None,
         "open_referrals": len(referrals),
         "overdue_referrals": len(overdue_rows),
         "next_due_date": min(due_dates) if due_dates else None,

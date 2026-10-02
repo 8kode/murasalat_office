@@ -236,26 +236,6 @@
       {% endif %}
     </div>
 
-    <div class="mo-card">
-      <h5 class="mo-sec">طلبات اعتماد المعاملة{% if approvals %} ({{ approvals | length }}){% endif %}</h5>
-      {% if approvals %}
-      <div class="mo-table-wrap"><table class="mo-tbl">
-        <thead><tr><th>الطلب</th><th>المستوى</th><th>الحالة</th><th>القرار</th></tr></thead>
-        <tbody>
-          {% for a in approvals %}
-          <tr>
-            <td data-label="الطلب"><span class="mo-cell-label">الطلب</span><span class="mo-cell-value"><a href="/app/murasalat-approval-request/{{ a.name }}">{{ a.name }}</a></span></td>
-            <td data-label="المستوى"><span class="mo-cell-label">المستوى</span><span class="mo-cell-value">{{ a.approval_level or "—" }}</span></td>
-            <td data-label="الحالة"><span class="mo-cell-label">الحالة</span><span class="mo-cell-value">{{ a.workflow_state or "—" }}</span></td>
-            <td data-label="القرار" class="mo-muted"><span class="mo-cell-label">القرار</span><span class="mo-cell-value">{{ a.approved_by or "بانتظار القرار" }}{% if a.approved_on %}<br>{{ a.approved_on }}{% endif %}</span></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table></div>
-      {% else %}
-      <div class="mo-empty">لا توجد طلبات اعتماد.</div>
-      {% endif %}
-    </div>
   </div>
 
 </div>

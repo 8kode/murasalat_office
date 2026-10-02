@@ -7,10 +7,8 @@ import frappe
 
 GOVERNED_DOCTYPES = (
     "Murasalat Correspondence",
-    "Murasalat Approval Request",
     "Murasalat Referral",
     "Murasalat Delegation",
-    "Murasalat User Organization Membership",
 )
 
 

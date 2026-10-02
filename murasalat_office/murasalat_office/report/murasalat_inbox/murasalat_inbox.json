@@ -13,7 +13,7 @@
       "fieldname": "scope",
       "label": "Scope",
       "fieldtype": "Select",
-      "options": "My Work\nMy Organization\nDelegated to Me\nAll Visible",
+      "options": "My Work\nDelegated to Me\nAll Visible",
       "default": "My Work",
       "reqd": 1
     },

@@ -44,14 +44,6 @@ workflow_methods = [
         "method": "murasalat_office.services.lifecycle.complete_referral",
     },
     {
-        "name": "Stamp Approval",
-        "method": "murasalat_office.services.approvals.stamp_approval",
-    },
-    {
-        "name": "Clear Approval",
-        "method": "murasalat_office.services.approvals.clear_approval",
-    },
-    {
         "name": "Cancel Referral",
         "method": "murasalat_office.services.lifecycle.cancel_referral",
     },
@@ -60,13 +52,7 @@ workflow_methods = [
 
 # There is intentionally no ToDo doc_event hook.
 #
-# Previous DEV12 behavior tried to infer one
-# Murasalat Correspondence.current_holder_user from the latest
-# open ToDo linked to the Correspondence. That is ambiguous when
-# multiple referrals/assignments exist and also couples assignment
-# to write permission on the parent Correspondence.
-#
-# Native Frappe Assignment should instead be performed on:
+# # Native Frappe Assignment should instead be performed on:
 #     Murasalat Referral
 #
 # The Referral identifies the work item; ToDo identifies the user.
@@ -74,7 +60,6 @@ workflow_methods = [
 
 after_migrate = [
     "murasalat_office.patches.schema_repair.ensure_child_table_schema",
-    "murasalat_office.patches.schema_repair.ensure_membership_unique_index",
 ]
 
 

@@ -69,42 +69,6 @@ def execute(filters=None):
 
         data = _query_referrals(referral_filters)
 
-    elif scope == "My Organization":
-        membership_query = frappe.qb.get_query(
-            "Murasalat User Organization Membership",
-            fields=["organization"],
-            filters=[
-                ["user", "=", user],
-                "and",
-                ["enabled", "=", 1],
-                "and",
-                [
-                    ["valid_from", "is", "not set"],
-                    "or",
-                    ["valid_from", "<=", today()],
-                ],
-                "and",
-                [
-                    ["valid_to", "is", "not set"],
-                    "or",
-                    ["valid_to", ">=", today()],
-                ],
-            ],
-            ignore_permissions=False,
-        )
-
-        memberships = membership_query.run(pluck=True)
-
-        if not memberships:
-            return _empty_result()
-
-        referral_filters = base_filters + [
-            ["recipient_type", "=", "Department"],
-            ["recipient_department", "in", memberships],
-        ]
-
-        data = _query_referrals(referral_filters)
-
     elif scope == "Delegated to Me":
         delegations = frappe.get_list(
             "Murasalat Delegation",
